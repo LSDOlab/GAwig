@@ -11,11 +11,10 @@ from VAST.core.vast_solver import VASTFluidSover
 from VAST.core.fluid_problem import FluidProblem
 from VAST.core.generate_mappings_m3l import VASTNodalForces
 import numpy as np
-import sys
-sys.setrecursionlimit(100000)
 import matplotlib.pyplot as plt
-plt.rcParams.update({'font.size': 18})
+plt.rcParams.update(plt.rcParamsDefault)
 import csdl
+from mirror import Mirror
 
 
 
@@ -57,14 +56,11 @@ wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 
 wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 1.]), direction=np.array([0., 0., 1.]), grid_search_n=30, plot=False)
 wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surface_wireframe, 1) # this linspace will return average when n=1
 #spatial_rep.plot_meshes([wing_camber_surface])
-
-
 wing_vlm_mesh_name = 'wing_vlm_mesh'
 sys_rep.add_output(wing_vlm_mesh_name, wing_camber_surface)
-wing_oml_mesh = am.vstack((wing_upper_surface_wireframe, wing_lower_surface_wireframe))
-wing_oml_mesh_name = 'wing_oml_mesh'
-sys_rep.add_output(wing_oml_mesh_name, wing_oml_mesh)
 
+
+sys_param.setup()
 
 
 
@@ -89,31 +85,44 @@ cruise_model.register_output(ac_states)
 
 
 
+# create a mirrored mesh
+mirror = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,ns=num_spanwise_vlm,nc=num_chordwise_vlm)
+wing_camber_surface_mirror = mirror.evaluate()
+cruise_model.register_output(wing_camber_surface_mirror)
+#sys_rep.add_output(wing_vlm_mesh_name+'_mirror', wing_camber_surface_mirror)
 
 
 
 # VLM solver
 vlm_model = VASTFluidSover(
-    surface_names=[wing_vlm_mesh_name,],
-    surface_shapes=[(1, ) + wing_camber_surface.evaluate().shape[1:],],
+    surface_names=[wing_vlm_mesh_name, wing_vlm_mesh_name+'_mirror',],
+    surface_shapes=[(1, ) + wing_camber_surface.evaluate().shape[1:],
+                    (1, ) + wing_camber_surface.evaluate().shape[1:],],
     fluid_problem=FluidProblem(solver_option='VLM', problem_type='fixed_wake'),
-    mesh_unit='ft',
-    cl0=[0.25]
+    mesh_unit='m',
+    cl0=[0.1,-0.1]
 )
 vlm_panel_forces, vlm_forces, vlm_moments = vlm_model.evaluate(ac_states=ac_states)
 cruise_model.register_output(vlm_forces)
 cruise_model.register_output(vlm_moments)
 
+"""
 # VLM force mapping model
 vlm_force_mapping_model = VASTNodalForces(
     surface_names=[wing_vlm_mesh_name,],
     surface_shapes=[(1, ) + wing_camber_surface.evaluate().shape[1:],],
     initial_meshes=[wing_camber_surface,]
 )
+"""
 
-oml_forces = vlm_force_mapping_model.evaluate(vlm_forces=vlm_panel_forces, nodal_force_meshes=[wing_oml_mesh, wing_oml_mesh])
-wing_forces = oml_forces[0]
 
+
+
+# total forces and moments
+total_forces_moments_model = cd.TotalForcesMomentsM3L()
+total_forces, total_moments = total_forces_moments_model.evaluate(vlm_forces, vlm_moments,)
+cruise_model.register_output(total_forces)
+cruise_model.register_output(total_moments)
 
 
 
@@ -125,20 +134,17 @@ design_scenario.add_design_condition(cruise_condition)
 system_model.add_design_scenario(design_scenario=design_scenario)
 caddee_csdl_model = caddee.assemble_csdl()
 
-
+caddee_csdl_model.connect('system_model.cruise.cruise.cruise.mirror.wing_vlm_mesh_mirror',
+                          'system_model.cruise.cruise.cruise.wing_vlm_meshwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_system.MeshPreprocessing_comp.wing_vlm_mesh_mirror')
 
 sim = Simulator(caddee_csdl_model, analytics=True)
 sim.run()
 
 
 
-vlm_total_forces = sim['system_model.cruise.cruise.cruise.wing_vlm_mesh_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_total_forces']
-print(vlm_total_forces[:,:,2])
-
-
-plt.plot(vlm_total_forces[:,:,2].flatten())
-plt.show()
+print(sim['system_model.cruise.cruise.cruise.total_forces_moments_model.wing_vlm_meshwing_vlm_mesh_mirror_vlm_model.F'])
 
 
 
-#print(sim[])
+#print(sim['system_model.cruise.cruise.cruise.wing_vlm_meshwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_mirror_total_forces'])
+print(sim['system_model.cruise.cruise.cruise.wing_vlm_meshwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_mirror_L'])
