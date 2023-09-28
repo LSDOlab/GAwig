@@ -135,13 +135,20 @@ sim = Simulator(caddee_csdl_model, analytics=True)
 sim.run()
 
 
+L = sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_L']
+C_L = sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_C_L']
+C_D_i = sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_C_D_i']
+h = sim['system_model.wig.wig.wig.mirror.h']
+b = 2.032 # wing span
 
-
-
-print(sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_L'])
+print('h/b: ', h/b)
+print('C_L: ', C_L)
+print('C_D_i: ', C_D_i)
+print('L: ', L)
 
 
 """
+# plot the meshes to see if stuff is working:
 original = sim['system_model.wig.wig.wig.mirror.debug_mesh']
 mirror_mesh = sim['system_model.wig.wig.wig.mirror.wing_vlm_mesh_mirror']
 mesh_out = sim['system_model.wig.wig.wig.mirror.wing_vlm_mesh_out']
