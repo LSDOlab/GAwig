@@ -15,6 +15,10 @@ plt.rcParams.update(plt.rcParamsDefault)
 import csdl
 from mirror import Mirror
 
+from mpl_toolkits.mplot3d import proj3d
+
+
+
  
 
 file_name = 'GAwig/clarky.stp'
@@ -34,22 +38,19 @@ sys_rep.add_component(wing)
 # wing.plot()
 
  
-
 # wing mesh
-num_spanwise_vlm = 18
-num_chordwise_vlm = 8
+num_spanwise_vlm = 20
+num_chordwise_vlm = 16
 leading_edge = wing.project(np.linspace(np.array([0, -1.016, 0.01]), np.array([0, 1.016, 0.01]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
 trailing_edge = wing.project(np.linspace(np.array([0.508, -1.016, 0]), np.array([0.508, 1.016, 0]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
 chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_vlm)
-#spatial_rep.plot_meshes([chord_surface])
+# spatial_rep.plot_meshes([chord_surface])
 
-
- 
 
 wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 0., 1.]), direction=np.array([0., 0., -1.]), grid_search_n=30, plot=False)
-wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 1.]), direction=np.array([0., 0., 1.]), grid_search_n=30, plot=False)
+wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 1.]), direction=np.array([0., 0., 1.]), grid_search_n=50, plot=False)
 wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surface_wireframe, 1)
-#spatial_rep.plot_meshes([wing_camber_surface])
+# spatial_rep.plot_meshes([wing_camber_surface])
 wing_vlm_mesh_name = 'wing_vlm_mesh'
 sys_rep.add_output(wing_vlm_mesh_name, wing_camber_surface)
 
@@ -68,7 +69,7 @@ wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
 wig_condition.set_module_input(name='mach_number', val=0.15, dv_flag=True, lower=0.1, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
-wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0), dv_flag=True, lower=np.deg2rad(-10), upper=np.deg2rad(10))
+wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0), dv_flag=False, lower=np.deg2rad(-10), upper=np.deg2rad(10))
 wig_condition.set_module_input(name='flight_path_angle', val=0)
 wig_condition.set_module_input(name='roll_angle', val=0)
 wig_condition.set_module_input(name='yaw_angle', val=0)
@@ -81,9 +82,28 @@ wig_model.register_output(ac_states)
  
 
 # create a mirrored mesh
-mirror = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=np.array([0,0,0]))
-wing_camber_surface_mirror = mirror.evaluate()
-wig_model.register_output(wing_camber_surface_mirror)
+mirror = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=np.array([0.508, 0, 0]))
+mirror.set_module_input('alpha', val=np.deg2rad(1), dv_flag=False)
+mirror.set_module_input('h', val=0.625, dv_flag=False)
+mesh_out, mirror_mesh = mirror.evaluate()
+wig_model.register_output(mirror_mesh)
+wig_model.register_output(mesh_out)
+
+
+
+
+# VLM solver
+vlm_model = VASTFluidSover(
+    surface_names=[wing_vlm_mesh_name+'_out', wing_vlm_mesh_name+'_mirror',],
+    surface_shapes=[(1, ) + wing_camber_surface.evaluate().shape[1:],
+                    (1, ) + wing_camber_surface.evaluate().shape[1:],],
+    fluid_problem=FluidProblem(solver_option='VLM', problem_type='fixed_wake'),
+    mesh_unit='m',
+    cl0=[0,0]
+)
+vlm_panel_forces, vlm_forces, vlm_moments = vlm_model.evaluate(ac_states=ac_states)
+wig_model.register_output(vlm_forces)
+wig_model.register_output(vlm_moments)
 
 
  
@@ -95,9 +115,44 @@ design_scenario.add_design_condition(wig_condition)
 system_model.add_design_scenario(design_scenario=design_scenario)
 caddee_csdl_model = caddee.assemble_csdl()
 
- 
+
+
+
+# connect the transformed wing meshes to VAST:
+caddee_csdl_model.connect('system_model.wig.wig.wig.mirror.wing_vlm_mesh_mirror',
+                          'system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_system.MeshPreprocessing_comp.wing_vlm_mesh_mirror')
+
+caddee_csdl_model.connect('system_model.wig.wig.wig.mirror.wing_vlm_mesh_out',
+                          'system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_system.MeshPreprocessing_comp.wing_vlm_mesh_out')
+
+# connect altitude to the mirror:
+#caddee_csdl_model.connect('system_model.wig.wig.wig.wig_ac_states_operation.wig_altitude',
+#                          'system_model.wig.wig.wig.mirror.h')
 
  
 
 sim = Simulator(caddee_csdl_model, analytics=True)
 sim.run()
+
+
+
+
+
+print(sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_L'])
+
+
+"""
+original = sim['system_model.wig.wig.wig.mirror.debug_mesh']
+mirror_mesh = sim['system_model.wig.wig.wig.mirror.wing_vlm_mesh_mirror']
+mesh_out = sim['system_model.wig.wig.wig.mirror.wing_vlm_mesh_out']
+
+fig = plt.figure(figsize=(8, 8))
+ax = fig.add_subplot(111, projection='3d')
+
+for i in range(num_spanwise_vlm):
+    for j in range(num_chordwise_vlm):
+        ax.scatter(mirror_mesh[i,j,0], mirror_mesh[i,j,1], mirror_mesh[i,j,2], color='blue', s=50)
+        ax.scatter(mesh_out[i,j,0], mesh_out[i,j,1], mesh_out[i,j,2], color='orange', s=50)
+        ax.scatter(original[i,j,0], original[i,j,1], original[i,j,2], color='black', s=50)
+plt.show()
+"""

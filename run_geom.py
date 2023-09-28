@@ -6,7 +6,6 @@ from modopt.csdl_library import CSDLProblem
 from caddee.core.caddee_core.system_representation.component.component import LiftingSurface, Component
 import array_mapper as am
 import lsdo_geo as lg
-from lsdo_rotor.core.BEM_caddee.BEM_caddee import BEM, BEMMesh
 from VAST.core.vast_solver import VASTFluidSover
 from VAST.core.fluid_problem import FluidProblem
 from VAST.core.generate_mappings_m3l import VASTNodalForces
@@ -86,10 +85,12 @@ cruise_model.register_output(ac_states)
 
 
 # create a mirrored mesh
-mirror = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,ns=num_spanwise_vlm,nc=num_chordwise_vlm)
-wing_camber_surface_mirror = mirror.evaluate()
-cruise_model.register_output(wing_camber_surface_mirror)
-#sys_rep.add_output(wing_vlm_mesh_name+'_mirror', wing_camber_surface_mirror)
+mirror = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=np.array([0.508, 0, 0]))
+mirror.set_module_input('alpha', val=np.deg2rad(1), dv_flag=False)
+mirror.set_module_input('h', val=0.625, dv_flag=False)
+mesh_out, mirror_mesh = mirror.evaluate()
+cruise_model.register_output(mirror_mesh)
+cruise_model.register_output(mesh_out)
 
 
 
