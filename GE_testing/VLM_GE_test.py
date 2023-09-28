@@ -1,5 +1,3 @@
-
-'''Example 1 : simulation of a rectangular wing'''
 import csdl
 import numpy as np
 from VAST.core.fluid_problem import FluidProblem
@@ -14,7 +12,7 @@ from generate_ground_effect_mesh import generate_ground_effect_mesh
 nx, ny = 3, 11
 num_nodes = 1
 
-h = 1.
+h = 2.
 
 mach = 0.02
 sos = 340.3
@@ -30,6 +28,7 @@ model = csdl.Model()
 # region aircraft states
 v_inf = np.ones((num_nodes,1)) * v_inf_scalar
 theta = np.deg2rad(np.ones((num_nodes,1))*pitch_scalar)
+print(theta)
 
 # acstates_model = CreateACSatesModel(v_inf=v_inf, num_nodes=num_nodes)
 acstates_model = CreateACSatesModel(v_inf=v_inf, theta=np.zeros((num_nodes,1))*180/np.pi, num_nodes=num_nodes)
@@ -47,7 +46,7 @@ mesh_dict = {
 wing_mesh_temp = generate_mesh(mesh_dict) # temporary wing mesh
 theta = pitch_scalar
 
-wing_mesh, wing_image_mesh = generate_ground_effect_mesh(wing_mesh_temp, theta, h, test_plot=False)
+wing_mesh, wing_image_mesh = generate_ground_effect_mesh(wing_mesh_temp, theta, h, test_plot=True)
 
 surface_names.append('wing')
 surface_shapes.append((num_nodes, nx, ny, 3))
@@ -73,7 +72,7 @@ solver_model = VLMSolverModel(
 
 model.add(solver_model, 'VLMSolverModel')
 
-sim = Simulator(model, analytics=True)
+sim = Simulator(model)
 sim.run()
 
 print('==== RESULTS ====')
