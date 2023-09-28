@@ -18,15 +18,16 @@ def generate_ground_effect_mesh(wing_mesh_temp, theta, h, test_plot=False):
     symmetry_plane[0,0] = wing_line[0,0]
     symmetry_plane[0,-1] = wing_line[-1,0]
 
-    import matplotlib.pyplot as plt
-    plt.plot(wing_line[:,0], wing_line[:,2], 'k-*', label='wing')
-    plt.plot(wing_image_line[:,0], wing_image_line[:,2], 'b-*', label='image')
-    plt.plot(symmetry_plane[0,:], symmetry_plane[1,:], 'r--', label='ground plane')
-    # plt.gca().invert_xaxis()
-    plt.legend()
-    plt.axis('equal')
-    plt.grid()
+
     if test_plot:
+        import matplotlib.pyplot as plt
+        plt.plot(wing_line[:,0], wing_line[:,2], 'k-*', label='wing')
+        plt.plot(wing_image_line[:,0], wing_image_line[:,2], 'b-*', label='image')
+        plt.plot(symmetry_plane[0,:], symmetry_plane[1,:], 'r--', label='ground plane')
+        # plt.gca().invert_xaxis()
+        plt.legend()
+        plt.axis('equal')
+        plt.grid()
         plt.show()
         # exit()
     return wing_mesh, wing_image_mesh
