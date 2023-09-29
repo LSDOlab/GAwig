@@ -18,6 +18,15 @@ from mirror import Mirror
 from mpl_toolkits.mplot3d import proj3d
 
 
+"""
+Re = 2.55E6
+mu = 1.4207E-5
+rho = 1.225
+L = 0.508
+a = 340.3
+M = Re*mu/(rho*L*a)
+print(M)
+"""
 
  
 
@@ -37,10 +46,10 @@ wing = LiftingSurface(name='wing', spatial_representation=spatial_rep, primitive
 sys_rep.add_component(wing)
 # wing.plot()
 
- 
+
 # wing mesh
-num_spanwise_vlm = 20
-num_chordwise_vlm = 16
+num_spanwise_vlm = 24
+num_chordwise_vlm = 18
 leading_edge = wing.project(np.linspace(np.array([0, -1.016, 0.01]), np.array([0, 1.016, 0.01]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
 trailing_edge = wing.project(np.linspace(np.array([0.508, -1.016, 0]), np.array([0.508, 1.016, 0]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
 chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_vlm)
@@ -67,7 +76,7 @@ wig_model = m3l.Model()
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.15, dv_flag=True, lower=0.1, upper=0.3)
+wig_condition.set_module_input(name='mach_number', val=0.1711, dv_flag=True, lower=0.1, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0), dv_flag=False, lower=np.deg2rad(-10), upper=np.deg2rad(10))
 wig_condition.set_module_input(name='flight_path_angle', val=0)
@@ -77,14 +86,14 @@ wig_condition.set_module_input(name='wind_angle', val=0)
 wig_condition.set_module_input(name='observer_location', val=np.array([0, 0, 1000]))
 ac_states = wig_condition.evaluate_ac_states()
 wig_model.register_output(ac_states)
- 
 
- 
+
+
 
 # create a mirrored mesh
-mirror = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=np.array([0.508, 0, 0]))
-mirror.set_module_input('alpha', val=np.deg2rad(1), dv_flag=False)
-mirror.set_module_input('h', val=0.625, dv_flag=False)
+mirror = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=np.array([0.508, 0, 0])) # chord is 0.508m
+mirror.set_module_input('alpha', val=np.deg2rad(8), dv_flag=False)
+mirror.set_module_input('h', val=0.03125/4, dv_flag=False)
 mesh_out, mirror_mesh = mirror.evaluate()
 wig_model.register_output(mirror_mesh)
 wig_model.register_output(mesh_out)
@@ -138,13 +147,17 @@ sim.run()
 L = sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_L']
 C_L = sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_C_L']
 C_D_i = sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_C_D_i']
+C_D = sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_C_D_total']
 h = sim['system_model.wig.wig.wig.mirror.h']
 b = 2.032 # wing span
+S = 1.032256
 
 print('h/b: ', h/b)
+print('h/sqrt(S): ', h/np.sqrt(S))
 print('C_L: ', C_L)
 print('C_D_i: ', C_D_i)
-print('L: ', L)
+print('C_D: ', C_D)
+print('L/D: ', C_L/C_D)
 
 
 """
