@@ -67,7 +67,7 @@ wig_model = m3l.Model()
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.15, dv_flag=True, lower=0.1, upper=0.3)
+wig_condition.set_module_input(name='mach_number', val=0.21623, dv_flag=True, lower=0.1, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0), dv_flag=False, lower=np.deg2rad(-10), upper=np.deg2rad(10))
 wig_condition.set_module_input(name='flight_path_angle', val=0)
@@ -83,8 +83,8 @@ wig_model.register_output(ac_states)
 
 # create a mirrored mesh
 mirror = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=np.array([0.508, 0, 0]))
-mirror.set_module_input('alpha', val=np.deg2rad(1), dv_flag=False)
-mirror.set_module_input('h', val=0.625, dv_flag=False)
+mirror.set_module_input('alpha', val=np.deg2rad(5.), dv_flag=False)
+mirror.set_module_input('h', val=0.124273977, dv_flag=False)
 mesh_out, mirror_mesh = mirror.evaluate()
 wig_model.register_output(mirror_mesh)
 wig_model.register_output(mesh_out)
@@ -99,7 +99,7 @@ vlm_model = VASTFluidSover(
                     (1, ) + wing_camber_surface.evaluate().shape[1:],],
     fluid_problem=FluidProblem(solver_option='VLM', problem_type='fixed_wake'),
     mesh_unit='m',
-    cl0=[0,0]
+    cl0=[0.1, -0.1]
 )
 vlm_panel_forces, vlm_forces, vlm_moments = vlm_model.evaluate(ac_states=ac_states)
 wig_model.register_output(vlm_forces)

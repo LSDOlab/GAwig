@@ -145,8 +145,8 @@ def GE_sweep(h_b_array, alpha_array, AR=4, span=10., plot_results=True):
         # LIFT COEFFICIENT
         plt.figure()
         for i, alpha in enumerate(alpha_array):
-            plt.plot(h_b_array, CL[:,i], '-', c=color[i], label=f'GE, aoa = {alpha} deg')
-            plt.plot(h_b_array, CL_noGE[:,i], '-*', c=color[i], label=f'No GE, aoa = {alpha} deg')
+            plt.plot(h_b_array, CL_noGE[:,i], '-', c=color[i], label=f'No GE, aoa = {alpha} deg')
+            plt.plot(h_b_array, CL[:,i], '-*', markersize=8, c=color[i], label=f'GE, aoa = {alpha} deg')
         plt.ylabel('CL')
         plt.xlabel('h/b')
         plt.legend(loc='best', fontsize=8)
@@ -154,8 +154,8 @@ def GE_sweep(h_b_array, alpha_array, AR=4, span=10., plot_results=True):
         # INDUCED DRAG COEFFICIENT
         plt.figure()
         for i, alpha in enumerate(alpha_array):
-            plt.plot(h_b_array, CDi[:,i], '-', c=color[i], label=f'GE, aoa = {alpha} deg')
-            plt.plot(h_b_array, CDi_noGE[:,i], '-*', c=color[i], label=f'No GE, aoa = {alpha} deg')
+            plt.plot(h_b_array, CDi_noGE[:,i], '-', c=color[i], label=f'No GE, aoa = {alpha} deg')
+            plt.plot(h_b_array, CDi[:,i], '-*', markersize=8, c=color[i], label=f'GE, aoa = {alpha} deg')
         plt.ylabel('CDi')
         plt.xlabel('h/b')
         plt.legend(loc='best', fontsize=8)
