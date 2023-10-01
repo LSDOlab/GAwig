@@ -40,7 +40,7 @@ class Mirror(m3l.ExplicitOperation):
         nc = self.parameters['nc']
         point = self.parameters['point']
  
-        self.name = 'mirror'
+        self.name = mesh_name + 'mirror'
         self.arguments = {}
 
         mirror_mesh = m3l.Variable(mesh_name + '_mirror', shape=(ns,nc,3), operation=self)
