@@ -35,6 +35,22 @@ class Rotate(m3l.ExplicitOperation):
         self.name = mesh_name + 'rotate'
         self.arguments = {}
 
-        rotated_mesh = m3l.Variable(mesh_name + '_rotated', shape=(ns,nc,3), operation=self)
+        rotated_mesh = m3l.Variable(mesh_name + '_rotated', shape=shape, operation=self)
 
         return rotated_mesh
+    
+
+
+class RotateCSDL(ModuleCSDL):
+    def initialize(self):
+        self.parameters.declare('mesh_name')
+        self.parameters.declare('shape')
+
+    def define(self):
+        mesh_name = self.parameters['mesh_name']
+        shape = self.parameters['shape']
+
+
+
+        omega = self.register_module_input('omega', shape=(1,), computed_upstream=False)
+        mesh = self.register_module_input(mesh_name, shape=shape, promotes=True)
