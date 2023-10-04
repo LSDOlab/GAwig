@@ -19,7 +19,7 @@ from mpl_toolkits.mplot3d import proj3d
 
  
 
-file_name = 'GAwig/liberty.stp'
+file_name = 'GAwig/liberty2.stp'
 caddee = cd.CADDEE()
 caddee.system_model = system_model = cd.SystemModel()
 caddee.system_representation = sys_rep = cd.SystemRepresentation()
