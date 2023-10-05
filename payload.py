@@ -42,7 +42,7 @@ class Payload(m3l.ExplicitOperation):
 
 class PayloadCSDL(ModuleCSDL):
     def initialize(self):
-        self.parameters.declare('mass')
+        self.parameters.declare('mass', default=25000)
         self.parameters.declare('gravity', default=9.81)
  
     def define(self):
@@ -58,7 +58,8 @@ class PayloadCSDL(ModuleCSDL):
 
 
         F = self.create_output('forces', shape=(3), val=0)
-        F[2] = m*g
+        F[1] = m*g*csdl.sin(theta)
+        F[2] = m*g*csdl.cos(theta)
 
         M = self.create_output('moments', shape=(3), val=0)
         M[1] = a*m*g
