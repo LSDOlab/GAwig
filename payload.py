@@ -61,7 +61,7 @@ class PayloadCSDL(ModuleCSDL):
         F[2] = m*g
 
         M = self.create_output('moments', shape=(3), val=0)
-        M[1] = a*g
+        M[1] = a*m*g
 
 
 
