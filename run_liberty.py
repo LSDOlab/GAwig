@@ -19,7 +19,7 @@ from mpl_toolkits.mplot3d import proj3d
 
  
 
-file_name = 'GAwig/liberty2.stp'
+file_name = 'GAwig/LibertyLifter.stp'
 caddee = cd.CADDEE()
 caddee.system_model = system_model = cd.SystemModel()
 caddee.system_representation = sys_rep = cd.SystemRepresentation()
@@ -27,7 +27,7 @@ caddee.system_parameterization = sys_param = cd.SystemParameterization(system_re
 spatial_rep = sys_rep.spatial_representation
 spatial_rep.import_file(file_name=file_name)
 spatial_rep.refit_geometry(file_name=file_name)
-# spatial_rep.plot(plot_types=['mesh'])
+spatial_rep.plot(plot_types=['mesh'])
 
 
 
@@ -50,9 +50,15 @@ fuse = LiftingSurface(name='fuse', spatial_representation=spatial_rep, primitive
 sys_rep.add_component(fuse)
 # fuse.plot()
 
+# prop 1:
+prop_1_primitive_names = list(spatial_rep.get_primitives(search_names=['Prop1']).keys())
+prop_1 = LiftingSurface(name='prop_1', spatial_representation=spatial_rep, primitive_names=prop_1_primitive_names)
+sys_rep.add_component(prop_1)
+prop_1.plot()
 
 
 
+exit()
 
 # wing mesh:
 num_spanwise_vlm = 22

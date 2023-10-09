@@ -13,44 +13,50 @@ class Rotate(m3l.ExplicitOperation):
         self.parameters.declare('component', default=None)
         self.parameters.declare('mesh', default=None)
         self.num_nodes = None
-        self.parameters.declare('mesh_name')
-        self.parameters.declare('shape')
+        self.parameters.declare('n')
+        self.parameters.declare('dt')
 
     def assign_attributes(self):
         self.component = self.parameters['component']
         self.mesh = self.parameters['mesh']
-        self.mesh_name = self.parameters['mesh_name']
-        self.shape = self.parameters['shape']
+        self.n = self.parameters['n']
+        self.dt = self.parameters['dt']
 
     def compute(self):
-        mesh_name = self.parameters['mesh_name']
-        shape = self.parameters['shape']
-        csdl_model = RotateCSDL(module=self,mesh_name=mesh_name,shape=shape)
+        n = self.parameters['n']
+        dt = self.parameters['dt']
+        csdl_model = RotateCSDL(module=self,n=n,dt=dt)
         return csdl_model
 
     def evaluate(self):
-        mesh_name = self.parameters['mesh_name']
+        component = self.parameters['component']
         shape = self.parameters['shape']
  
-        self.name = mesh_name + 'rotate'
+        self.name = component + '_rotate'
         self.arguments = {}
 
-        rotated_mesh = m3l.Variable(mesh_name + '_rotated', shape=shape, operation=self)
+        angles = m3l.Variable('angles', shape=shape, operation=self)
 
-        return rotated_mesh
+        return angles
     
 
 
 class RotateCSDL(ModuleCSDL):
     def initialize(self):
-        self.parameters.declare('mesh_name')
-        self.parameters.declare('shape')
+        self.parameters.declare('n')
+        self.parameters.declare('dt')
 
     def define(self):
-        mesh_name = self.parameters['mesh_name']
-        shape = self.parameters['shape']
+        n = self.parameters['n']
+        dt = self.parameters['dt']
 
 
 
-        omega = self.register_module_input('omega', shape=(1,), computed_upstream=False)
-        mesh = self.register_module_input(mesh_name, shape=shape, promotes=True)
+        rpm = self.register_module_input('rpm', shape=(1,), computed_upstream=False)
+        rps = rpm/60
+        rad_per_sec = rps*2*np.pi
+        rad_per_dt = rad_per_sec*dt
+
+        angles = self.create_output('angles', shape=(n), val=0)
+        for i in range(n):
+            angles[i] = i*rad_per_dt
