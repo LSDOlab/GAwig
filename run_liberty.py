@@ -18,7 +18,7 @@ from rotate import Rotate
 from mpl_toolkits.mplot3d import proj3d
 
 
- 
+
 
 file_name = 'GAwig/LibertyLifter2.stp'
 caddee = cd.CADDEE()
@@ -28,7 +28,7 @@ caddee.system_parameterization = sys_param = cd.SystemParameterization(system_re
 spatial_rep = sys_rep.spatial_representation
 spatial_rep.import_file(file_name=file_name)
 spatial_rep.refit_geometry(file_name=file_name)
-spatial_rep.plot(plot_types=['mesh'])
+# spatial_rep.plot(plot_types=['mesh'])
 
 
 
@@ -109,16 +109,32 @@ sys_rep.add_output(htail_vlm_mesh_name, htail_camber_surface)
 
 # prop 1 mesh:
 num_spanwise_prop= 6
-num_chordwise_prop = 1
-prop_1_leading_edge = prop_1.project(np.linspace(np.array([39.803, -88.35, 5.185]), np.array([39.901, -93.75, 5.428]), num_spanwise_prop), direction=np.array([0., 0., -1.]), plot=True)
-exit()
-prop_1_trailing_edge = prop_1.project(np.linspace(np.array([80, -105, 6]), np.array([80, 105, 6]), num_spanwise_prop), direction=np.array([0., 0., -1.]), plot=True)
-chord_surface = am.linspace(prop_1_leading_edge, prop_1_trailing_edge, num_chordwise_prop)
+num_chordwise_prop = 2
+prop_1_leading_edge = prop_1.project(np.linspace(np.array([39.803, -88.35, 5.185]), np.array([39.901, -93.75, 6.528]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+prop_1_trailing_edge = prop_1.project(np.linspace(np.array([40.197, -88.35, 4.815]), np.array([40.171, -93.259, 4.347]), num_spanwise_prop), direction=np.array([0., 0., -1.]), plot=False)
+prop_1_chord_surface = am.linspace(prop_1_leading_edge, prop_1_trailing_edge, num_chordwise_prop)
 
+spatial_rep.plot_meshes([prop_1_chord_surface])
 
+# Configuration creations and prescribed actuations
+configuration_names = ["cruise_configuration"]
+system_configurations = sys_rep.declare_configurations(names=configuration_names)
+cruise_configuration = system_configurations['cruise_configuration']
 
+n = 20
+dt = 0.1
 
+cruise_configuration.set_num_nodes(num_nodes=n)
+cruise_configuration.add_output('prop_1_chord_surface', prop_1_chord_surface)
 
+hub_back = prop_1.project(np.array([28.5, -10., 8.]))
+hub_front = prop_1.project(np.array([28.5, 10., 8.]))
+prop1_actuation_axis = hub_front - hub_back
+from caddee.core.caddee_core.system_representation.prescribed_actuations import PrescribedRotation
+prop1_actuator_solver = PrescribedRotation(component=prop_1, axis_origin=hub_front, axis_vector=prop1_actuation_axis)
+prop1_actuation_profile = np.linspace(0., -1., n)
+prop1_actuator_solver.set_rotation(name='cruise_prop_actuation', value=np.zeros((n,)), units='radians')
+cruise_configuration.actuate(transformation=prop1_actuator_solver)
 
 
 
@@ -131,6 +147,11 @@ sys_param.setup()
 
 
 # design scenario
+from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
+my_big_wig_model = ModuleCSDL()
+from rotate import RotateCSDL
+rotation_model = RotateCSDL(n=n,dt=dt)
+
 design_scenario = cd.DesignScenario(name='wig')
 wig_model = m3l.Model()
 wig_condition = cd.CruiseCondition(name='wig')
@@ -152,35 +173,51 @@ wig_model.register_output(ac_states)
 
 
 
-n = 20
-dt = 0.1
+
+# # create angular time-histories for rotors:
+# prop_1_model = Rotate(component=prop_1, n=n, dt=dt)
+# prop_1_model.set_module_input('rpm', val=1000, dv_flag=True)
+# prop_1_angles = prop_1_model.evaluate()
+# wig_model.register_output(prop_1_angles)
 
 
-# create angular time-histories for rotors:
-prop_1_model = Rotate(component=prop_1, n=n, dt=dt)
-prop_1_model.set_module_input('rpm', val=1000, dv_flag=True)
-prop_1_angles = prop_1_model.evaluate()
-wig_model.register_output(prop_1_angles)
-
-
-
+wig_model_csdl = wig_model.assemble()
 
 
 
 
+# # add the cruise m3l model to the cruise condition
+# wig_condition.add_m3l_model('wig_model', wig_model)
+# # add the design condition to the design scenario
+# design_scenario.add_design_condition(wig_condition)
+# system_model.add_design_scenario(design_scenario=design_scenario)
+# caddee_csdl_model = caddee.assemble_csdl()
+
+my_big_wig_model.add(rotation_model, name='rotation_model')
+my_big_wig_model.add_module(sys_param.assemble_csdl(), name='system_paramterization')
+my_big_wig_model.add_module(sys_rep.assemble_csdl(), name='system_representation')
+my_big_wig_model.add_module(wig_model_csdl, name='m3l_model')
+
+my_big_wig_model.connect('angles', 'cruise_prop_actuation')
+
+my_big_wig_model.create_input('rpm', val=1000)
 
 
-# add the cruise m3l model to the cruise condition
-wig_condition.add_m3l_model('wig_model', wig_model)
-# add the design condition to the design scenario
-design_scenario.add_design_condition(wig_condition)
-system_model.add_design_scenario(design_scenario=design_scenario)
-caddee_csdl_model = caddee.assemble_csdl()
 
-
-
-
-
-
-sim = Simulator(caddee_csdl_model, analytics=True)
+sim = Simulator(my_big_wig_model, analytics=True)
 sim.run()
+
+for t in range(n):
+    updated_primitives_names = list(spatial_rep.primitives.keys()).copy()
+    cruise_geometry = sim['cruise_configuration_geometry'][t]
+    # cruise_geometry = sim['design_geometry']
+    spatial_rep.update(cruise_geometry, updated_primitives_names)
+
+    prop_1_chord_surface.evaluate(spatial_rep.control_points['geometry'])
+
+    prop_1_chord_surface_csdl = sim['prop_1_chord_surface'][t]
+    # print("Python and CSDL difference: wing camber surface", np.linalg.norm(wing_camber_surface_csdl - wing_camber_surface.value))
+    # print("Python and CSDL difference: horizontal stabilizer camber surface", 
+    #       np.linalg.norm(horizontal_stabilizer_camber_surface_csdl - horizontal_stabilizer_camber_surface.value))
+
+    spatial_rep.plot_meshes([prop_1_chord_surface_csdl], mesh_plot_types=['wireframe'], mesh_opacity=1.)

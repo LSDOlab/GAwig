@@ -40,7 +40,7 @@ class Rotate(m3l.ExplicitOperation):
         return angles
     
 
-
+"""
 class RotateCSDL(ModuleCSDL):
     def initialize(self):
         self.parameters.declare('n')
@@ -52,6 +52,25 @@ class RotateCSDL(ModuleCSDL):
 
 
         rpm = self.register_module_input('rpm', shape=(1,), computed_upstream=False)
+        rps = rpm/60
+        rad_per_sec = rps*2*np.pi
+        rad_per_dt = rad_per_sec*dt
+
+        angles = self.create_output('angles', shape=(n), val=0)
+        for i in range(n):
+            angles[i] = i*rad_per_dt
+"""
+class RotateCSDL(csdl.Model):
+    def initialize(self):
+        self.parameters.declare('n')
+        self.parameters.declare('dt')
+
+    def define(self):
+        n = self.parameters['n']
+        dt = self.parameters['dt']
+
+
+        rpm = self.declare_variable('rpm', shape=(1,))
         rps = rpm/60
         rad_per_sec = rps*2*np.pi
         rad_per_dt = rad_per_sec*dt
