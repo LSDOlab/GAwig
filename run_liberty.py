@@ -15,6 +15,7 @@ plt.rcParams.update(plt.rcParamsDefault)
 import csdl
 from mirror import Mirror
 from rotate import Rotate
+from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from mpl_toolkits.mplot3d import proj3d
 
 
@@ -147,10 +148,7 @@ sys_param.setup()
 
 
 # design scenario
-from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 my_big_wig_model = ModuleCSDL()
-from rotate import RotateCSDL
-rotation_model = RotateCSDL(n=n,dt=dt)
 
 design_scenario = cd.DesignScenario(name='wig')
 wig_model = m3l.Model()
@@ -171,14 +169,8 @@ wig_model.register_output(ac_states)
 
 
 
+prop_1_rotation_model = Rotate(n=n,dt=dt)
 
-
-
-# # create angular time-histories for rotors:
-# prop_1_model = Rotate(component=prop_1, n=n, dt=dt)
-# prop_1_model.set_module_input('rpm', val=1000, dv_flag=True)
-# prop_1_angles = prop_1_model.evaluate()
-# wig_model.register_output(prop_1_angles)
 
 
 wig_model_csdl = wig_model.assemble()
@@ -186,19 +178,15 @@ wig_model_csdl = wig_model.assemble()
 
 
 
-# # add the cruise m3l model to the cruise condition
-# wig_condition.add_m3l_model('wig_model', wig_model)
-# # add the design condition to the design scenario
-# design_scenario.add_design_condition(wig_condition)
-# system_model.add_design_scenario(design_scenario=design_scenario)
-# caddee_csdl_model = caddee.assemble_csdl()
-
-my_big_wig_model.add(rotation_model, name='rotation_model')
+my_big_wig_model.add(prop_1_rotation_model, name='rotation_model')
 my_big_wig_model.add_module(sys_param.assemble_csdl(), name='system_paramterization')
 my_big_wig_model.add_module(sys_rep.assemble_csdl(), name='system_representation')
 my_big_wig_model.add_module(wig_model_csdl, name='m3l_model')
 
 my_big_wig_model.connect('angles', 'cruise_prop_actuation')
+
+
+
 
 my_big_wig_model.create_input('rpm', val=1000)
 
@@ -207,17 +195,15 @@ my_big_wig_model.create_input('rpm', val=1000)
 sim = Simulator(my_big_wig_model, analytics=True)
 sim.run()
 
+
+
+
+
 for t in range(n):
     updated_primitives_names = list(spatial_rep.primitives.keys()).copy()
     cruise_geometry = sim['cruise_configuration_geometry'][t]
     # cruise_geometry = sim['design_geometry']
     spatial_rep.update(cruise_geometry, updated_primitives_names)
-
     prop_1_chord_surface.evaluate(spatial_rep.control_points['geometry'])
-
     prop_1_chord_surface_csdl = sim['prop_1_chord_surface'][t]
-    # print("Python and CSDL difference: wing camber surface", np.linalg.norm(wing_camber_surface_csdl - wing_camber_surface.value))
-    # print("Python and CSDL difference: horizontal stabilizer camber surface", 
-    #       np.linalg.norm(horizontal_stabilizer_camber_surface_csdl - horizontal_stabilizer_camber_surface.value))
-
     spatial_rep.plot_meshes([prop_1_chord_surface_csdl], mesh_plot_types=['wireframe'], mesh_opacity=1.)
