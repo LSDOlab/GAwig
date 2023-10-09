@@ -31,7 +31,7 @@ print(M)
  
 
 #file_name = 'GAwig/clarky.stp'
-file_name = 'GAwig/clarky_endplate_t0d2.stp'
+file_name = 'clarky_endplate_t0d2.stp'
 caddee = cd.CADDEE()
 caddee.system_model = system_model = cd.SystemModel()
 caddee.system_representation = sys_rep = cd.SystemRepresentation()
@@ -61,15 +61,15 @@ sys_rep.add_component(right_plate)
 
 
 # wing mesh
-num_spanwise_vlm = 20
-num_chordwise_vlm = 14
+num_spanwise_vlm = 25
+num_chordwise_vlm = 25
 leading_edge = wing.project(np.linspace(np.array([0, -1.016, 0.01]), np.array([0, 1.016, 0.01]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
 trailing_edge = wing.project(np.linspace(np.array([0.508, -1.016, 0]), np.array([0.508, 1.016, 0]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
 chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_vlm)
 # spatial_rep.plot_meshes([chord_surface])
 
 
-wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 0., 1.]), direction=np.array([0., 0., -1.]), grid_search_n=30, plot=False)
+wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 0., 0.5]), direction=np.array([0., 0., 1.]), grid_search_n=50, plot=False)
 wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 1.]), direction=np.array([0., 0., 1.]), grid_search_n=50, plot=False)
 wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surface_wireframe, 1)
 # spatial_rep.plot_meshes([wing_camber_surface])
@@ -78,8 +78,8 @@ sys_rep.add_output(wing_vlm_mesh_name, wing_camber_surface)
 
 
 # left plate mesh
-num_spanwise_plate = 4
-num_chordwise_plate = 4
+num_spanwise_plate = 8
+num_chordwise_plate = 8
 left_plate_leading_edge = left_plate.project(np.linspace(np.array([0, -1.016, -0.051]), np.array([0, -1.016, 0]), num_spanwise_plate), direction=np.array([0., 0., -1.]), plot=False)
 left_plate_trailing_edge = left_plate.project(np.linspace(np.array([0.508, -1.016, -0.051]), np.array([0.508, -1.016, 0]), num_spanwise_plate), direction=np.array([0., 0., -1.]), plot=False)
 left_plate_vlm_mesh = am.linspace(left_plate_leading_edge, left_plate_trailing_edge, num_chordwise_plate)
@@ -125,8 +125,8 @@ wig_model.register_output(ac_states)
 
 
 # create a mirrored wing mesh:
-alpha = np.deg2rad(0)
-h = 10
+alpha = np.deg2rad(5)
+h = 0.04807366201
 mirror = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=np.array([0.508, 0, 0])) # chord is 0.508m
 mirror.set_module_input('alpha', val=alpha, dv_flag=False)
 mirror.set_module_input('h', val=h, dv_flag=False)
