@@ -30,12 +30,12 @@ class Rotate(m3l.ExplicitOperation):
 
     def evaluate(self):
         component = self.parameters['component']
-        shape = self.parameters['shape']
+        n = self.parameters['n']
  
-        self.name = component + '_rotate'
+        self.name = component.name + '_rotate'
         self.arguments = {}
 
-        angles = m3l.Variable('angles', shape=shape, operation=self)
+        angles = m3l.Variable('angles', shape=(n), operation=self)
 
         return angles
     
@@ -49,7 +49,6 @@ class RotateCSDL(ModuleCSDL):
     def define(self):
         n = self.parameters['n']
         dt = self.parameters['dt']
-
 
 
         rpm = self.register_module_input('rpm', shape=(1,), computed_upstream=False)
