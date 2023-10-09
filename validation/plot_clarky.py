@@ -14,6 +14,8 @@ ld_a6 = np.array([0.81468118,0.88313313,0.99754808,1.14423502,1.28689962,1.39868
 
 hs = np.array([0.49212598,0.24606299,0.1230315,0.06151575,0.03075787,0.01537894,0.00768947,])
 
+hsref = np.array([0.3,0.15,0.08,0.04,0.02,0.01,])
+ldref = np.array([1.13,1.25,1.5,1.85,2.375,2.85,])
 
 
 lda0_ldoge = ld_a0/ld_oge[0]
@@ -28,10 +30,11 @@ plt.semilogx(hs,lda0_ldoge,linewidth=2)
 #plt.semilogx(hs,lda4_ldoge,linewidth=2)
 #plt.semilogx(hs,lda6_ldoge,linewidth=2)
 
+plt.semilogx(hsref,ldref,linewidth=2)
 
 
-#plt.xlabel(r'$h_o/\sqrt{S}$', fontsize=fontsize)
-#plt.ylabel(r'$\frac{(L/D)_{IGE}}{(L/D)_{OGE}}$', fontsize=fontsize)
+plt.xlabel(r'$h_o/\sqrt{S}$', fontsize=fontsize)
+plt.ylabel(r'$\frac{(L/D)_{IGE}}{(L/D)_{OGE}}$', fontsize=fontsize)
 
 
 plt.xticks([0.01,0.02,0.04,0.06,0.08,0.1,0.2,0.3], labels=[0.01,0.02,0.04,0.06,0.08,0.1,0.2,0.3], fontsize=fontsize - 3)
@@ -40,7 +43,7 @@ plt.yticks([1,2,3,4], fontsize=fontsize - 3)
 plt.xlim([0.01,0.3])
 plt.ylim([1,4])
 
-#plt.legend([r'$\alpha=0^\circ$',r'$\alpha=2^\circ$',r'$\alpha=4^\circ$',r'$\alpha=6^\circ$'], fontsize=fontsize-4)
+plt.legend(['UCSD VAST','Brown et al. (Lockheed)'], fontsize=fontsize-4)
 plt.grid(color='lavender')
 
 

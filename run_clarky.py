@@ -91,9 +91,12 @@ wig_model.register_output(ac_states)
 
 
 # create a mirrored mesh
+h = 0.124273977
+alpha = np.deg2rad(5.)
+
 mirror = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=np.array([0.508, 0, 0]))
-mirror.set_module_input('alpha', val=np.deg2rad(-3.), dv_flag=False)
-mirror.set_module_input('h', val=100, dv_flag=False)
+mirror.set_module_input('alpha', val=alpha, dv_flag=False)
+mirror.set_module_input('h', val=h, dv_flag=False)
 mesh_out, mirror_mesh = mirror.evaluate()
 wig_model.register_output(mirror_mesh)
 wig_model.register_output(mesh_out)
@@ -108,7 +111,7 @@ vlm_model = VASTFluidSover(
                     (1, ) + wing_camber_surface.evaluate().shape[1:],],
     fluid_problem=FluidProblem(solver_option='VLM', problem_type='fixed_wake'),
     mesh_unit='m',
-    cl0=[0.1, -0.1]
+    cl0=[0.0, 0.0]
 )
 vlm_panel_forces, vlm_forces, vlm_moments = vlm_model.evaluate(ac_states=ac_states)
 wig_model.register_output(vlm_forces)
@@ -146,7 +149,6 @@ sim.run()
 
 L = sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_L']
 C_L = sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_C_L']
-C_D_i = sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_C_D_i']
 C_D = sim['system_model.wig.wig.wig.wing_vlm_mesh_outwing_vlm_mesh_mirror_vlm_model.vast.VLMSolverModel.VLM_outputs.LiftDrag.wing_vlm_mesh_out_C_D_total']
 h = sim['system_model.wig.wig.wig.wing_vlm_meshmirror.h']
 b = 2.032 # wing span
@@ -155,7 +157,6 @@ S = 1.032256
 print('h/b: ', h/b)
 print('h/sqrt(S): ', h/np.sqrt(S))
 print('C_L: ', C_L)
-print('C_D_i: ', C_D_i)
 print('C_D: ', C_D)
 print('L/D: ', C_L/C_D)
 
