@@ -1,4 +1,6 @@
-from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, ProfileOpModel, ProfileOpModel2
+# from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, ProfileOpModel, ProfileOpModel2
+from lsdo_uvlm.uvlm_operation import UVLMCore
+from lsdo_uvlm.examples.profile_outputs.profile_op_model import ProfileOpModel
 import python_csdl_backend
 from VAST.utils.generate_mesh import *
 import m3l
@@ -37,7 +39,8 @@ theta_val = np.ones((num_nodes, 1))*alpha
 
 
 
-# design scenario
+# design scenariofrom lsdo_uvlm.uvlm_outputs.compute_force.compute_lift_drag import LiftDrag
+
 design_scenario = cd.DesignScenario(name='wig')
 wig_model = m3l.Model()
 wig_condition = cd.CruiseCondition(name='wig')
@@ -129,7 +132,7 @@ submodel = ProfileOpModel(
 pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
 
 model = m3l.DynamicModel()
-uvlm = VASTSolverUnsteady(num_nodes=num_nodes, surface_names=surface_names, surface_shapes=surface_shapes, delta_t=delta_t, nt=num_nodes+1)
+uvlm = UVLMCore(surface_names=surface_names, surface_shapes=surface_shapes, delta_t=delta_t, nt=num_nodes+1)
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
 model.set_dynamic_options(initial_conditions=initial_conditions,
@@ -154,14 +157,13 @@ overmodel.register_output(panel_forces)
 model_csdl = overmodel.assemble()
 
 
-
 sim = python_csdl_backend.Simulator(model_csdl, analytics=True)
 
 sim.run()
 
-print(sim['operation.post_processor.LiftDrag.panel_forces'])
+print(sim['operation.post_processor.VLM_outputs.ThrustDrag.panel_forces'])
 
-if True:
+if False:
     from vedo import dataurl, Plotter, Mesh, Video, Points, Axes, show
     axs = Axes(
         xrange=(0, 35),
@@ -194,7 +196,7 @@ if True:
         # cam1 = dict(focalPoint=(3.133, 1.506, -3.132))
         # video.action(cameras=[cam1, cam1])
         vp.show(axs, elevation=-60, azimuth=-0,
-                axes=False, interactive=False)  # render the scene
+                axes=False, interactive=True)  # render the scene
         video.add_frame()  # add individual frame
         # time.sleep(0.1)
         # vp.interactive().close()
