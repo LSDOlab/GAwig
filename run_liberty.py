@@ -17,7 +17,7 @@ from mirror import Mirror
 from rotate import Rotate
 from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from mpl_toolkits.mplot3d import proj3d
-
+from caddee.core.caddee_core.system_representation.prescribed_actuations import PrescribedRotation
 
 
 
@@ -57,6 +57,55 @@ prop_1_primitive_names = list(spatial_rep.get_primitives(search_names=['Prop1','
 prop_1 = LiftingSurface(name='prop_1', spatial_representation=spatial_rep, primitive_names=prop_1_primitive_names)
 sys_rep.add_component(prop_1)
 # prop_1.plot()
+
+# prop 2:
+prop_2_primitive_names = list(spatial_rep.get_primitives(search_names=['Prop2','Hub2']).keys())
+prop_2 = LiftingSurface(name='prop_2', spatial_representation=spatial_rep, primitive_names=prop_2_primitive_names)
+sys_rep.add_component(prop_2)
+# prop_2.plot()
+
+# prop 3:
+prop_3_primitive_names = list(spatial_rep.get_primitives(search_names=['Prop3','Hub3']).keys())
+prop_3 = LiftingSurface(name='prop_3', spatial_representation=spatial_rep, primitive_names=prop_3_primitive_names)
+sys_rep.add_component(prop_3)
+# prop_3.plot()
+
+# prop 4:
+prop_4_primitive_names = list(spatial_rep.get_primitives(search_names=['Prop4','Hub4']).keys())
+prop_4 = LiftingSurface(name='prop_4', spatial_representation=spatial_rep, primitive_names=prop_4_primitive_names)
+sys_rep.add_component(prop_4)
+# prop_4.plot()
+
+# prop 5:
+prop_5_primitive_names = list(spatial_rep.get_primitives(search_names=['Prop5','Hub5']).keys())
+prop_5 = LiftingSurface(name='prop_5', spatial_representation=spatial_rep, primitive_names=prop_5_primitive_names)
+sys_rep.add_component(prop_5)
+# prop_5.plot()
+
+# prop 6:
+prop_6_primitive_names = list(spatial_rep.get_primitives(search_names=['Prop6','Hub6']).keys())
+prop_6 = LiftingSurface(name='prop_6', spatial_representation=spatial_rep, primitive_names=prop_6_primitive_names)
+sys_rep.add_component(prop_6)
+# prop_6.plot()
+
+# prop 7:
+prop_7_primitive_names = list(spatial_rep.get_primitives(search_names=['Prop7','Hub7']).keys())
+prop_7 = LiftingSurface(name='prop_7', spatial_representation=spatial_rep, primitive_names=prop_7_primitive_names)
+sys_rep.add_component(prop_7)
+# prop_7.plot()
+
+# prop 8:
+prop_8_primitive_names = list(spatial_rep.get_primitives(search_names=['Prop8','Hub8']).keys())
+prop_8 = LiftingSurface(name='prop_8', spatial_representation=spatial_rep, primitive_names=prop_8_primitive_names)
+sys_rep.add_component(prop_8)
+# prop_8.plot()
+
+
+
+
+
+
+
 
 
 
@@ -108,30 +157,33 @@ sys_rep.add_output(htail_vlm_mesh_name, htail_camber_surface)
 
 
 
-# prop 1 mesh:
+# prop 1 blade 1 mesh:
 num_spanwise_prop= 6
 num_chordwise_prop = 2
-prop_1_leading_edge = prop_1.project(np.linspace(np.array([39.803, -88.35, 5.185]), np.array([39.901, -93.75, 6.528]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
-prop_1_trailing_edge = prop_1.project(np.linspace(np.array([40.197, -88.35, 4.815]), np.array([40.171, -93.259, 4.347]), num_spanwise_prop), direction=np.array([0., 0., -1.]), plot=False)
-prop_1_chord_surface = am.linspace(prop_1_leading_edge, prop_1_trailing_edge, num_chordwise_prop)
 
-spatial_rep.plot_meshes([prop_1_chord_surface])
+p1b1_leading_edge = prop_1.project(np.linspace(np.array([39.803, -88.35, 5.185]), np.array([39.901 - 0.5, -93.75 - 0.2, 6.528 + 0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+p1b1_trailing_edge = prop_1.project(np.linspace(np.array([40.197, -88.35, 4.815]), np.array([40.171 + 0.75, -93.259 - 0.75, 4.347 - 0.75]), num_spanwise_prop), direction=np.array([0., 0., -1.]), plot=False)
+p1b1_chord_surface = am.linspace(p1b1_leading_edge, p1b1_trailing_edge, num_chordwise_prop)
+
+# spatial_rep.plot_meshes([p1b1_chord_surface])
+
+
+
 
 # Configuration creations and prescribed actuations
 configuration_names = ["cruise_configuration"]
 system_configurations = sys_rep.declare_configurations(names=configuration_names)
 cruise_configuration = system_configurations['cruise_configuration']
 
-n = 20
-dt = 0.1
+n = 2
+dt = 0.001
 
 cruise_configuration.set_num_nodes(num_nodes=n)
-cruise_configuration.add_output('prop_1_chord_surface', prop_1_chord_surface)
+cruise_configuration.add_output('p1b1_chord_surface', p1b1_chord_surface)
 
-hub_back = prop_1.project(np.array([28.5, -10., 8.]))
-hub_front = prop_1.project(np.array([28.5, 10., 8.]))
+hub_back = prop_1.project(np.array([40., -87., 5.]))
+hub_front = prop_1.project(np.array([37., -87., 5.]))
 prop1_actuation_axis = hub_front - hub_back
-from caddee.core.caddee_core.system_representation.prescribed_actuations import PrescribedRotation
 prop1_actuator_solver = PrescribedRotation(component=prop_1, axis_origin=hub_front, axis_vector=prop1_actuation_axis)
 prop1_actuation_profile = np.linspace(0., -1., n)
 prop1_actuator_solver.set_rotation(name='cruise_prop_actuation', value=np.zeros((n,)), units='radians')
@@ -196,14 +248,16 @@ sim = Simulator(my_big_wig_model, analytics=True)
 sim.run()
 
 
+print(sim['angles'])
 
 
 
+exit()
 for t in range(n):
     updated_primitives_names = list(spatial_rep.primitives.keys()).copy()
     cruise_geometry = sim['cruise_configuration_geometry'][t]
     # cruise_geometry = sim['design_geometry']
     spatial_rep.update(cruise_geometry, updated_primitives_names)
-    prop_1_chord_surface.evaluate(spatial_rep.control_points['geometry'])
-    prop_1_chord_surface_csdl = sim['prop_1_chord_surface'][t]
-    spatial_rep.plot_meshes([prop_1_chord_surface_csdl], mesh_plot_types=['wireframe'], mesh_opacity=1.)
+    p1b1_chord_surface.evaluate(spatial_rep.control_points['geometry'])
+    p1b1_chord_surface_csdl = sim['p1b1_chord_surface'][t]
+    spatial_rep.plot_meshes([p1b1_chord_surface_csdl], mesh_plot_types=['wireframe'], mesh_opacity=1.)
