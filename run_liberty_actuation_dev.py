@@ -15,7 +15,6 @@ plt.rcParams.update(plt.rcParamsDefault)
 import csdl
 from mirror import Mirror
 from rotate import Rotate
-from rotor import Rotor
 from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from mpl_toolkits.mplot3d import proj3d
 from caddee.core.caddee_core.system_representation.prescribed_actuations import PrescribedRotation
@@ -156,33 +155,53 @@ htail_vlm_mesh_name = 'htail_vlm_mesh'
 sys_rep.add_output(htail_vlm_mesh_name, htail_camber_surface)
 
 
+
+
 # prop 1 blade 1 mesh:
 num_spanwise_prop= 6
 num_chordwise_prop = 2
+
 p1b1_leading_edge = prop_1.project(np.linspace(np.array([39.803, -88.35, 5.185]), np.array([39.901 - 0.5, -93.75 - 0.2, 6.528 + 0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
 p1b1_trailing_edge = prop_1.project(np.linspace(np.array([40.197, -88.35, 4.815]), np.array([40.171 + 0.75, -93.259 - 0.75, 4.347 - 0.75]), num_spanwise_prop), direction=np.array([0., 0., -1.]), plot=False)
 p1b1_chord_surface = am.linspace(p1b1_leading_edge, p1b1_trailing_edge, num_chordwise_prop)
-# spatial_rep.plot_meshes([p1b1_chord_surface])
-p1b1_mesh_name = 'p1b1_mesh'
-sys_rep.add_output(p1b1_mesh_name, p1b1_chord_surface)
 
-# prop 1 hub:
+# spatial_rep.plot_meshes([p1b1_chord_surface])
+
+
+
+
+# Configuration creations and prescribed actuations
+configuration_names = ["cruise_configuration"]
+system_configurations = sys_rep.declare_configurations(names=configuration_names)
+cruise_configuration = system_configurations['cruise_configuration']
+
+n = 2
+dt = 0.001
+
+cruise_configuration.set_num_nodes(num_nodes=n)
+cruise_configuration.add_output('p1b1_chord_surface', p1b1_chord_surface)
+
 hub_back = prop_1.project(np.array([40., -87., 5.]))
 hub_front = prop_1.project(np.array([37., -87., 5.]))
-prop1_vec = hub_front - hub_back
-p1_vector_name = 'p1_vector'
-p1_point_name = 'p1_point'
-sys_rep.add_output(p1_vector_name, prop1_vec)
-sys_rep.add_output(p1_point_name, hub_back)
+prop1_actuation_axis = hub_front - hub_back
+prop1_actuator_solver = PrescribedRotation(component=prop_1, axis_origin=hub_front, axis_vector=prop1_actuation_axis)
+prop1_actuation_profile = np.linspace(0., -1., n)
+prop1_actuator_solver.set_rotation(name='cruise_prop_actuation', value=np.zeros((n,)), units='radians')
+cruise_configuration.actuate(transformation=prop1_actuator_solver)
 
 
 
 
 
 
+
+
+sys_param.setup()
 
 
 # design scenario
+my_big_wig_model = ModuleCSDL()
+
 design_scenario = cd.DesignScenario(name='wig')
 wig_model = m3l.Model()
 wig_condition = cd.CruiseCondition(name='wig')
@@ -201,60 +220,44 @@ wig_model.register_output(ac_states)
 
 
 
-nt = 1
-dt = 0.001
-num_blades = 6
-prop_1_model = Rotor(component=prop_1, mesh_name=p1b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt)
-prop_1_model.set_module_input('rpm', val=1000, dv_flag=True)
-prop_1_mesh = prop_1_model.evaluate()
-wig_model.register_output(prop_1_mesh)
+
+prop_1_rotation_model = Rotate(n=n,dt=dt)
 
 
 
-# add the cruise m3l model to the cruise condition
-wig_condition.add_m3l_model('wig_model', wig_model)
-# add the design condition to the design scenario
-design_scenario.add_design_condition(wig_condition)
-system_model.add_design_scenario(design_scenario=design_scenario)
-caddee_csdl_model = caddee.assemble_csdl()
+wig_model_csdl = wig_model.assemble()
 
 
 
-caddee_csdl_model.connect('p1b1_mesh', 
-                          'system_model.wig.wig.wig.p1b1_mesh_rotor.p1b1_mesh')
 
-caddee_csdl_model.connect('p1_vector', 
-                          'system_model.wig.wig.wig.p1b1_mesh_rotor.vector')
+my_big_wig_model.add(prop_1_rotation_model, name='rotation_model')
+my_big_wig_model.add_module(sys_param.assemble_csdl(), name='system_paramterization')
+my_big_wig_model.add_module(sys_rep.assemble_csdl(), name='system_representation')
+my_big_wig_model.add_module(wig_model_csdl, name='m3l_model')
 
-caddee_csdl_model.connect('p1_point', 
-                          'system_model.wig.wig.wig.p1b1_mesh_rotor.point')
-
+my_big_wig_model.connect('angles', 'cruise_prop_actuation')
 
 
-sim = Simulator(caddee_csdl_model, analytics=True)
+
+
+my_big_wig_model.create_input('rpm', val=1000)
+
+
+
+sim = Simulator(my_big_wig_model, analytics=True)
 sim.run()
 
 
+print(sim['angles'])
 
 
 
-# plot the meshes to see if stuff is working:
-original = sim['p1b1_mesh']
-p1_mesh = sim['system_model.wig.wig.wig.p1b1_mesh_rotor.rotor']
-
-
-
-
-
-fig = plt.figure(figsize=(8, 8))
-ax = fig.add_subplot(111, projection='3d')
-
-ax.plot_trisurf(original[:,:,0].flatten(), original[:,:,1].flatten(), original[:,:,2].flatten(), color='orange')
-
-for i in range(num_blades):
-    for j in range(nt):
-        #ax.plot_trisurf(p1_mesh[i,j,:,:,0].flatten(), p1_mesh[i,j,:,:,1].flatten(), p1_mesh[i,j,:,:,2].flatten(), color='blue')
-        ax.plot_trisurf(p1_mesh[i,j,:,:,0].flatten(), p1_mesh[i,j,:,:,1].flatten(), p1_mesh[i,j,:,:,2].flatten())
-
-plt.gca().set_aspect('equal', adjustable='box')
-plt.show()
+exit()
+for t in range(n):
+    updated_primitives_names = list(spatial_rep.primitives.keys()).copy()
+    cruise_geometry = sim['cruise_configuration_geometry'][t]
+    # cruise_geometry = sim['design_geometry']
+    spatial_rep.update(cruise_geometry, updated_primitives_names)
+    p1b1_chord_surface.evaluate(spatial_rep.control_points['geometry'])
+    p1b1_chord_surface_csdl = sim['p1b1_chord_surface'][t]
+    spatial_rep.plot_meshes([p1b1_chord_surface_csdl], mesh_plot_types=['wireframe'], mesh_opacity=1.)
