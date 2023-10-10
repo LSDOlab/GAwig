@@ -19,13 +19,13 @@ h_inf_VAST = {
     'CDi': [0.00066579, 0.00011712, 0.00222084, 0.00426832, 0.00697743, 0.01034555, 0.014369, 0.01904301, 0.02436178, 0.06036207, 0.11102288]
 }
 
-file_name='clarky_DegenGeom.polar'
+file_name='VSP_polars/clarky_DegenGeom.polar'
 clarky_polar_data = np.genfromtxt(file_name, skip_header=1)
 clarky_alpha = clarky_polar_data[:,2]
 clarky_CL = clarky_polar_data[:,4]
 clarky_CDi = clarky_polar_data[:,6]
 
-file_name='clarky_DegenGeom_AR=10.polar'
+file_name='VSP_polars/clarky_DegenGeom_AR=10.polar'
 clarky_polar_data_AR_10 = np.genfromtxt(file_name, skip_header=1)
 clarky_alpha_AR_10 = clarky_polar_data_AR_10[:,2]
 clarky_CL_AR_10 = clarky_polar_data_AR_10[:,4]

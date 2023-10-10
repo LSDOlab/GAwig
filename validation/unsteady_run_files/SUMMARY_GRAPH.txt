@@ -1,0 +1,2058 @@
+node name, 	 node object
+
+wing_gamma_w_0, <csdl.lang.input.Input object at 0x7fcee8ace7f0>, .wing_gamma_w_0
+	CONNECTED TO: False
+	PROMOTED TO: True
+		wing_gamma_w_0, prob.wing_gamma_w_0
+	PREDECESSORS
+	SUCCESSORS
+		_00W9
+
+wing_wake_coords_0, <csdl.lang.input.Input object at 0x7fcee8ace850>, .wing_wake_coords_0
+	CONNECTED TO: False
+	PROMOTED TO: True
+		wing_wake_coords_0, prob.wing_wake_coords_0
+	PREDECESSORS
+	SUCCESSORS
+		_00W9
+
+wing, <csdl.lang.input.Input object at 0x7fcee8ace7c0>, .wing
+	CONNECTED TO: False
+	PROMOTED TO: True
+		wing, prob.wing
+		wing, ThrustDrag.wing
+	PREDECESSORS
+	SUCCESSORS
+		_00W9
+		_00X9
+
+h, <csdl.lang.input.Input object at 0x7fcee8ace880>, .h
+	CONNECTED TO: False
+	PROMOTED TO: True
+		h, prob.h
+	PREDECESSORS
+	SUCCESSORS
+		_00W9
+
+_00W9, <ozone.classes.ODEModelTM.ODEModelComp object at 0x7fcee8513040>
+	PREDECESSORS
+		wing_gamma_w_0,(20, 10) 
+		wing_wake_coords_0,(20, 11, 3) 
+		wing,(20, 11, 11, 3) 
+		h,(19,) 
+	SUCCESSORS
+		wing_gamma_b,(20, 100) 
+		wing_eval_pts_coords,(20, 10, 10, 3) 
+		wing_s_panel,(20, 10, 10) 
+		wing_eval_total_vel,(20, 100, 3) 
+		rho,(20, 1) 
+		alpha,(20, 1) 
+		beta,(20, 1) 
+		frame_vel,(20, 3) 
+		bd_vec,(20, 100, 3) 
+		horseshoe_circulation,(20, 100) 
+		wing_gamma_w_integrated,(20, 20, 10) 
+		wing_wake_coords_integrated,(20, 20, 11, 3) 
+
+wing_gamma_b, <csdl.lang.output.Output object at 0x7fcee8513130>, prob.wing_gamma_b
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+
+wing_eval_pts_coords, <csdl.lang.output.Output object at 0x7fcee8513100>, prob.wing_eval_pts_coords
+	CONNECTED TO: False
+	PROMOTED TO: True
+		wing_eval_pts_coords, ThrustDrag.wing_eval_pts_coords
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+		_00WK
+
+wing_s_panel, <csdl.lang.output.Output object at 0x7fcee8513160>, prob.wing_s_panel
+	CONNECTED TO: False
+	PROMOTED TO: True
+		wing_s_panel, ThrustDrag.wing_s_panel
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+		_00WH
+
+wing_eval_total_vel, <csdl.lang.output.Output object at 0x7fcee8513190>, prob.wing_eval_total_vel
+	CONNECTED TO: False
+	PROMOTED TO: True
+		wing_eval_total_vel, ThrustDrag.wing_eval_total_vel
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+		_00WG
+
+rho, <csdl.lang.output.Output object at 0x7fcee84b5280>, prob.rho
+	CONNECTED TO: False
+	PROMOTED TO: True
+		rho, ThrustDrag.rho
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+		_00Wo
+		_00YX
+		_00Z6
+		_00ZW
+
+alpha, <csdl.lang.output.Output object at 0x7fcee84b52b0>, prob.alpha
+	CONNECTED TO: False
+	PROMOTED TO: True
+		alpha, ThrustDrag.alpha
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+		_00WN
+		_00WR
+
+beta, <csdl.lang.output.Output object at 0x7fcee84b52e0>, prob.beta
+	CONNECTED TO: False
+	PROMOTED TO: True
+		beta, ThrustDrag.beta
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+		_00WZ
+		_00WV
+
+frame_vel, <csdl.lang.output.Output object at 0x7fcee84b5310>, prob.frame_vel
+	CONNECTED TO: False
+	PROMOTED TO: True
+		frame_vel, ThrustDrag.frame_vel
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+		_00Y0
+
+bd_vec, <csdl.lang.output.Output object at 0x7fcee84b5340>, prob.bd_vec
+	CONNECTED TO: False
+	PROMOTED TO: True
+		bd_vec, ThrustDrag.bd_vec
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+		_00X4
+		_00XJ
+		_00Zm
+		_00Zs
+
+horseshoe_circulation, <csdl.lang.output.Output object at 0x7fcee84b5370>, prob.horseshoe_circulation
+	CONNECTED TO: False
+	PROMOTED TO: True
+		horseshoe_circulation, ThrustDrag.horseshoe_circulation
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+		_00Ww
+
+wing_gamma_w_integrated, <csdl.lang.output.Output object at 0x7fcee84b53a0>, prob.wing_gamma_w_integrated
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+
+wing_wake_coords_integrated, <csdl.lang.output.Output object at 0x7fcee84b53d0>, prob.wing_wake_coords_integrated
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00W9
+	SUCCESSORS
+
+_00WG, <csdl.operations.indexed_passthrough.indexed_passthrough object at 0x7fcee84b57f0>
+	PREDECESSORS
+		wing_eval_total_vel,(20, 100, 3) 
+	SUCCESSORS
+		eval_total_vel,(20, 100, 3) 
+
+eval_total_vel, <csdl.lang.concatenation.Concatenation object at 0x7fcee84b5640>, ThrustDrag.eval_total_vel
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WG
+	SUCCESSORS
+		_00X4
+		_00XJ
+		_00Zm
+		_00Zs
+
+_00X4, <csdl.operations.cross.cross object at 0x7fcee84b5c40>
+	PREDECESSORS
+		eval_total_vel,(20, 100, 3) 
+		bd_vec,(20, 100, 3) 
+	SUCCESSORS
+		_00X5,(20, 100, 3) 
+
+_00XJ, <csdl.operations.cross.cross object at 0x7fcee75fe400>
+	PREDECESSORS
+		eval_total_vel,(20, 100, 3) 
+		bd_vec,(20, 100, 3) 
+	SUCCESSORS
+		_00XK,(20, 100, 3) 
+
+_00Zm, <csdl.operations.cross.cross object at 0x7fcee83e67f0>
+	PREDECESSORS
+		eval_total_vel,(20, 100, 3) 
+		bd_vec,(20, 100, 3) 
+	SUCCESSORS
+		_00Zn,(20, 100, 3) 
+
+_00Zs, <csdl.operations.cross.cross object at 0x7fcee83e66d0>
+	PREDECESSORS
+		eval_total_vel,(20, 100, 3) 
+		bd_vec,(20, 100, 3) 
+	SUCCESSORS
+		crosspd,(20, 100, 3) 
+
+_00WH, <csdl.operations.reshape.reshape object at 0x7fcee84b57c0>
+	PREDECESSORS
+		wing_s_panel,(20, 10, 10) 
+	SUCCESSORS
+		_00WI,(20, 100) 
+
+_00WI, <csdl.lang.output.Output object at 0x7fcee84b5820>, ThrustDrag._00WI
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WH
+	SUCCESSORS
+		_00WJ
+
+_00WJ, <csdl.operations.indexed_passthrough.indexed_passthrough object at 0x7fcee84b5880>
+	PREDECESSORS
+		_00WI,(20, 100) 
+	SUCCESSORS
+		s_panels_all,(20, 100) 
+
+s_panels_all, <csdl.lang.concatenation.Concatenation object at 0x7fcee84b5610>, ThrustDrag.s_panels_all
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WJ
+	SUCCESSORS
+		_00YA
+		_00YE
+		_00ZS
+
+_00YA, <csdl.operations.expand.expand object at 0x7fcee7415610>
+	PREDECESSORS
+		s_panels_all,(20, 100) 
+	SUCCESSORS
+		_00YB,(20, 100, 3) 
+
+_00YE, <csdl.operations.sum.sum object at 0x7fcee7415130>
+	PREDECESSORS
+		s_panels_all,(20, 100) 
+	SUCCESSORS
+		_00YF,(20,) 
+
+_00ZS, <csdl.operations.sum.sum object at 0x7fcee83e6280>
+	PREDECESSORS
+		s_panels_all,(20, 100) 
+	SUCCESSORS
+		_00ZT,(20,) 
+
+_00WK, <csdl.operations.reshape.reshape object at 0x7fcee84b5850>
+	PREDECESSORS
+		wing_eval_pts_coords,(20, 10, 10, 3) 
+	SUCCESSORS
+		_00WL,(20, 100, 3) 
+
+_00WL, <csdl.lang.output.Output object at 0x7fcee84b5910>, ThrustDrag._00WL
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WK
+	SUCCESSORS
+		_00WM
+
+_00WM, <csdl.operations.indexed_passthrough.indexed_passthrough object at 0x7fcee84b5970>
+	PREDECESSORS
+		_00WL,(20, 100, 3) 
+	SUCCESSORS
+		eval_pts_all,(20, 100, 3) 
+
+eval_pts_all, <csdl.lang.concatenation.Concatenation object at 0x7fcee84b5670>, ThrustDrag.eval_pts_all
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WM
+	SUCCESSORS
+		_00_i
+
+_00_i, <csdl.operations.linear_combination.linear_combination object at 0x7fcee83f3c70>
+	PREDECESSORS
+		eval_pts_all,(20, 100, 3) 
+		_00_h,(20, 100, 3) 
+	SUCCESSORS
+		_00_j,(20, 100, 3) 
+
+_00Wo, <csdl.operations.reshape.reshape object at 0x7fcee84b5400>
+	PREDECESSORS
+		rho,(20, 1) 
+	SUCCESSORS
+		_00Wp,(20,) 
+
+_00YX, <csdl.operations.power_combination.power_combination object at 0x7fcee83e6cd0>
+	PREDECESSORS
+		rho,(20, 1) 
+	SUCCESSORS
+		_00YY,(20, 1) 
+
+_00Z6, <csdl.operations.power_combination.power_combination object at 0x7fcee83e6ac0>
+	PREDECESSORS
+		rho,(20, 1) 
+	SUCCESSORS
+		_00Z7,(20, 1) 
+
+_00ZW, <csdl.operations.power_combination.power_combination object at 0x7fcee83e6190>
+	PREDECESSORS
+		rho,(20, 1) 
+	SUCCESSORS
+		_00ZX,(20, 1) 
+
+_00Wp, <csdl.lang.output.Output object at 0x7fcee84b5460>, ThrustDrag._00Wp
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Wo
+	SUCCESSORS
+		_00Wq
+
+_00Wq, <csdl.operations.expand.expand object at 0x7fcee84b54c0>
+	PREDECESSORS
+		_00Wp,(20,) 
+	SUCCESSORS
+		rho_expand,(20, 100, 3) 
+
+rho_expand, <csdl.lang.output.Output object at 0x7fcee84b5490>, ThrustDrag.rho_expand
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Wq
+	SUCCESSORS
+		_00X2
+		_00XF
+		_00Zi
+
+_00X2, <csdl.operations.power_combination.power_combination object at 0x7fcee84b5c10>
+	PREDECESSORS
+		rho_expand,(20, 100, 3) 
+		_00Wx,(20, 100, 3) 
+	SUCCESSORS
+		_00X3,(20, 100, 3) 
+
+_00XF, <csdl.operations.power_combination.power_combination object at 0x7fcee75fe370>
+	PREDECESSORS
+		rho_expand,(20, 100, 3) 
+		dcirculation_repeat_dt,(20, 100, 3) 
+	SUCCESSORS
+		_00XG,(20, 100, 3) 
+
+_00Zi, <csdl.operations.power_combination.power_combination object at 0x7fcee83e68b0>
+	PREDECESSORS
+		rho_expand,(20, 100, 3) 
+		dcirculation_repeat_dt,(20, 100, 3) 
+	SUCCESSORS
+		_00Zj,(20, 100, 3) 
+
+_00X3, <csdl.lang.output.Output object at 0x7fcee84b5be0>, ThrustDrag._00X3
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00X2
+	SUCCESSORS
+		_00X6
+
+_00Ww, <csdl.operations.expand.expand object at 0x7fcee84b55e0>
+	PREDECESSORS
+		horseshoe_circulation,(20, 100) 
+	SUCCESSORS
+		_00Wx,(20, 100, 3) 
+
+_00Wx, <csdl.lang.output.Output object at 0x7fcee84b55b0>, ThrustDrag._00Wx
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Ww
+	SUCCESSORS
+		_00X2
+		_00Xl
+
+_00Xl, <csdl.operations.decompose.decompose object at 0x7fcee84b5fa0>
+	PREDECESSORS
+		_00Wx,(20, 100, 3) 
+	SUCCESSORS
+		_00Xm,(1, 100, 3) 
+		_00Xn,(1, 100, 3) 
+		_00Xt,(18, 100, 3) 
+		_00Xu,(18, 100, 3) 
+		_00Xz,(1, 100, 3) 
+		_00XA,(1, 100, 3) 
+
+_00X6, <csdl.operations.power_combination.power_combination object at 0x7fcee84b5ca0>
+	PREDECESSORS
+		_00X3,(20, 100, 3) 
+		_00X5,(20, 100, 3) 
+	SUCCESSORS
+		panel_forces,(20, 100, 3) 
+
+panel_forces, <csdl.lang.output.Output object at 0x7fcee84b5cd0>, ThrustDrag.panel_forces
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00X6
+	SUCCESSORS
+		_00XN
+		_00YC
+		_00Zg
+		_00_k
+
+_00X5, <csdl.lang.output.Output object at 0x7fcee84b5c70>, ThrustDrag._00X5
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00X4
+	SUCCESSORS
+		_00X6
+
+_00XN, <csdl.operations.decompose.decompose object at 0x7fcee75fe4f0>
+	PREDECESSORS
+		panel_forces,(20, 100, 3) 
+	SUCCESSORS
+		_00XO,(20, 100, 1) 
+		_00XT,(20, 100, 1) 
+		_00XX,(20, 100, 1) 
+
+_00YC, <csdl.operations.power_combination.power_combination object at 0x7fcee74152b0>
+	PREDECESSORS
+		panel_forces,(20, 100, 3) 
+		_00YB,(20, 100, 3) 
+	SUCCESSORS
+		_00YD,(20, 100, 3) 
+
+_00Zg, <csdl.operations.sum.sum object at 0x7fcee83e6f70>
+	PREDECESSORS
+		panel_forces,(20, 100, 3) 
+	SUCCESSORS
+		_00Zh,(20, 3) 
+
+_00_k, <csdl.operations.cross.cross object at 0x7fcee83f3c40>
+	PREDECESSORS
+		panel_forces,(20, 100, 3) 
+		_00_j,(20, 100, 3) 
+	SUCCESSORS
+		_00_l,(20, 100, 3) 
+
+_00Xm, <csdl.lang.output.Output object at 0x7fcee84b5fd0>, ThrustDrag._00Xm
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xl
+	SUCCESSORS
+		_00Xo
+
+_00Xn, <csdl.lang.output.Output object at 0x7fcee75fe070>, ThrustDrag._00Xn
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xl
+	SUCCESSORS
+		_00Xo
+
+_00Xt, <csdl.lang.output.Output object at 0x7fcee75fe1c0>, ThrustDrag._00Xt
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xl
+	SUCCESSORS
+		_00Xv
+
+_00Xu, <csdl.lang.output.Output object at 0x7fcee75fe160>, ThrustDrag._00Xu
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xl
+	SUCCESSORS
+		_00Xv
+
+_00Xz, <csdl.lang.output.Output object at 0x7fcee75fe220>, ThrustDrag._00Xz
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xl
+	SUCCESSORS
+		_00XB
+
+_00XA, <csdl.lang.output.Output object at 0x7fcee75fe310>, ThrustDrag._00XA
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xl
+	SUCCESSORS
+		_00XB
+
+_00Xo, <csdl.operations.linear_combination.linear_combination object at 0x7fcee84b5f70>
+	PREDECESSORS
+		_00Xm,(1, 100, 3) 
+		_00Xn,(1, 100, 3) 
+	SUCCESSORS
+		_00Xp,(1, 100, 3) 
+
+_00Xv, <csdl.operations.linear_combination.linear_combination object at 0x7fcee75fe130>
+	PREDECESSORS
+		_00Xt,(18, 100, 3) 
+		_00Xu,(18, 100, 3) 
+	SUCCESSORS
+		_00Xw,(18, 100, 3) 
+
+_00XB, <csdl.operations.linear_combination.linear_combination object at 0x7fcee75fe2b0>
+	PREDECESSORS
+		_00Xz,(1, 100, 3) 
+		_00XA,(1, 100, 3) 
+	SUCCESSORS
+		_00XC,(1, 100, 3) 
+
+_00Xp, <csdl.lang.output.Output object at 0x7fcee75fe040>, ThrustDrag._00Xp
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xo
+	SUCCESSORS
+		_00Xq
+
+_00Xq, <csdl.operations.power_combination.power_combination object at 0x7fcee75fe0a0>
+	PREDECESSORS
+		_00Xp,(1, 100, 3) 
+	SUCCESSORS
+		_00Xr,(1, 100, 3) 
+
+_00Xr, <csdl.lang.output.Output object at 0x7fcee75fe0d0>, ThrustDrag._00Xr
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xq
+	SUCCESSORS
+		_00Xs
+
+_00Xs, <csdl.operations.indexed_passthrough.indexed_passthrough object at 0x7fcee75fe190>
+	PREDECESSORS
+		_00Xr,(1, 100, 3) 
+		_00Xy,(18, 100, 3) 
+		_00XE,(1, 100, 3) 
+	SUCCESSORS
+		dcirculation_repeat_dt,(20, 100, 3) 
+
+dcirculation_repeat_dt, <csdl.lang.concatenation.Concatenation object at 0x7fcee84b5ee0>, ThrustDrag.dcirculation_repeat_dt
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xs
+	SUCCESSORS
+		_00XF
+		_00Zi
+
+_00Xw, <csdl.lang.output.Output object at 0x7fcee75fe100>, ThrustDrag._00Xw
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xv
+	SUCCESSORS
+		_00Xx
+
+_00Xx, <csdl.operations.power_combination.power_combination object at 0x7fcee75fe1f0>
+	PREDECESSORS
+		_00Xw,(18, 100, 3) 
+	SUCCESSORS
+		_00Xy,(18, 100, 3) 
+
+_00Xy, <csdl.lang.output.Output object at 0x7fcee75fe250>, ThrustDrag._00Xy
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xx
+	SUCCESSORS
+		_00Xs
+
+_00XC, <csdl.lang.output.Output object at 0x7fcee75fe2e0>, ThrustDrag._00XC
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XB
+	SUCCESSORS
+		_00XD
+
+_00XD, <csdl.operations.power_combination.power_combination object at 0x7fcee75fe280>
+	PREDECESSORS
+		_00XC,(1, 100, 3) 
+	SUCCESSORS
+		_00XE,(1, 100, 3) 
+
+_00XE, <csdl.lang.output.Output object at 0x7fcee75fe340>, ThrustDrag._00XE
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XD
+	SUCCESSORS
+		_00Xs
+
+_00XO, <csdl.lang.output.Output object at 0x7fcee75fe580>, ThrustDrag._00XO
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XN
+	SUCCESSORS
+		_00XR
+
+_00XT, <csdl.lang.output.Output object at 0x7fcee75fef70>, ThrustDrag._00XT
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XN
+	SUCCESSORS
+		_00XV
+
+_00XX, <csdl.lang.output.Output object at 0x7fcee75feb20>, ThrustDrag._00XX
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XN
+	SUCCESSORS
+		_00XZ
+
+_00XR, <csdl.operations.linear_combination.linear_combination object at 0x7fcee75fe520>
+	PREDECESSORS
+		_00XO,(20, 100, 1) 
+		_00XQ,(20, 100, 1) 
+	SUCCESSORS
+		_00XS,(20, 100, 1) 
+
+_00XV, <csdl.operations.linear_combination.linear_combination object at 0x7fcee75fe610>
+	PREDECESSORS
+		_00XT,(20, 100, 1) 
+		_00XU,(20, 100, 1) 
+	SUCCESSORS
+		_00XW,(20, 100, 1) 
+
+_00XZ, <csdl.operations.linear_combination.linear_combination object at 0x7fcee75febb0>
+	PREDECESSORS
+		_00XX,(20, 100, 1) 
+		_00XY,(20, 100, 1) 
+	SUCCESSORS
+		_00X_,(20, 100, 1) 
+
+_00XS, <csdl.lang.output.Output object at 0x7fcee75fe5b0>, ThrustDrag._00XS
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XR
+	SUCCESSORS
+		_00Ye
+		_00Ym
+
+_00XG, <csdl.lang.output.Output object at 0x7fcee75fe3d0>, ThrustDrag._00XG
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XF
+	SUCCESSORS
+		_00XH
+
+_00XH, <csdl.operations.power_combination.power_combination object at 0x7fcee75fe3a0>
+	PREDECESSORS
+		_00XG,(20, 100, 3) 
+		c_bar_exp,(20, 100, 3) 
+	SUCCESSORS
+		_00XI,(20, 100, 3) 
+
+_00XI, <csdl.lang.output.Output object at 0x7fcee75fe430>, ThrustDrag._00XI
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XH
+	SUCCESSORS
+		_00XL
+
+_00X9, <csdl.operations.decompose.decompose object at 0x7fcee84b5d60>
+	PREDECESSORS
+		wing,(20, 11, 11, 3) 
+	SUCCESSORS
+		_00Xa,(1, 1, 1, 1) 
+		_00Xb,(1, 1, 1, 1) 
+
+_00Xa, <csdl.lang.output.Output object at 0x7fcee84b5dc0>, ThrustDrag._00Xa
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00X9
+	SUCCESSORS
+		_00Xc
+
+_00Xb, <csdl.lang.output.Output object at 0x7fcee84b5df0>, ThrustDrag._00Xb
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00X9
+	SUCCESSORS
+		_00Xc
+
+_00Xc, <csdl.operations.linear_combination.linear_combination object at 0x7fcee84b5d30>
+	PREDECESSORS
+		_00Xa,(1, 1, 1, 1) 
+		_00Xb,(1, 1, 1, 1) 
+	SUCCESSORS
+		_00Xd,(1, 1, 1, 1) 
+
+_00Xd, <csdl.lang.output.Output object at 0x7fcee84b5d90>, ThrustDrag._00Xd
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xc
+	SUCCESSORS
+		_00Xe
+
+_00Xe, <csdl.operations.reshape.reshape object at 0x7fcee84b5e20>
+	PREDECESSORS
+		_00Xd,(1, 1, 1, 1) 
+	SUCCESSORS
+		_00Xf,(1,) 
+
+_00Xf, <csdl.lang.output.Output object at 0x7fcee84b5e50>, ThrustDrag._00Xf
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xe
+	SUCCESSORS
+		_00Xg
+
+_00Xg, <csdl.operations.expand.expand object at 0x7fcee84b5f10>
+	PREDECESSORS
+		_00Xf,(1,) 
+	SUCCESSORS
+		_00Xh,(6000, 1) 
+
+_00Xh, <csdl.lang.output.Output object at 0x7fcee84b5eb0>, ThrustDrag._00Xh
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xg
+	SUCCESSORS
+		_00Xi
+
+_00Xi, <csdl.operations.reshape.reshape object at 0x7fcee84b5e80>
+	PREDECESSORS
+		_00Xh,(6000, 1) 
+	SUCCESSORS
+		c_bar_exp,(20, 100, 3) 
+
+c_bar_exp, <csdl.lang.output.Output object at 0x7fcee84b5f40>, ThrustDrag.c_bar_exp
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Xi
+	SUCCESSORS
+		_00XH
+		_00Zk
+
+_00Zk, <csdl.operations.power_combination.power_combination object at 0x7fcee83e6850>
+	PREDECESSORS
+		c_bar_exp,(20, 100, 3) 
+		_00Zj,(20, 100, 3) 
+	SUCCESSORS
+		_00Zl,(20, 100, 3) 
+
+_00XL, <csdl.operations.power_combination.power_combination object at 0x7fcee75fe4c0>
+	PREDECESSORS
+		_00XI,(20, 100, 3) 
+		_00XK,(20, 100, 3) 
+	SUCCESSORS
+		_00XM,(20, 100, 3) 
+
+_00XM, <csdl.lang.output.Output object at 0x7fcee75fe490>, ThrustDrag._00XM
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XL
+	SUCCESSORS
+		_00XP
+
+_00XK, <csdl.lang.output.Output object at 0x7fcee75fe460>, ThrustDrag._00XK
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XJ
+	SUCCESSORS
+		_00XL
+
+_00XP, <csdl.operations.decompose.decompose object at 0x7fcee75fe550>
+	PREDECESSORS
+		_00XM,(20, 100, 3) 
+	SUCCESSORS
+		_00XQ,(20, 100, 1) 
+		_00XU,(20, 100, 1) 
+		_00XY,(20, 100, 1) 
+
+_00XQ, <csdl.lang.output.Output object at 0x7fcee75fe5e0>, ThrustDrag._00XQ
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XP
+	SUCCESSORS
+		_00XR
+
+_00XU, <csdl.lang.output.Output object at 0x7fcee75febe0>, ThrustDrag._00XU
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XP
+	SUCCESSORS
+		_00XV
+
+_00XY, <csdl.lang.output.Output object at 0x7fcee75feac0>, ThrustDrag._00XY
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XP
+	SUCCESSORS
+		_00XZ
+
+_00Ye, <csdl.operations.linear_combination.linear_combination object at 0x7fcee75fe880>
+	PREDECESSORS
+		_00XS,(20, 100, 1) 
+	SUCCESSORS
+		_00Yf,(20, 100, 1) 
+
+_00Ym, <csdl.operations.power_combination.power_combination object at 0x7fcee75fe6d0>
+	PREDECESSORS
+		_00XS,(20, 100, 1) 
+		_00WU,(20, 100, 1) 
+	SUCCESSORS
+		_00Yn,(20, 100, 1) 
+
+_00Yf, <csdl.lang.output.Output object at 0x7fcee75fe820>, ThrustDrag._00Yf
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Ye
+	SUCCESSORS
+		_00Yg
+
+_00Yg, <csdl.operations.power_combination.power_combination object at 0x7fcee75fe7f0>
+	PREDECESSORS
+		_00Yf,(20, 100, 1) 
+		_00WQ,(20, 100, 1) 
+	SUCCESSORS
+		_00Yh,(20, 100, 1) 
+
+_00Yh, <csdl.lang.output.Output object at 0x7fcee75fe7c0>, ThrustDrag._00Yh
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Yg
+	SUCCESSORS
+		_00Yk
+
+_00WN, <csdl.operations.sin.sin object at 0x7fcee84b56d0>
+	PREDECESSORS
+		alpha,(20, 1) 
+	SUCCESSORS
+		_00WO,(20, 1) 
+
+_00WR, <csdl.operations.cos.cos object at 0x7fcee84b59d0>
+	PREDECESSORS
+		alpha,(20, 1) 
+	SUCCESSORS
+		_00WS,(20, 1) 
+
+_00WO, <csdl.lang.output.Output object at 0x7fcee84b58b0>, ThrustDrag._00WO
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WN
+	SUCCESSORS
+		_00WP
+
+_00WP, <csdl.operations.expand.expand object at 0x7fcee84b5940>
+	PREDECESSORS
+		_00WO,(20, 1) 
+	SUCCESSORS
+		_00WQ,(20, 100, 1) 
+
+_00WQ, <csdl.lang.output.Output object at 0x7fcee84b58e0>, ThrustDrag._00WQ
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WP
+	SUCCESSORS
+		_00Yg
+		_00Yq
+
+_00Yq, <csdl.operations.power_combination.power_combination object at 0x7fcee77ede50>
+	PREDECESSORS
+		_00WQ,(20, 100, 1) 
+		_00X_,(20, 100, 1) 
+	SUCCESSORS
+		_00Yr,(20, 100, 1) 
+
+_00Yk, <csdl.operations.linear_combination.linear_combination object at 0x7fcee75fe730>
+	PREDECESSORS
+		_00Yh,(20, 100, 1) 
+		_00Yj,(20, 100, 1) 
+	SUCCESSORS
+		_00Yl,(20, 100, 1) 
+
+_00Yl, <csdl.lang.output.Output object at 0x7fcee75fe700>, ThrustDrag._00Yl
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Yk
+	SUCCESSORS
+		_00YJ
+
+_00X_, <csdl.lang.output.Output object at 0x7fcee75feb50>, ThrustDrag._00X_
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XZ
+	SUCCESSORS
+		_00Yi
+		_00Yq
+
+_00Yi, <csdl.operations.power_combination.power_combination object at 0x7fcee75fe790>
+	PREDECESSORS
+		_00X_,(20, 100, 1) 
+		_00WU,(20, 100, 1) 
+	SUCCESSORS
+		_00Yj,(20, 100, 1) 
+
+_00Yj, <csdl.lang.output.Output object at 0x7fcee75fe760>, ThrustDrag._00Yj
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Yi
+	SUCCESSORS
+		_00Yk
+
+_00WS, <csdl.lang.output.Output object at 0x7fcee84b59a0>, ThrustDrag._00WS
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WR
+	SUCCESSORS
+		_00WT
+
+_00WT, <csdl.operations.expand.expand object at 0x7fcee84b5a00>
+	PREDECESSORS
+		_00WS,(20, 1) 
+	SUCCESSORS
+		_00WU,(20, 100, 1) 
+
+_00WU, <csdl.lang.output.Output object at 0x7fcee84b5a30>, ThrustDrag._00WU
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WT
+	SUCCESSORS
+		_00Yi
+		_00Ym
+
+_00YJ, <csdl.operations.decompose.decompose object at 0x7fcee83e6f10>
+	PREDECESSORS
+		_00Yl,(20, 100, 1) 
+	SUCCESSORS
+		wing_L_panel,(20, 100, 1) 
+
+wing_L_panel, <csdl.lang.output.Output object at 0x7fcee83e6eb0>, ThrustDrag.wing_L_panel
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YJ
+	SUCCESSORS
+		_00YP
+
+_00YP, <csdl.operations.sum.sum object at 0x7fcee83e6f40>
+	PREDECESSORS
+		wing_L_panel,(20, 100, 1) 
+	SUCCESSORS
+		_00YQ,(20, 1) 
+
+_00Yn, <csdl.lang.output.Output object at 0x7fcee75fe6a0>, ThrustDrag._00Yn
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Ym
+	SUCCESSORS
+		_00Yo
+
+_00Yo, <csdl.operations.power_combination.power_combination object at 0x7fcee75fe670>
+	PREDECESSORS
+		_00Yn,(20, 100, 1) 
+		_00X1,(20, 100, 1) 
+	SUCCESSORS
+		_00Yp,(20, 100, 1) 
+
+_00Yp, <csdl.lang.output.Output object at 0x7fcee75fe640>, ThrustDrag._00Yp
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Yo
+	SUCCESSORS
+		_00Yu
+
+_00WZ, <csdl.operations.cos.cos object at 0x7fcee84b5b50>
+	PREDECESSORS
+		beta,(20, 1) 
+	SUCCESSORS
+		_00W_,(20, 1) 
+
+_00WV, <csdl.operations.sin.sin object at 0x7fcee84b5a60>
+	PREDECESSORS
+		beta,(20, 1) 
+	SUCCESSORS
+		_00WW,(20, 1) 
+
+_00W_, <csdl.lang.output.Output object at 0x7fcee84b5b20>, ThrustDrag._00W_
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WZ
+	SUCCESSORS
+		_00X0
+
+_00X0, <csdl.operations.expand.expand object at 0x7fcee84b5bb0>
+	PREDECESSORS
+		_00W_,(20, 1) 
+	SUCCESSORS
+		_00X1,(20, 100, 1) 
+
+_00X1, <csdl.lang.output.Output object at 0x7fcee84b5b80>, ThrustDrag._00X1
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00X0
+	SUCCESSORS
+		_00Yo
+		_00Ys
+
+_00Ys, <csdl.operations.power_combination.power_combination object at 0x7fcee77edfd0>
+	PREDECESSORS
+		_00X1,(20, 100, 1) 
+		_00Yr,(20, 100, 1) 
+	SUCCESSORS
+		_00Yt,(20, 100, 1) 
+
+_00Yu, <csdl.operations.linear_combination.linear_combination object at 0x7fcee77edf40>
+	PREDECESSORS
+		_00Yp,(20, 100, 1) 
+		_00Yt,(20, 100, 1) 
+	SUCCESSORS
+		_00Yv,(20, 100, 1) 
+
+_00Yv, <csdl.lang.output.Output object at 0x7fcee77edf10>, ThrustDrag._00Yv
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Yu
+	SUCCESSORS
+		_00Yy
+
+_00Yr, <csdl.lang.output.Output object at 0x7fcee77edfa0>, ThrustDrag._00Yr
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Yq
+	SUCCESSORS
+		_00Ys
+
+_00Yt, <csdl.lang.output.Output object at 0x7fcee77edf70>, ThrustDrag._00Yt
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Ys
+	SUCCESSORS
+		_00Yu
+
+_00Yy, <csdl.operations.linear_combination.linear_combination object at 0x7fcee77ede80>
+	PREDECESSORS
+		_00Yv,(20, 100, 1) 
+		_00Yx,(20, 100, 1) 
+	SUCCESSORS
+		_00Yz,(20, 100, 1) 
+
+_00Yz, <csdl.lang.output.Output object at 0x7fcee77eddf0>, ThrustDrag._00Yz
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Yy
+	SUCCESSORS
+		_00YL
+
+_00XW, <csdl.lang.output.Output object at 0x7fcee75fed30>, ThrustDrag._00XW
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00XV
+	SUCCESSORS
+		_00Yw
+
+_00Yw, <csdl.operations.power_combination.power_combination object at 0x7fcee77edee0>
+	PREDECESSORS
+		_00XW,(20, 100, 1) 
+		_00WY,(20, 100, 1) 
+	SUCCESSORS
+		_00Yx,(20, 100, 1) 
+
+_00Yx, <csdl.lang.output.Output object at 0x7fcee77edeb0>, ThrustDrag._00Yx
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Yw
+	SUCCESSORS
+		_00Yy
+
+_00WW, <csdl.lang.output.Output object at 0x7fcee84b5a90>, ThrustDrag._00WW
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WV
+	SUCCESSORS
+		_00WX
+
+_00WX, <csdl.operations.expand.expand object at 0x7fcee84b5af0>
+	PREDECESSORS
+		_00WW,(20, 1) 
+	SUCCESSORS
+		_00WY,(20, 100, 1) 
+
+_00WY, <csdl.lang.output.Output object at 0x7fcee84b5ac0>, ThrustDrag._00WY
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00WX
+	SUCCESSORS
+		_00Yw
+
+_00YL, <csdl.operations.decompose.decompose object at 0x7fcee83e6ee0>
+	PREDECESSORS
+		_00Yz,(20, 100, 1) 
+	SUCCESSORS
+		wing_D_panel,(20, 100, 1) 
+
+wing_D_panel, <csdl.lang.output.Output object at 0x7fcee83e6e50>, ThrustDrag.wing_D_panel
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YL
+	SUCCESSORS
+		_00YR
+
+_00YR, <csdl.operations.sum.sum object at 0x7fcee83e6df0>
+	PREDECESSORS
+		wing_D_panel,(20, 100, 1) 
+	SUCCESSORS
+		_00YS,(20, 1) 
+
+_00YD, <csdl.lang.output.Output object at 0x7fcee74151c0>, ThrustDrag._00YD
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YC
+	SUCCESSORS
+		_00YN
+
+_00YB, <csdl.lang.output.Output object at 0x7fcee7415550>, ThrustDrag._00YB
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YA
+	SUCCESSORS
+		_00YC
+
+_00YN, <csdl.operations.decompose.decompose object at 0x7fcee83e6e80>
+	PREDECESSORS
+		_00YD,(20, 100, 3) 
+	SUCCESSORS
+		wing_traction_surfaces,(20, 100, 3) 
+
+wing_traction_surfaces, <csdl.lang.output.Output object at 0x7fcee83e6dc0>, ThrustDrag.wing_traction_surfaces
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YN
+	SUCCESSORS
+
+_00YQ, <csdl.lang.output.Output object at 0x7fcee83e6e20>, ThrustDrag._00YQ
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YP
+	SUCCESSORS
+		_00YT
+		_00Z2
+
+_00YT, <csdl.operations.reshape.reshape object at 0x7fcee83e6d60>
+	PREDECESSORS
+		_00YQ,(20, 1) 
+	SUCCESSORS
+		wing_L,(20, 1) 
+
+_00Z2, <csdl.operations.power_combination.power_combination object at 0x7fcee83e6b80>
+	PREDECESSORS
+		_00YQ,(20, 1) 
+		_00Z1,(20, 1) 
+	SUCCESSORS
+		_00Z3,(20, 1) 
+
+wing_L, <csdl.lang.output.Output object at 0x7fcee83e6d30>, ThrustDrag.wing_L
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YT
+	SUCCESSORS
+
+_00YS, <csdl.lang.output.Output object at 0x7fcee83e6d90>, ThrustDrag._00YS
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YR
+	SUCCESSORS
+		_00YV
+		_00Zc
+
+_00YV, <csdl.operations.reshape.reshape object at 0x7fcee83e6d00>
+	PREDECESSORS
+		_00YS,(20, 1) 
+	SUCCESSORS
+		wing_D,(20, 1) 
+
+_00Zc, <csdl.operations.power_combination.power_combination object at 0x7fcee83e69a0>
+	PREDECESSORS
+		_00YS,(20, 1) 
+		_00Zb,(20, 1) 
+	SUCCESSORS
+		_00Zd,(20, 1) 
+
+wing_D, <csdl.lang.output.Output object at 0x7fcee83e6ca0>, ThrustDrag.wing_D
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YV
+	SUCCESSORS
+
+_00Z3, <csdl.lang.output.Output object at 0x7fcee83e6b50>, ThrustDrag._00Z3
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Z2
+	SUCCESSORS
+		_00Z4
+
+_00YY, <csdl.lang.output.Output object at 0x7fcee83e6c70>, ThrustDrag._00YY
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YX
+	SUCCESSORS
+		_00YZ
+
+_00YZ, <csdl.operations.power_combination.power_combination object at 0x7fcee83e6c40>
+	PREDECESSORS
+		_00YY,(20, 1) 
+		_00YH,(20, 1) 
+	SUCCESSORS
+		_00Y_,(20, 1) 
+
+_00Y_, <csdl.lang.output.Output object at 0x7fcee83e6c10>, ThrustDrag._00Y_
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YZ
+	SUCCESSORS
+		_00Z0
+
+_00YF, <csdl.lang.output.Output object at 0x7fcee7415af0>, ThrustDrag._00YF
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YE
+	SUCCESSORS
+		_00YG
+
+_00YG, <csdl.operations.reshape.reshape object at 0x7fcee7415c40>
+	PREDECESSORS
+		_00YF,(20,) 
+	SUCCESSORS
+		_00YH,(20, 1) 
+
+_00YH, <csdl.lang.output.Output object at 0x7fcee83e6fd0>, ThrustDrag._00YH
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00YG
+	SUCCESSORS
+		_00YZ
+		_00Z8
+
+_00Z8, <csdl.operations.power_combination.power_combination object at 0x7fcee83e6a60>
+	PREDECESSORS
+		_00YH,(20, 1) 
+		_00Z7,(20, 1) 
+	SUCCESSORS
+		_00Z9,(20, 1) 
+
+_00Z0, <csdl.operations.power_combination.power_combination object at 0x7fcee83e6be0>
+	PREDECESSORS
+		_00Y_,(20, 1) 
+		_00Yd,(20, 1) 
+	SUCCESSORS
+		_00Z1,(20, 1) 
+
+_00Z1, <csdl.lang.output.Output object at 0x7fcee83e6bb0>, ThrustDrag._00Z1
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Z0
+	SUCCESSORS
+		_00Z2
+
+_00Y0, <csdl.operations.decompose.decompose object at 0x7fcee75fea90>
+	PREDECESSORS
+		frame_vel,(20, 3) 
+	SUCCESSORS
+		_00Y1,(20, 1) 
+		_00Y4,(20, 1) 
+		_00Y9,(20, 1) 
+
+_00Y1, <csdl.lang.output.Output object at 0x7fcee75fea00>, ThrustDrag._00Y1
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Y0
+	SUCCESSORS
+		_00Y2
+
+_00Y4, <csdl.lang.output.Output object at 0x7fcee75fe9d0>, ThrustDrag._00Y4
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Y0
+	SUCCESSORS
+		_00Y5
+
+_00Y9, <csdl.lang.output.Output object at 0x7fcee75fe8e0>, ThrustDrag._00Y9
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Y0
+	SUCCESSORS
+		_00Ya
+
+_00Y2, <csdl.operations.power_combination.power_combination object at 0x7fcee75feb80>
+	PREDECESSORS
+		_00Y1,(20, 1) 
+	SUCCESSORS
+		_00Y3,(20, 1) 
+
+_00Y5, <csdl.operations.power_combination.power_combination object at 0x7fcee75fea60>
+	PREDECESSORS
+		_00Y4,(20, 1) 
+	SUCCESSORS
+		_00Y6,(20, 1) 
+
+_00Ya, <csdl.operations.power_combination.power_combination object at 0x7fcee75fe970>
+	PREDECESSORS
+		_00Y9,(20, 1) 
+	SUCCESSORS
+		_00Yb,(20, 1) 
+
+_00Y3, <csdl.lang.output.Output object at 0x7fcee75feaf0>, ThrustDrag._00Y3
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Y2
+	SUCCESSORS
+		_00Y7
+
+_00Y7, <csdl.operations.linear_combination.linear_combination object at 0x7fcee75fea30>
+	PREDECESSORS
+		_00Y3,(20, 1) 
+		_00Y6,(20, 1) 
+	SUCCESSORS
+		_00Y8,(20, 1) 
+
+_00Y8, <csdl.lang.output.Output object at 0x7fcee75fe940>, ThrustDrag._00Y8
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Y7
+	SUCCESSORS
+		_00Yc
+
+_00Y6, <csdl.lang.output.Output object at 0x7fcee75fe9a0>, ThrustDrag._00Y6
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Y5
+	SUCCESSORS
+		_00Y7
+
+_00Yc, <csdl.operations.linear_combination.linear_combination object at 0x7fcee75fe910>
+	PREDECESSORS
+		_00Y8,(20, 1) 
+		_00Yb,(20, 1) 
+	SUCCESSORS
+		_00Yd,(20, 1) 
+
+_00Yd, <csdl.lang.output.Output object at 0x7fcee75fe850>, ThrustDrag._00Yd
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Yc
+	SUCCESSORS
+		_00Z0
+		_00Za
+		_00ZY
+
+_00Yb, <csdl.lang.output.Output object at 0x7fcee75fe8b0>, ThrustDrag._00Yb
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Ya
+	SUCCESSORS
+		_00Yc
+
+_00Za, <csdl.operations.power_combination.power_combination object at 0x7fcee83e6a00>
+	PREDECESSORS
+		_00Yd,(20, 1) 
+		_00Z9,(20, 1) 
+	SUCCESSORS
+		_00Zb,(20, 1) 
+
+_00ZY, <csdl.operations.power_combination.power_combination object at 0x7fcee83e60d0>
+	PREDECESSORS
+		_00Yd,(20, 1) 
+		_00ZX,(20, 1) 
+	SUCCESSORS
+		_00ZZ,(20, 1) 
+
+_00Z4, <csdl.operations.reshape.reshape object at 0x7fcee83e6b20>
+	PREDECESSORS
+		_00Z3,(20, 1) 
+	SUCCESSORS
+		wing_C_L,(20, 1) 
+
+wing_C_L, <csdl.lang.output.Output object at 0x7fcee83e6af0>, ThrustDrag.wing_C_L
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Z4
+	SUCCESSORS
+
+_00Zd, <csdl.lang.output.Output object at 0x7fcee83e6970>, ThrustDrag._00Zd
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zc
+	SUCCESSORS
+		_00Ze
+
+_00Z7, <csdl.lang.output.Output object at 0x7fcee83e6a90>, ThrustDrag._00Z7
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Z6
+	SUCCESSORS
+		_00Z8
+
+_00Z9, <csdl.lang.output.Output object at 0x7fcee83e6a30>, ThrustDrag._00Z9
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Z8
+	SUCCESSORS
+		_00Za
+
+_00Zb, <csdl.lang.output.Output object at 0x7fcee83e69d0>, ThrustDrag._00Zb
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Za
+	SUCCESSORS
+		_00Zc
+
+_00Ze, <csdl.operations.reshape.reshape object at 0x7fcee83e6940>
+	PREDECESSORS
+		_00Zd,(20, 1) 
+	SUCCESSORS
+		wing_C_D_i,(20, 1) 
+
+wing_C_D_i, <csdl.lang.output.Output object at 0x7fcee83e6910>, ThrustDrag.wing_C_D_i
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Ze
+	SUCCESSORS
+
+_00Zj, <csdl.lang.output.Output object at 0x7fcee83e6880>, ThrustDrag._00Zj
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zi
+	SUCCESSORS
+		_00Zk
+
+_00Zl, <csdl.lang.output.Output object at 0x7fcee83e6820>, ThrustDrag._00Zl
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zk
+	SUCCESSORS
+		_00Zo
+
+_00Zo, <csdl.operations.power_combination.power_combination object at 0x7fcee83e6790>
+	PREDECESSORS
+		_00Zl,(20, 100, 3) 
+		_00Zn,(20, 100, 3) 
+	SUCCESSORS
+		_00Zp,(20, 100, 3) 
+
+_00Zp, <csdl.lang.output.Output object at 0x7fcee83e6760>, ThrustDrag._00Zp
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zo
+	SUCCESSORS
+		_00Zq
+
+_00Zn, <csdl.lang.output.Output object at 0x7fcee83e67c0>, ThrustDrag._00Zn
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zm
+	SUCCESSORS
+		_00Zo
+
+_00Zq, <csdl.operations.sum.sum object at 0x7fcee83e6730>
+	PREDECESSORS
+		_00Zp,(20, 100, 3) 
+	SUCCESSORS
+		total_forces_temp_dynamic,(20, 3) 
+
+total_forces_temp_dynamic, <csdl.lang.output.Output object at 0x7fcee83e6700>, ThrustDrag.total_forces_temp_dynamic
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zq
+	SUCCESSORS
+		_00Zx
+
+_00Zx, <csdl.operations.decompose.decompose object at 0x7fcee83e6580>
+	PREDECESSORS
+		total_forces_temp_dynamic,(20, 3) 
+	SUCCESSORS
+		_00Zy,(20, 1) 
+		_00ZD,(20, 1) 
+		_00ZJ,(20, 1) 
+
+crosspd, <csdl.lang.output.Output object at 0x7fcee83e66a0>, ThrustDrag.crosspd
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zs
+	SUCCESSORS
+
+_00Zh, <csdl.lang.output.Output object at 0x7fcee83e68e0>, ThrustDrag._00Zh
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zg
+	SUCCESSORS
+		_00Zv
+
+_00Zv, <csdl.operations.decompose.decompose object at 0x7fcee83e6610>
+	PREDECESSORS
+		_00Zh,(20, 3) 
+	SUCCESSORS
+		_00Zw,(20, 1) 
+		_00ZC,(20, 1) 
+		_00ZG,(20, 1) 
+
+_00Zw, <csdl.lang.output.Output object at 0x7fcee83e65b0>, ThrustDrag._00Zw
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zv
+	SUCCESSORS
+		_00Zz
+		_00ZN
+
+_00ZC, <csdl.lang.output.Output object at 0x7fcee83e64f0>, ThrustDrag._00ZC
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zv
+	SUCCESSORS
+		_00ZE
+		_00ZN
+
+_00ZG, <csdl.lang.output.Output object at 0x7fcee83e63a0>, ThrustDrag._00ZG
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zv
+	SUCCESSORS
+		_00ZH
+		_00ZO
+
+_00Zz, <csdl.operations.linear_combination.linear_combination object at 0x7fcee83e6640>
+	PREDECESSORS
+		_00Zw,(20, 1) 
+		_00Zy,(20, 1) 
+	SUCCESSORS
+		_00ZA,(20, 1) 
+
+_00ZN, <csdl.operations.indexed_passthrough.indexed_passthrough object at 0x7fcee83e62e0>
+	PREDECESSORS
+		_00Zw,(20, 1) 
+		_00ZC,(20, 1) 
+		_00ZP,(20, 1) 
+	SUCCESSORS
+		F_s,(20, 3) 
+
+_00ZE, <csdl.operations.linear_combination.linear_combination object at 0x7fcee83e65e0>
+	PREDECESSORS
+		_00ZC,(20, 1) 
+		_00ZD,(20, 1) 
+	SUCCESSORS
+		_00ZF,(20, 1) 
+
+_00ZH, <csdl.operations.linear_combination.linear_combination object at 0x7fcee83e6430>
+	PREDECESSORS
+		_00ZG,(20, 1) 
+	SUCCESSORS
+		_00ZI,(20, 1) 
+
+_00ZO, <csdl.operations.linear_combination.linear_combination object at 0x7fcee83e62b0>
+	PREDECESSORS
+		_00ZG,(20, 1) 
+	SUCCESSORS
+		_00ZP,(20, 1) 
+
+_00ZA, <csdl.lang.output.Output object at 0x7fcee83e6550>, ThrustDrag._00ZA
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zz
+	SUCCESSORS
+		_00ZB
+
+_00Zy, <csdl.lang.output.Output object at 0x7fcee83e6520>, ThrustDrag._00Zy
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zx
+	SUCCESSORS
+		_00Zz
+
+_00ZD, <csdl.lang.output.Output object at 0x7fcee83e6490>, ThrustDrag._00ZD
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zx
+	SUCCESSORS
+		_00ZE
+
+_00ZJ, <csdl.lang.output.Output object at 0x7fcee83e6340>, ThrustDrag._00ZJ
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Zx
+	SUCCESSORS
+		_00ZK
+
+_00ZK, <csdl.operations.linear_combination.linear_combination object at 0x7fcee83e63d0>
+	PREDECESSORS
+		_00ZJ,(20, 1) 
+		_00ZI,(20, 1) 
+	SUCCESSORS
+		_00ZL,(20, 1) 
+
+_00ZB, <csdl.operations.indexed_passthrough.indexed_passthrough object at 0x7fcee83e64c0>
+	PREDECESSORS
+		_00ZA,(20, 1) 
+		_00ZF,(20, 1) 
+		_00ZL,(20, 1) 
+	SUCCESSORS
+		F,(20, 3) 
+
+F, <csdl.lang.concatenation.Concatenation object at 0x7fcee83e6670>, ThrustDrag.F
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00ZB
+	SUCCESSORS
+		_00ZQ
+
+_00ZF, <csdl.lang.output.Output object at 0x7fcee83e6400>, ThrustDrag._00ZF
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00ZE
+	SUCCESSORS
+		_00ZB
+
+_00ZI, <csdl.lang.output.Output object at 0x7fcee83e6460>, ThrustDrag._00ZI
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00ZH
+	SUCCESSORS
+		_00ZK
+
+_00ZL, <csdl.lang.output.Output object at 0x7fcee83e6310>, ThrustDrag._00ZL
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00ZK
+	SUCCESSORS
+		_00ZB
+
+_00ZQ, <csdl.operations.decompose.decompose object at 0x7fcee83e6220>
+	PREDECESSORS
+		F,(20, 3) 
+	SUCCESSORS
+		thrust,(20, 1) 
+
+F_s, <csdl.lang.concatenation.Concatenation object at 0x7fcee83e6370>, ThrustDrag.F_s
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00ZN
+	SUCCESSORS
+
+_00ZP, <csdl.lang.output.Output object at 0x7fcee83e61f0>, ThrustDrag._00ZP
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00ZO
+	SUCCESSORS
+		_00ZN
+
+thrust, <csdl.lang.output.Output object at 0x7fcee83e61c0>, ThrustDrag.thrust
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00ZQ
+	SUCCESSORS
+		_00_3
+
+_00_3, <csdl.operations.sum.sum object at 0x7fcee83f3f70>
+	PREDECESSORS
+		thrust,(20, 1) 
+	SUCCESSORS
+		_00_4,(1,) 
+
+_00ZX, <csdl.lang.output.Output object at 0x7fcee83e6100>, ThrustDrag._00ZX
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00ZW
+	SUCCESSORS
+		_00ZY
+
+_00ZZ, <csdl.lang.output.Output object at 0x7fcee83e60a0>, ThrustDrag._00ZZ
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00ZY
+	SUCCESSORS
+		_00Z_
+
+_00Z_, <csdl.operations.power_combination.power_combination object at 0x7fcee83e6070>
+	PREDECESSORS
+		_00ZZ,(20, 1) 
+		_00ZV,(20, 1) 
+	SUCCESSORS
+		_00_0,(20, 1) 
+
+_00_0, <csdl.lang.output.Output object at 0x7fcee83e6040>, ThrustDrag._00_0
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00Z_
+	SUCCESSORS
+		_00_1
+
+_00ZT, <csdl.lang.output.Output object at 0x7fcee83e6160>, ThrustDrag._00ZT
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00ZS
+	SUCCESSORS
+		_00ZU
+
+_00ZU, <csdl.operations.reshape.reshape object at 0x7fcee83e6250>
+	PREDECESSORS
+		_00ZT,(20,) 
+	SUCCESSORS
+		_00ZV,(20, 1) 
+
+_00ZV, <csdl.lang.output.Output object at 0x7fcee83e6130>, ThrustDrag._00ZV
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00ZU
+	SUCCESSORS
+		_00Z_
+
+_00_1, <csdl.operations.power_combination.power_combination object at 0x7fcee83f3fd0>
+	PREDECESSORS
+		_00_0,(20, 1) 
+	SUCCESSORS
+		Drag,(20, 1) 
+
+Drag, <csdl.lang.output.Output object at 0x7fcee83f3fa0>, ThrustDrag.Drag
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_1
+	SUCCESSORS
+		_00_7
+
+_00_7, <csdl.operations.sum.sum object at 0x7fcee83f3eb0>
+	PREDECESSORS
+		Drag,(20, 1) 
+	SUCCESSORS
+		_00_8,(1,) 
+
+_00_4, <csdl.lang.output.Output object at 0x7fcee83f3f10>, ThrustDrag._00_4
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_3
+	SUCCESSORS
+		_00_5
+
+_00_5, <csdl.operations.power_combination.power_combination object at 0x7fcee83f3f40>
+	PREDECESSORS
+		_00_4,(1,) 
+	SUCCESSORS
+		_00_6,(1,) 
+
+_00_6, <csdl.lang.output.Output object at 0x7fcee83f3ee0>, ThrustDrag._00_6
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_5
+	SUCCESSORS
+		_00_b
+
+_00_b, <csdl.operations.linear_combination.linear_combination object at 0x7fcee83f3df0>
+	PREDECESSORS
+		_00_6,(1,) 
+		_00_a,(1,) 
+	SUCCESSORS
+		_00_c,(1,) 
+
+_00_c, <csdl.lang.output.Output object at 0x7fcee83f3dc0>, ThrustDrag._00_c
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_b
+	SUCCESSORS
+		_00_d
+
+_00_8, <csdl.lang.output.Output object at 0x7fcee83f3e80>, ThrustDrag._00_8
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_7
+	SUCCESSORS
+		_00_9
+
+_00_9, <csdl.operations.power_combination.power_combination object at 0x7fcee83f3e50>
+	PREDECESSORS
+		_00_8,(1,) 
+	SUCCESSORS
+		_00_a,(1,) 
+
+_00_a, <csdl.lang.output.Output object at 0x7fcee83f3e20>, ThrustDrag._00_a
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_9
+	SUCCESSORS
+		_00_b
+
+_00_d, <csdl.operations.power_combination.power_combination object at 0x7fcee83f3d90>
+	PREDECESSORS
+		_00_c,(1,) 
+	SUCCESSORS
+		res,(1,) 
+
+res, <csdl.lang.output.Output object at 0x7fcee83f3d60>, ThrustDrag.res
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_d
+	SUCCESSORS
+
+_00_j, <csdl.lang.output.Output object at 0x7fcee83f3ca0>, ThrustDrag._00_j
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_i
+	SUCCESSORS
+		_00_k
+
+evaluation_pt, <csdl.lang.declared_variable.DeclaredVariable object at 0x7fcee83f3d30>, ThrustDrag.evaluation_pt
+	WARNING: this declared variable is not a promotion or connection. 
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+	SUCCESSORS
+		_00_g
+
+_00_g, <csdl.operations.expand.expand object at 0x7fcee83f3cd0>
+	PREDECESSORS
+		evaluation_pt,(3,) 
+	SUCCESSORS
+		_00_h,(20, 100, 3) 
+
+_00_h, <csdl.lang.output.Output object at 0x7fcee83f3d00>, ThrustDrag._00_h
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_g
+	SUCCESSORS
+		_00_i
+
+_00_l, <csdl.lang.output.Output object at 0x7fcee83f3c10>, ThrustDrag._00_l
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_k
+	SUCCESSORS
+		_00_m
+
+_00_m, <csdl.operations.sum.sum object at 0x7fcee83f3be0>
+	PREDECESSORS
+		_00_l,(20, 100, 3) 
+	SUCCESSORS
+		_00_n,(20, 3) 
+
+_00_n, <csdl.lang.output.Output object at 0x7fcee83f3bb0>, ThrustDrag._00_n
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_m
+	SUCCESSORS
+		_00_p
+
+_00_p, <csdl.operations.decompose.decompose object at 0x7fcee83f3b20>
+	PREDECESSORS
+		_00_n,(20, 3) 
+	SUCCESSORS
+		_00_q,(20, 1) 
+		_00_u,(20, 1) 
+		_00_z,(20, 1) 
+
+_00_q, <csdl.lang.output.Output object at 0x7fcee83f3ac0>, ThrustDrag._00_q
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_p
+	SUCCESSORS
+		_00_r
+
+_00_u, <csdl.lang.output.Output object at 0x7fcee83f3a60>, ThrustDrag._00_u
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_p
+	SUCCESSORS
+		_00_v
+
+_00_z, <csdl.lang.output.Output object at 0x7fcee83f38e0>, ThrustDrag._00_z
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_p
+	SUCCESSORS
+		_00_A
+
+_00_r, <csdl.operations.linear_combination.linear_combination object at 0x7fcee83f3b50>
+	PREDECESSORS
+		_00_q,(20, 1) 
+	SUCCESSORS
+		_00_s,(20, 1) 
+
+_00_v, <csdl.operations.linear_combination.linear_combination object at 0x7fcee83f3af0>
+	PREDECESSORS
+		_00_u,(20, 1) 
+	SUCCESSORS
+		_00_w,(20, 1) 
+
+_00_A, <csdl.operations.linear_combination.linear_combination object at 0x7fcee83f39d0>
+	PREDECESSORS
+		_00_z,(20, 1) 
+	SUCCESSORS
+		_00_B,(20, 1) 
+
+_00_s, <csdl.lang.output.Output object at 0x7fcee83f3a90>, ThrustDrag._00_s
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_r
+	SUCCESSORS
+		_00_t
+
+_00_t, <csdl.operations.indexed_passthrough.indexed_passthrough object at 0x7fcee83f3a30>
+	PREDECESSORS
+		_00_s,(20, 1) 
+		_00_y,(20, 1) 
+		_00_B,(20, 1) 
+	SUCCESSORS
+		M,(20, 3) 
+
+M, <csdl.lang.concatenation.Concatenation object at 0x7fcee83f3b80>, ThrustDrag.M
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_t
+	SUCCESSORS
+
+_00_w, <csdl.lang.output.Output object at 0x7fcee83f39a0>, ThrustDrag._00_w
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_v
+	SUCCESSORS
+		_00_x
+
+_00_x, <csdl.operations.power_combination.power_combination object at 0x7fcee83f3a00>
+	PREDECESSORS
+		_00_w,(20, 1) 
+	SUCCESSORS
+		_00_y,(20, 1) 
+
+_00_y, <csdl.lang.output.Output object at 0x7fcee83f3970>, ThrustDrag._00_y
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_x
+	SUCCESSORS
+		_00_t
+
+_00_B, <csdl.lang.output.Output object at 0x7fcee83f3910>, ThrustDrag._00_B
+	CONNECTED TO: False
+	PROMOTED TO: False
+	PREDECESSORS
+		_00_A
+	SUCCESSORS
+		_00_t
