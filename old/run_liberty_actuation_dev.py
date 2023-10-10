@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 plt.rcParams.update(plt.rcParamsDefault)
 import csdl
 from mirror import Mirror
-from rotate import Rotate
+from old.rotate import Rotate
 from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from mpl_toolkits.mplot3d import proj3d
 from caddee.core.caddee_core.system_representation.prescribed_actuations import PrescribedRotation

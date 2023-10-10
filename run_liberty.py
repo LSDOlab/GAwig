@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 plt.rcParams.update(plt.rcParamsDefault)
 import csdl
 from mirror import Mirror
-from rotate import Rotate
 from rotor import Rotor
 from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from mpl_toolkits.mplot3d import proj3d
@@ -201,10 +200,10 @@ wig_model.register_output(ac_states)
 
 
 
-nt = 1
+nt = 4
 dt = 0.001
 num_blades = 6
-prop_1_model = Rotor(component=prop_1, mesh_name=p1b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt)
+prop_1_model = Rotor(component=prop_1, mesh_name=p1b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=-1)
 prop_1_model.set_module_input('rpm', val=1000, dv_flag=True)
 prop_1_mesh = prop_1_model.evaluate()
 wig_model.register_output(prop_1_mesh)

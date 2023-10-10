@@ -16,6 +16,7 @@ class Rotor(m3l.ExplicitOperation):
         self.parameters.declare('nc')
         self.parameters.declare('nt')
         self.parameters.declare('dt')
+        self.parameters.declare('dir')
 
     def assign_attributes(self):
         self.component = self.parameters['component']
@@ -26,6 +27,7 @@ class Rotor(m3l.ExplicitOperation):
         self.nc = self.parameters['nc']
         self.nt = self.parameters['nt']
         self.dt = self.parameters['dt']
+        self.dir = self.parameters['dir']
 
     def compute(self):
         mesh_name = self.parameters['mesh_name']
@@ -34,13 +36,15 @@ class Rotor(m3l.ExplicitOperation):
         nc = self.parameters['nc']
         nt = self.parameters['nt']
         dt = self.parameters['dt']
+        dir = self.parameters['dir']
         csdl_model = RotorCSDL(module=self,
                                mesh_name=mesh_name,
                                num_blades=num_blades,
                                ns=ns,
                                nc=nc,
                                nt=nt,
-                               dt=dt,)
+                               dt=dt,
+                               dir=dir,)
         return csdl_model
 
     def evaluate(self):
@@ -68,6 +72,7 @@ class RotorCSDL(ModuleCSDL):
         self.parameters.declare('nc', default=2)
         self.parameters.declare('nt', default=2)
         self.parameters.declare('dt', default=0.001)
+        self.parameters.declare('dir', default=1)
  
     def define(self):
         mesh_name = self.parameters['mesh_name']
@@ -76,6 +81,7 @@ class RotorCSDL(ModuleCSDL):
         nc = self.parameters['nc']
         nt = self.parameters['nt']
         dt = self.parameters['dt']
+        dir = self.parameters['dir']
 
 
         rad_per_blade = 2*np.pi/num_blades
@@ -104,7 +110,7 @@ class RotorCSDL(ModuleCSDL):
             set_angle = rad_per_blade*i
 
             for j in range(nt):
-                angle = set_angle + rad_per_dt*j
+                angle = set_angle + rad_per_dt*j*dir
 
                 rot_mat = self.create_output('rot_mat_' + str(i) + str(j), shape=(3,3), val=0)
                 cos_theta, sin_theta = csdl.cos(angle), csdl.sin(angle)
