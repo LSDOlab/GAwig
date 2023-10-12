@@ -21,7 +21,7 @@ from caddee.core.caddee_core.system_representation.prescribed_actuations import 
 
 
 
-file_name = 'GAwig/LibertyLifter2.stp'
+file_name = 'GAwig/LibertyLifter3.stp'
 caddee = cd.CADDEE()
 caddee.system_model = system_model = cd.SystemModel()
 caddee.system_representation = sys_rep = cd.SystemRepresentation()
@@ -158,21 +158,35 @@ sys_rep.add_output(htail_vlm_mesh_name, htail_camber_surface)
 # prop 1 blade 1 mesh:
 num_spanwise_prop= 6
 num_chordwise_prop = 2
-p1b1_leading_edge = prop_1.project(np.linspace(np.array([39.803, -88.35, 5.185]), np.array([39.901 - 0.5, -93.75 - 0.2, 6.528 + 0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
-p1b1_trailing_edge = prop_1.project(np.linspace(np.array([40.197, -88.35, 4.815]), np.array([40.171 + 0.75, -93.259 - 0.75, 4.347 - 0.75]), num_spanwise_prop), direction=np.array([0., 0., -1.]), plot=False)
+p1b1_leading_edge = prop_1.project(np.linspace(np.array([39.754, -88.35, 4.769]), np.array([39.848-0.3, -93.75, 4.342-0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+p1b1_trailing_edge = prop_1.project(np.linspace(np.array([40.246, -88.35, 5.231]), np.array([40.152+0.3, -93.75, 5.658+0.5]), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
 p1b1_chord_surface = am.linspace(p1b1_leading_edge, p1b1_trailing_edge, num_chordwise_prop)
 # spatial_rep.plot_meshes([p1b1_chord_surface])
 p1b1_mesh_name = 'p1b1_mesh'
 sys_rep.add_output(p1b1_mesh_name, p1b1_chord_surface)
 
 # prop 1 hub:
-hub_back = prop_1.project(np.array([40., -87., 5.]))
-hub_front = prop_1.project(np.array([37., -87., 5.]))
+hub_back, hub_front = prop_1.project(np.array([40., -87., 5.])), prop_1.project(np.array([37., -87., 5.]))
 prop1_vec = hub_front - hub_back
-p1_vector_name = 'p1_vector'
-p1_point_name = 'p1_point'
+p1_vector_name, p1_point_name = 'p1_vector', 'p1_point'
 sys_rep.add_output(p1_vector_name, prop1_vec)
 sys_rep.add_output(p1_point_name, hub_back)
+
+
+# prop 2 blade 1 mesh:
+p2b1_leading_edge = prop_2.project(np.linspace(np.array([39.754, -88.35+20, 4.769]), np.array([39.848-0.3, -93.75+20, 4.342-0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+p2b1_trailing_edge = prop_2.project(np.linspace(np.array([40.246, -88.35+20, 5.231]), np.array([40.152+0.3, -93.75+20, 5.658+0.5]), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
+p2b1_chord_surface = am.linspace(p2b1_leading_edge, p2b1_trailing_edge, num_chordwise_prop)
+# spatial_rep.plot_meshes([p2b1_chord_surface])
+p2b1_mesh_name = 'p2b1_mesh'
+sys_rep.add_output(p2b1_mesh_name, p2b1_chord_surface)
+
+# prop 2 hub:
+p2_hub_back, p2_hub_front = prop_2.project(np.array([40., -87.+20, 5.])), prop_2.project(np.array([37., -87.+20, 5.]))
+prop2_vec = p2_hub_front - p2_hub_back
+p2_vector_name, p2_point_name = 'p2_vector', 'p2_point'
+sys_rep.add_output(p2_vector_name, prop2_vec)
+sys_rep.add_output(p2_point_name, p2_hub_back)
 
 
 
@@ -208,6 +222,11 @@ prop_1_model.set_module_input('rpm', val=1000, dv_flag=True)
 prop_1_mesh = prop_1_model.evaluate()
 wig_model.register_output(prop_1_mesh)
 
+prop_2_model = Rotor(component=prop_2, mesh_name=p2b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=-1)
+prop_2_model.set_module_input('rpm', val=1000, dv_flag=True)
+prop_2_mesh = prop_2_model.evaluate()
+wig_model.register_output(prop_2_mesh)
+
 
 
 # add the cruise m3l model to the cruise condition
@@ -228,6 +247,15 @@ caddee_csdl_model.connect('p1_vector',
 caddee_csdl_model.connect('p1_point', 
                           'system_model.wig.wig.wig.p1b1_mesh_rotor.point')
 
+caddee_csdl_model.connect('p2b1_mesh', 
+                          'system_model.wig.wig.wig.p2b1_mesh_rotor.p2b1_mesh')
+
+caddee_csdl_model.connect('p2_vector', 
+                          'system_model.wig.wig.wig.p2b1_mesh_rotor.vector')
+
+caddee_csdl_model.connect('p2_point', 
+                          'system_model.wig.wig.wig.p2b1_mesh_rotor.point')
+
 
 
 sim = Simulator(caddee_csdl_model, analytics=True)
@@ -240,6 +268,7 @@ sim.run()
 # plot the meshes to see if stuff is working:
 original = sim['p1b1_mesh']
 p1_mesh = sim['system_model.wig.wig.wig.p1b1_mesh_rotor.rotor']
+p2_mesh = sim['system_model.wig.wig.wig.p2b1_mesh_rotor.rotor']
 
 
 
@@ -254,6 +283,7 @@ for i in range(num_blades):
     for j in range(nt):
         #ax.plot_trisurf(p1_mesh[i,j,:,:,0].flatten(), p1_mesh[i,j,:,:,1].flatten(), p1_mesh[i,j,:,:,2].flatten(), color='blue')
         ax.plot_trisurf(p1_mesh[i,j,:,:,0].flatten(), p1_mesh[i,j,:,:,1].flatten(), p1_mesh[i,j,:,:,2].flatten())
+        ax.plot_trisurf(p2_mesh[i,j,:,:,0].flatten(), p2_mesh[i,j,:,:,1].flatten(), p2_mesh[i,j,:,:,2].flatten())
 
 plt.gca().set_aspect('equal', adjustable='box')
 plt.show()
