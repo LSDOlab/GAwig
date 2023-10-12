@@ -10,13 +10,13 @@ from generate_ground_effect_mesh import generate_ground_effect_mesh
 ########################################
 # define mesh here
 ########################################
-nx = 19
-ny = 9 
+nx = 29
+ny = 5
 AR = 8
 span = 12
 chord = span/AR
-num_nodes = 10
-h = 1
+num_nodes = 20
+h = 100
 
 nt = num_nodes+1
 alpha = 15
@@ -34,9 +34,9 @@ wig_model = m3l.Model()
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.21623, dv_flag=True, lower=0.1, upper=0.3)
+wig_condition.set_module_input(name='mach_number', val=0.03, dv_flag=True, lower=0.1, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
-wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0), dv_flag=False, lower=np.deg2rad(-10), upper=np.deg2rad(10))
+wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(alpha), dv_flag=False, lower=np.deg2rad(-10), upper=np.deg2rad(10))
 wig_condition.set_module_input(name='flight_path_angle', val=0)
 wig_condition.set_module_input(name='roll_angle', val=0)
 wig_condition.set_module_input(name='yaw_angle', val=0)
@@ -69,13 +69,13 @@ mesh_dict = {
     "chord_cos_spacing": False,
 }
 mesh_temp = generate_mesh(mesh_dict)
-mesh, _ = generate_ground_effect_mesh(mesh_temp, alpha, h)
+mesh, _ = generate_ground_effect_mesh(mesh_temp, alpha, h, test_plot=False)
 
 mesh_val = np.zeros((num_nodes, nx, ny, 3))
 for j in range(num_nodes):
-    mesh_val[j, :, :, 0] = mesh.copy()[:, :, 0]
-    mesh_val[j, :, :, 1] = mesh.copy()[:, :, 1]
-    mesh_val[j, :, :, 2] = mesh.copy()[:, :, 2]
+    mesh_val[j, :, :, 0] = mesh_temp.copy()[:, :, 0]
+    mesh_val[j, :, :, 1] = mesh_temp.copy()[:, :, 1]
+    mesh_val[j, :, :, 2] = mesh_temp.copy()[:, :, 2]
 
 uvlm_parameters.append(('wing', True, mesh_val))
 surface_names = [
@@ -85,7 +85,7 @@ surface_shapes = [
     (nx,ny,3)
 ]
 
-h_stepsize = delta_t = 1/128
+h_stepsize = delta_t = 1/4
 
 initial_conditions = []
 for i in range(len(surface_names)):
