@@ -9,7 +9,7 @@ from python_csdl_backend import Simulator
 from generate_ground_effect_mesh import generate_ground_effect_mesh
 
 # region inputs
-nx, ny = 3, 11
+nx, ny = 19, 5
 num_nodes = 1
 
 h = 2.
@@ -18,7 +18,7 @@ mach = 0.02
 sos = 340.3
 v_inf_scalar = mach*sos
 
-pitch_scalar = 5. # degrees
+pitch_scalar = 15. # degrees
 # endregion
 
 fluid_problem = FluidProblem(solver_option='VLM', problem_type='fixed_wake')
@@ -31,16 +31,20 @@ theta = np.deg2rad(np.ones((num_nodes,1))*pitch_scalar)
 print(theta)
 
 # acstates_model = CreateACSatesModel(v_inf=v_inf, num_nodes=num_nodes)
-acstates_model = CreateACSatesModel(v_inf=v_inf, theta=np.zeros((num_nodes,1))*180/np.pi, num_nodes=num_nodes)
+acstates_model = CreateACSatesModel(v_inf=v_inf, theta=np.zeros((num_nodes,1))*np.deg2rad(pitch_scalar), num_nodes=num_nodes)
 model.add(acstates_model, 'ac_states_model')
 # endregion
 
 # region VLM meshes
+span = 12.
+AR = 8.
+chord = span/AR
+
 surface_names, surface_shapes = [], []
 
 mesh_dict = {
-    "num_y": ny, "num_x": nx, "wing_type": "rect", "symmetry": False, "span": 10.0,
-    "chord": 4, "span_cos_sppacing": 1.0, "chord_cos_sacing": 1.0, # 'offset': np.array([0., 0., h])
+    "num_y": ny, "num_x": nx, "wing_type": "rect", "symmetry": False, "span": span,
+    "chord": chord, "span_cos_sppacing": 1.0, "chord_cos_sacing": 1.0, # 'offset': np.array([0., 0., h])
 }
 
 wing_mesh_temp = generate_mesh(mesh_dict) # temporary wing mesh
@@ -52,9 +56,9 @@ surface_names.append('wing')
 surface_shapes.append((num_nodes, nx, ny, 3))
 wing = model.create_input('wing', val=np.einsum('i,jkl->ijkl', np.ones((num_nodes)), wing_mesh))
 
-surface_names.append('wing_image')
-surface_shapes.append((num_nodes, nx, ny, 3))
-wing_image = model.create_input('wing_image', val=np.einsum('i,jkl->ijkl', np.ones((num_nodes)), wing_image_mesh))
+# surface_names.append('wing_image')
+# surface_shapes.append((num_nodes, nx, ny, 3))
+# wing_image = model.create_input('wing_image', val=np.einsum('i,jkl->ijkl', np.ones((num_nodes)), wing_image_mesh))
 
 # endregion
 
