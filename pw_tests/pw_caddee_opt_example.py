@@ -1,4 +1,4 @@
-from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, ProfileOpModel, ProfileOpModel2, PostProcessor
+from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, ProfileOpModel, ProfileOpModel2
 import python_csdl_backend
 from VAST.utils.generate_mesh import *
 import m3l
@@ -15,7 +15,7 @@ chord = 1
 span = 12
 num_nodes = 10
 
-num_surfaces = 4
+num_surfaces = 1
 surface_offset = [0,0,2]
 
 nt = num_nodes+1
@@ -43,9 +43,9 @@ wig_model = m3l.Model()
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.21623, dv_flag=True, lower=0.1, upper=0.3)
+wig_condition.set_module_input(name='mach_number', val=0.21623, dv_flag=False, lower=0.1, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
-wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(5), dv_flag=False, lower=np.deg2rad(-10), upper=np.deg2rad(10))
+wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(5), dv_flag=True, lower=np.deg2rad(-10), upper=np.deg2rad(10))
 wig_condition.set_module_input(name='flight_path_angle', val=0)
 wig_condition.set_module_input(name='roll_angle', val=0)
 wig_condition.set_module_input(name='yaw_angle', val=0)
@@ -105,6 +105,7 @@ for i in range(len(surface_names)):
     nx = surface_shape[0]
     ny = surface_shape[1]
     initial_conditions.append((gamma_w_0_name, np.zeros((num_nodes-1, ny - 1))))
+
     initial_conditions.append((wake_coords_0_name, np.zeros((num_nodes-1, ny, 3))))
 
 # profile_outputs = []
@@ -126,7 +127,10 @@ submodel = ProfileOpModel(
     delta_t = h_stepsize,
     nt = num_nodes + 1
 )
-pp_vars = [('panel_forces', (num_nodes-1, system_size, 3)), ('eval_pts_all', (num_nodes-1, system_size, 3))]
+# pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
+pp_vars = [('wing0_L', (num_nodes, 1))]
+
+
 
 model = m3l.DynamicModel()
 uvlm = VASTSolverUnsteady(num_nodes=num_nodes, surface_names=surface_names, surface_shapes=surface_shapes, delta_t=delta_t, nt=num_nodes+1)
@@ -138,7 +142,7 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
                             parameters=uvlm_parameters,
                             int_naming=('op_',''),
                             integrator='ForwardEuler',
-                            approach='time-marching checkpointing',
+                            approach='time-marching',
                             profile_outputs=None,
                             profile_system=None,
                             profile_parameters=None,
@@ -146,62 +150,39 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
                             pp_vars=pp_vars)
 uvlm_op = model.assemble(return_operation=True)
 
-panel_forces, eval_pts, int1, _, _, _, _, _, _, _ = uvlm_op.evaluate()
+lift, int1, int2 = uvlm_op.evaluate()
+# panel_forces, eval_pts, int1, _, _, _, _, _, _, _ = uvlm_op.evaluate()
 # int1, int2, _, _, _, _, _, _ = uvlm_op.evaluate()
 
-
 overmodel = m3l.Model()
-overmodel.register_output(panel_forces)
-model_csdl = overmodel.assemble()
+overmodel.register_output(lift)
+model_csdl = overmodel.assemble() 
+
+lift = model_csdl.create_input('lift', shape=(num_nodes, 1))
+model_csdl.connect('operation.post_processor.LiftDrag.wing0_L', 'lift')
+lift_last = csdl.pnorm(lift[-1,0])
+model_csdl.register_output('lift_norm', lift_last)
+
+model_csdl.add_objective('lift_norm', scaler=1e-3)
 
 
 
 sim = python_csdl_backend.Simulator(model_csdl, analytics=True)
 
 sim.run()
+# sim.check_totals()
+# exit()
 
-# print(sim['operation.post_processor.LiftDrag.panel_forces'])
-print(sim['operation.post_processor.LiftDrag.wing0_C_L'])
 
+from modopt.scipy_library import SLSQP
+from modopt.csdl_library import CSDLProblem
 
-if True:
-    from vedo import dataurl, Plotter, Mesh, Video, Points, Axes, show
-    axs = Axes(
-        xrange=(0, 35),
-        yrange=(-10, 10),
-        zrange=(-3, 4),
-    )
-    video = Video("uvlm_m3l_test.gif", duration=10, backend='ffmpeg')
-    for i in range(nt - 1):
-        vp = Plotter(
-            bg='beige',
-            bg2='lb',
-            # axes=0,
-            #  pos=(0, 0),
-            offscreen=False,
-            interactive=1)
-        # Any rendering loop goes here, e.g.:
-        for surface_name in surface_names:
-            surface_name = surface_name
-            vps = Points(np.reshape(sim['operation.' + surface_name][i, :, :, :], (-1, 3)),
-                        r=8,
-                        c='red')
-            vp += vps
-            vp += __doc__
-            vps = Points(np.reshape(sim['operation.' + 'op_' + surface_name+'_wake_coords'][i, 0:i, :, :],
-                                    (-1, 3)),
-                        r=8,
-                        c='blue')
-            vp += vps
-            vp += __doc__
-        # cam1 = dict(focalPoint=(3.133, 1.506, -3.132))
-        # video.action(cameras=[cam1, cam1])
-        vp.show(axs, elevation=-60, azimuth=-0,
-                axes=False, interactive=False)  # render the scene
-        video.add_frame()  # add individual frame
-        # time.sleep(0.1)
-        # vp.interactive().close()
-        vp.close_window()
-    vp.close_window()
-    video.close()  # merge all the recorded frames
+prob = CSDLProblem(problem_name='pav', simulator=sim)
+optimizer = SLSQP(prob, maxiter=50, ftol=1E-5)
+
+optimizer.solve()
+optimizer.print_results()
+
+print(sim['operation.input_model.wig_ac_states_operation.wig_pitch_angle'])
+print(sim['operation.post_processor.LiftDrag.wing0_L'])
 
