@@ -119,7 +119,7 @@ for i in range(len(surface_names)):
 #         'nt': nt
 #     }
 
-submodel = ProfileOpModel(
+submodel = PostProcessor(
     num_nodes = num_nodes-1,
     surface_names = surface_names,
     surface_shapes = surface_shapes,
@@ -161,10 +161,10 @@ sim = python_csdl_backend.Simulator(model_csdl, analytics=True)
 sim.run()
 
 # print(sim['operation.post_processor.LiftDrag.panel_forces'])
-print(sim['operation.post_processor.LiftDrag.wing0_C_L'])
+print(sim['operation.post_processor.ThrustDrag.wing0_C_L'])
 
 
-if True:
+if False:
     from vedo import dataurl, Plotter, Mesh, Video, Points, Axes, show
     axs = Axes(
         xrange=(0, 35),

@@ -1,4 +1,4 @@
-from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, ProfileOpModel, ProfileOpModel2
+from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, ProfileOpModel, ProfileOpModel2, PostProcessor
 import python_csdl_backend
 from VAST.utils.generate_mesh import *
 import m3l
@@ -15,7 +15,7 @@ chord = 1
 span = 12
 num_nodes = 10
 
-num_surfaces = 1
+num_surfaces = 4
 surface_offset = [0,0,2]
 
 nt = num_nodes+1
@@ -120,7 +120,7 @@ for i in range(len(surface_names)):
 #         'nt': nt
 #     }
 
-submodel = ProfileOpModel(
+submodel = PostProcessor(
     num_nodes = num_nodes-1,
     surface_names = surface_names,
     surface_shapes = surface_shapes,
@@ -128,7 +128,9 @@ submodel = ProfileOpModel(
     nt = num_nodes + 1
 )
 # pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
-pp_vars = [('wing0_L', (num_nodes, 1))]
+pp_vars = []
+for name in surface_names:
+    pp_vars.append((name+'_L', (num_nodes, 1)))
 
 
 
@@ -150,17 +152,21 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
                             pp_vars=pp_vars)
 uvlm_op = model.assemble(return_operation=True)
 
-lift, int1, int2 = uvlm_op.evaluate()
-# panel_forces, eval_pts, int1, _, _, _, _, _, _, _ = uvlm_op.evaluate()
-# int1, int2, _, _, _, _, _, _ = uvlm_op.evaluate()
+lift_vars = uvlm_op.evaluate()[0:num_surfaces]
 
 overmodel = m3l.Model()
-overmodel.register_output(lift)
+for var in lift_vars:
+    overmodel.register_output(var)
 model_csdl = overmodel.assemble() 
 
-lift = model_csdl.create_input('lift', shape=(num_nodes, 1))
-model_csdl.connect('operation.post_processor.LiftDrag.wing0_L', 'lift')
-lift_last = csdl.pnorm(lift[-1,0])
+last_lifts = model_csdl.create_output('last_lifts', shape=(num_surfaces,1))
+i = 0
+for name in surface_names:
+    lift = model_csdl.create_input(name+'_lift', shape=(num_nodes, 1))
+    model_csdl.connect('operation.post_processor.ThrustDrag.'+name+'_L', name+'_lift')
+    last_lifts[i,0] = lift[-1,0]
+    i += 1
+lift_last = csdl.pnorm(last_lifts)
 model_csdl.register_output('lift_norm', lift_last)
 
 model_csdl.add_objective('lift_norm', scaler=1e-3)
@@ -184,5 +190,5 @@ optimizer.solve()
 optimizer.print_results()
 
 print(sim['operation.input_model.wig_ac_states_operation.wig_pitch_angle'])
-print(sim['operation.post_processor.LiftDrag.wing0_L'])
+print(sim['last_lifts'])
 
