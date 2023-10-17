@@ -1,4 +1,4 @@
-from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, ProfileOpModel, ProfileOpModel2
+from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, ProfileOpModel, ProfileOpModel2, PostProcessor
 import python_csdl_backend
 from VAST.utils.generate_mesh import *
 import m3l
@@ -10,23 +10,23 @@ from generate_ground_effect_mesh import generate_ground_effect_mesh
 ########################################
 # define mesh here
 ########################################
-nx = 29
-ny = 5
+nx = 5
+ny = 13
 AR = 8
-span = 12
+span = 8
 chord = span/AR
-num_nodes = 20
-h = 100
+num_nodes = 10
+h = 0
 
 nt = num_nodes+1
 alpha = 15
 system_size = 0
 for i in range(2):
-    system_size += (nx - 1) * (ny - 1)
+    system_size += nx*ny
 
-u_vel = np.ones(num_nodes).reshape(num_nodes,1)*10
-w_vel = np.zeros((num_nodes, 1))
-theta_val = np.zeros((num_nodes, 1))*np.deg2rad(alpha)
+# u_vel = np.ones(num_nodes).reshape(num_nodes,1)*1
+# w_vel = np.zeros((num_nodes, 1))
+# theta_val = np.zeros((num_nodes, 1))*np.deg2rad(alpha)
 
 # design scenario
 design_scenario = cd.DesignScenario(name='wig')
@@ -34,7 +34,7 @@ wig_model = m3l.Model()
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.03, dv_flag=True, lower=0.1, upper=0.3)
+wig_condition.set_module_input(name='mach_number', val=0.05, dv_flag=True, lower=0.1, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(alpha), dv_flag=False, lower=np.deg2rad(-10), upper=np.deg2rad(10))
 wig_condition.set_module_input(name='flight_path_angle', val=0)
@@ -95,9 +95,9 @@ for i in range(len(surface_names)):
     surface_shape = surface_shapes[i]
     nx = surface_shape[0]
     ny = surface_shape[1]
-    initial_conditions.append((gamma_w_0_name, np.zeros((num_nodes, ny - 1))))
+    initial_conditions.append((gamma_w_0_name, np.zeros((num_nodes-1, ny - 1))))
 
-    initial_conditions.append((wake_coords_0_name, np.zeros((num_nodes, ny, 3))))
+    initial_conditions.append((wake_coords_0_name, np.zeros((num_nodes-1, ny, 3))))
 
 # profile_outputs = []
 
@@ -116,20 +116,40 @@ submodel = ProfileOpModel(
     surface_names = surface_names,
     surface_shapes = surface_shapes,
     delta_t = h_stepsize,
-    nt = num_nodes + 1
+    nt = num_nodes + 1,
+    # frame='inertial'
 )
-pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3)), ('wing_C_L', (num_nodes,))]
+# pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3)), ('wing_C_L', (num_nodes,))]
+
+submodel = PostProcessor(
+    num_nodes = num_nodes,
+    surface_names = surface_names,
+    surface_shapes = surface_shapes,
+    delta_t = h_stepsize,
+    nt = num_nodes + 1,
+    symmetry=True
+)
+# pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
+pp_vars = [('wing_C_L', (num_nodes-1, 1))]
 
 model = m3l.DynamicModel()
-uvlm = VASTSolverUnsteady(num_nodes=num_nodes, surface_names=surface_names, surface_shapes=surface_shapes, delta_t=delta_t, nt=num_nodes+1)
+uvlm = VASTSolverUnsteady(
+    num_nodes=num_nodes, 
+    surface_names=surface_names, 
+    surface_shapes=surface_shapes, 
+    delta_t=delta_t, 
+    nt=num_nodes+1,
+    # frame='inertial'
+)
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
 model.set_dynamic_options(initial_conditions=initial_conditions,
                             num_times=num_nodes,
                             h_stepsize=delta_t,
                             parameters=uvlm_parameters,
+                            int_naming=('op_',''),
                             integrator='ForwardEuler',
-                            approach='time-marching',
+                            approach='time-marching checkpointing',
                             profile_outputs=None,
                             profile_system=None,
                             profile_parameters=None,
@@ -137,12 +157,12 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
                             pp_vars=pp_vars)
 uvlm_op = model.assemble(return_operation=True)
 
-panel_forces, eval_pts, wing_C_L, int1, _ = uvlm_op.evaluate()
+wing_C_L, int1, _ = uvlm_op.evaluate()
 # int1, int2, _, _, _, _, _, _ = uvlm_op.evaluate()
 
 
 overmodel = m3l.Model()
-overmodel.register_output(panel_forces)
+# overmodel.register_output(panel_forces)
 overmodel.register_output(wing_C_L)
 model_csdl = overmodel.assemble()
 
@@ -152,9 +172,19 @@ sim = python_csdl_backend.Simulator(model_csdl, analytics=True)
 
 sim.run()
 
-print(sim['operation.post_processor.LiftDrag.panel_forces'])
+wing_CL = sim['operation.post_processor.ThrustDrag.wing_C_L']
+wing_CDi = sim['operation.post_processor.ThrustDrag.wing_C_D_i']
 
-if True:
+print('===============')
+print('wing CL: ')
+print(wing_CL)
+print('===============')
+print('wing CDi: ')
+print(wing_CDi)
+
+# print(sim['operation.post_processor.LiftDrag.panel_forces'])
+
+if False:
     from vedo import dataurl, Plotter, Mesh, Video, Points, Axes, show
     axs = Axes(
         xrange=(0, 35),
@@ -172,13 +202,13 @@ if True:
             interactive=1)
         # Any rendering loop goes here, e.g.:
         for surface_name in surface_names:
-            surface_name = 'operation.' + surface_name
-            vps = Points(np.reshape(sim[surface_name][i, :, :, :], (-1, 3)),
+            # surface_name = 'operation.' + surface_name
+            vps = Points(np.reshape(sim['operation.' + surface_name][i, :, :, :], (-1, 3)),
                         r=8,
                         c='red')
             vp += vps
             vp += __doc__
-            vps = Points(np.reshape(sim[surface_name+'_wake_coords_integrated'][i, 0:i, :, :],
+            vps = Points(np.reshape(sim['operation.prob.op_'+surface_name+'_wake_coords'][i, 0:i, :, :],
                                     (-1, 3)),
                         r=8,
                         c='blue')
