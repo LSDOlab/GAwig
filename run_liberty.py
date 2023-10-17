@@ -213,12 +213,76 @@ p4b1_chord_surface = am.linspace(p4b1_leading_edge, p4b1_trailing_edge, num_chor
 p4b1_mesh_name = 'p4b1_mesh'
 sys_rep.add_output(p4b1_mesh_name, p4b1_chord_surface)
 
-# prop 3 hub:
+# prop 4 hub:
 p4_hub_back, p4_hub_front = prop_4.project(np.array([40., -87.+40+38, 5.])), prop_4.project(np.array([37., -87.+40+38, 5.]))
 prop4_vec = p4_hub_front - p4_hub_back
 p4_vector_name, p4_point_name = 'p4_vector', 'p4_point'
 sys_rep.add_output(p4_vector_name, prop4_vec)
 sys_rep.add_output(p4_point_name, p4_hub_back)
+
+
+# prop 5 blade 1 mesh:
+p5b1_leading_edge = prop_5.project(np.linspace(np.array([39.754, -88.35+40+38+18, 4.769]), np.array([39.848-0.3, -93.75+40+38+18, 4.342-0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+p5b1_trailing_edge = prop_5.project(np.linspace(np.array([40.246, -88.35+40+38+18, 5.231]), np.array([40.152+0.3, -93.75+40+38+18, 5.658+0.5]), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
+p5b1_chord_surface = am.linspace(p5b1_leading_edge, p5b1_trailing_edge, num_chordwise_prop)
+# spatial_rep.plot_meshes([p5b1_chord_surface])
+p5b1_mesh_name = 'p5b1_mesh'
+sys_rep.add_output(p5b1_mesh_name, p5b1_chord_surface)
+
+# prop 5 hub:
+p5_hub_back, p5_hub_front = prop_5.project(np.array([40., -87.+40+38+18, 5.])), prop_5.project(np.array([37., -87.+40+38+18, 5.]))
+prop5_vec = p5_hub_front - p5_hub_back
+p5_vector_name, p5_point_name = 'p5_vector', 'p5_point'
+sys_rep.add_output(p5_vector_name, prop5_vec)
+sys_rep.add_output(p5_point_name, p5_hub_back)
+
+
+# prop 6 blade 1 mesh:
+p6b1_leading_edge = prop_6.project(np.linspace(np.array([39.754, -88.35+40+38+18+38, 4.769]), np.array([39.848-0.3, -93.75+40+38+18+38, 4.342-0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+p6b1_trailing_edge = prop_6.project(np.linspace(np.array([40.246, -88.35+40+38+18+38, 5.231]), np.array([40.152+0.3, -93.75+40+38+18+38, 5.658+0.5]), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
+p6b1_chord_surface = am.linspace(p6b1_leading_edge, p6b1_trailing_edge, num_chordwise_prop)
+# spatial_rep.plot_meshes([p6b1_chord_surface])
+p6b1_mesh_name = 'p6b1_mesh'
+sys_rep.add_output(p6b1_mesh_name, p6b1_chord_surface)
+
+# prop 6 hub:
+p6_hub_back, p6_hub_front = prop_6.project(np.array([40., -87.+40+38+18+38, 5.])), prop_6.project(np.array([37., -87.+40+38+18+38, 5.]))
+prop6_vec = p6_hub_front - p6_hub_back
+p6_vector_name, p6_point_name = 'p6_vector', 'p6_point'
+sys_rep.add_output(p6_vector_name, prop6_vec)
+sys_rep.add_output(p6_point_name, p6_hub_back)
+
+
+# prop 7 blade 1 mesh:
+p7b1_leading_edge = prop_7.project(np.linspace(np.array([39.754, -88.35+40+38+18+38+20, 4.769]), np.array([39.848-0.3, -93.75+40+38+18+38+20, 4.342-0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+p7b1_trailing_edge = prop_7.project(np.linspace(np.array([40.246, -88.35+40+38+18+38+20, 5.231]), np.array([40.152+0.3, -93.75+40+38+18+38+20, 5.658+0.5]), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
+p7b1_chord_surface = am.linspace(p7b1_leading_edge, p7b1_trailing_edge, num_chordwise_prop)
+# spatial_rep.plot_meshes([p7b1_chord_surface])
+p7b1_mesh_name = 'p7b1_mesh'
+sys_rep.add_output(p7b1_mesh_name, p7b1_chord_surface)
+
+# prop 7 hub:
+p7_hub_back, p7_hub_front = prop_7.project(np.array([40., -87.+40+38+18+38+20, 5.])), prop_7.project(np.array([37., -87.+40+38+18+38+20, 5.]))
+prop7_vec = p7_hub_front - p7_hub_back
+p7_vector_name, p7_point_name = 'p7_vector', 'p7_point'
+sys_rep.add_output(p7_vector_name, prop7_vec)
+sys_rep.add_output(p7_point_name, p7_hub_back)
+
+
+# prop 8 blade 1 mesh:
+p8b1_leading_edge = prop_8.project(np.linspace(np.array([39.754, -88.35+40+38+18+38+40, 4.769]), np.array([39.848-0.3, -93.75+40+38+18+38+40, 4.342-0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+p8b1_trailing_edge = prop_8.project(np.linspace(np.array([40.246, -88.35+40+38+18+38+40, 5.231]), np.array([40.152+0.3, -93.75+40+38+18+38+40, 5.658+0.5]), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
+p8b1_chord_surface = am.linspace(p8b1_leading_edge, p8b1_trailing_edge, num_chordwise_prop)
+# spatial_rep.plot_meshes([p8b1_chord_surface])
+p8b1_mesh_name = 'p8b1_mesh'
+sys_rep.add_output(p8b1_mesh_name, p8b1_chord_surface)
+
+# prop 8 hub:
+p8_hub_back, p8_hub_front = prop_8.project(np.array([40., -87.+40+38+18+38+40, 5.])), prop_8.project(np.array([37., -87.+40+38+18+38+40, 5.]))
+prop8_vec = p8_hub_front - p8_hub_back
+p8_vector_name, p8_point_name = 'p8_vector', 'p8_point'
+sys_rep.add_output(p8_vector_name, prop8_vec)
+sys_rep.add_output(p8_point_name, p8_hub_back)
 
 
 
@@ -269,6 +333,26 @@ prop_4_model.set_module_input('rpm', val=1000, dv_flag=True)
 prop_4_mesh = prop_4_model.evaluate()
 wig_model.register_output(prop_4_mesh)
 
+prop_5_model = Rotor(component=prop_5, mesh_name=p5b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=1)
+prop_5_model.set_module_input('rpm', val=1000, dv_flag=True)
+prop_5_mesh = prop_5_model.evaluate()
+wig_model.register_output(prop_5_mesh)
+
+prop_6_model = Rotor(component=prop_6, mesh_name=p6b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=1)
+prop_6_model.set_module_input('rpm', val=1000, dv_flag=True)
+prop_6_mesh = prop_6_model.evaluate()
+wig_model.register_output(prop_6_mesh)
+
+prop_7_model = Rotor(component=prop_7, mesh_name=p7b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=1)
+prop_7_model.set_module_input('rpm', val=1000, dv_flag=True)
+prop_7_mesh = prop_7_model.evaluate()
+wig_model.register_output(prop_7_mesh)
+
+prop_8_model = Rotor(component=prop_8, mesh_name=p8b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=1)
+prop_8_model.set_module_input('rpm', val=1000, dv_flag=True)
+prop_8_mesh = prop_8_model.evaluate()
+wig_model.register_output(prop_8_mesh)
+
 
 
 # add the cruise m3l model to the cruise condition
@@ -316,6 +400,42 @@ caddee_csdl_model.connect('p4_vector',
 caddee_csdl_model.connect('p4_point', 
                           'system_model.wig.wig.wig.p4b1_mesh_rotor.point')
 
+caddee_csdl_model.connect('p5b1_mesh', 
+                          'system_model.wig.wig.wig.p5b1_mesh_rotor.p5b1_mesh')
+
+caddee_csdl_model.connect('p5_vector', 
+                          'system_model.wig.wig.wig.p5b1_mesh_rotor.vector')
+
+caddee_csdl_model.connect('p5_point', 
+                          'system_model.wig.wig.wig.p5b1_mesh_rotor.point')
+
+caddee_csdl_model.connect('p6b1_mesh', 
+                          'system_model.wig.wig.wig.p6b1_mesh_rotor.p6b1_mesh')
+
+caddee_csdl_model.connect('p6_vector', 
+                          'system_model.wig.wig.wig.p6b1_mesh_rotor.vector')
+
+caddee_csdl_model.connect('p6_point', 
+                          'system_model.wig.wig.wig.p6b1_mesh_rotor.point')
+
+caddee_csdl_model.connect('p7b1_mesh', 
+                          'system_model.wig.wig.wig.p7b1_mesh_rotor.p7b1_mesh')
+
+caddee_csdl_model.connect('p7_vector', 
+                          'system_model.wig.wig.wig.p7b1_mesh_rotor.vector')
+
+caddee_csdl_model.connect('p7_point', 
+                          'system_model.wig.wig.wig.p7b1_mesh_rotor.point')
+
+caddee_csdl_model.connect('p8b1_mesh', 
+                          'system_model.wig.wig.wig.p8b1_mesh_rotor.p8b1_mesh')
+
+caddee_csdl_model.connect('p8_vector', 
+                          'system_model.wig.wig.wig.p8b1_mesh_rotor.vector')
+
+caddee_csdl_model.connect('p8_point', 
+                          'system_model.wig.wig.wig.p8b1_mesh_rotor.point')
+
 
 
 sim = Simulator(caddee_csdl_model, analytics=True)
@@ -326,19 +446,20 @@ sim.run()
 
 
 # plot the meshes to see if stuff is working:
-original = sim['p1b1_mesh']
+# original = sim['p1b1_mesh']
 p1_mesh = sim['system_model.wig.wig.wig.p1b1_mesh_rotor.rotor']
 p2_mesh = sim['system_model.wig.wig.wig.p2b1_mesh_rotor.rotor']
 p3_mesh = sim['system_model.wig.wig.wig.p3b1_mesh_rotor.rotor']
 p4_mesh = sim['system_model.wig.wig.wig.p4b1_mesh_rotor.rotor']
-
-
+p5_mesh = sim['system_model.wig.wig.wig.p5b1_mesh_rotor.rotor']
+p6_mesh = sim['system_model.wig.wig.wig.p6b1_mesh_rotor.rotor']
+p7_mesh = sim['system_model.wig.wig.wig.p7b1_mesh_rotor.rotor']
+p8_mesh = sim['system_model.wig.wig.wig.p8b1_mesh_rotor.rotor']
 
 
 fig = plt.figure(figsize=(8, 8))
 ax = fig.add_subplot(111, projection='3d')
-
-ax.plot_trisurf(original[:,:,0].flatten(), original[:,:,1].flatten(), original[:,:,2].flatten(), color='orange')
+# ax.plot_trisurf(original[:,:,0].flatten(), original[:,:,1].flatten(), original[:,:,2].flatten(), color='orange')
 
 for i in range(num_blades):
     for j in range(nt):
@@ -347,6 +468,10 @@ for i in range(num_blades):
         ax.plot_trisurf(p2_mesh[i,j,:,:,0].flatten(), p2_mesh[i,j,:,:,1].flatten(), p2_mesh[i,j,:,:,2].flatten())
         ax.plot_trisurf(p3_mesh[i,j,:,:,0].flatten(), p3_mesh[i,j,:,:,1].flatten(), p3_mesh[i,j,:,:,2].flatten())
         ax.plot_trisurf(p4_mesh[i,j,:,:,0].flatten(), p4_mesh[i,j,:,:,1].flatten(), p4_mesh[i,j,:,:,2].flatten())
+        ax.plot_trisurf(p5_mesh[i,j,:,:,0].flatten(), p5_mesh[i,j,:,:,1].flatten(), p5_mesh[i,j,:,:,2].flatten())
+        ax.plot_trisurf(p6_mesh[i,j,:,:,0].flatten(), p6_mesh[i,j,:,:,1].flatten(), p6_mesh[i,j,:,:,2].flatten())
+        ax.plot_trisurf(p7_mesh[i,j,:,:,0].flatten(), p7_mesh[i,j,:,:,1].flatten(), p7_mesh[i,j,:,:,2].flatten())
+        ax.plot_trisurf(p8_mesh[i,j,:,:,0].flatten(), p8_mesh[i,j,:,:,1].flatten(), p8_mesh[i,j,:,:,2].flatten())
 
 plt.gca().set_aspect('equal', adjustable='box')
 plt.show()
