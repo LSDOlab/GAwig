@@ -121,19 +121,6 @@ for i in range(len(surface_names)):
 #         'nt': nt
 #     }
 
-submodel = PostProcessor(
-    num_nodes = num_nodes-1,
-    surface_names = surface_names,
-    surface_shapes = surface_shapes,
-    delta_t = h_stepsize,
-    nt = num_nodes + 1
-)
-# pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
-pp_vars = []
-for name in surface_names:
-    pp_vars.append((name+'_L', (num_nodes, 1)))
-
-
 
 sub = True
 # sub_eval_list =    [0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,7]  # 4.9/3.78/58.8
@@ -157,7 +144,20 @@ for i in range(int(num_surfaces/4)):
 # groups = [list(range(0,num_surfaces))]
 sub_eval_list, sub_induced_list = generate_sub_lists(groups)
 
-
+submodel = PostProcessor(
+    num_nodes = num_nodes-1,
+    surface_names = surface_names,
+    surface_shapes = surface_shapes,
+    delta_t = h_stepsize,
+    nt = num_nodes + 1,
+    sub = sub,
+    sub_eval_list = sub_eval_list,
+    sub_induced_list = sub_induced_list
+)
+# pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
+pp_vars = []
+for name in surface_names:
+    pp_vars.append((name+'_L', (num_nodes, 1)))
 
 
 model = m3l.DynamicModel()
