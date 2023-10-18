@@ -48,7 +48,7 @@ class Engine(m3l.ExplicitOperation):
 class EngineCSDL(ModuleCSDL):
     def initialize(self):
         self.parameters.declare('engine_name')
-        self.parameters.declare('sfc')
+        self.parameters.declare('sfc', default=0.46)
  
     def define(self):
         engine_name = self.parameters['engine_name']
@@ -58,4 +58,13 @@ class EngineCSDL(ModuleCSDL):
 
 
         rpm = self.declare_variable('rpm', shape=(1,))
-        torque = self.declare_variable('torque', shape=(1,))
+        torque = self.declare_variable('torque', shape=(1,)) # (N-m)
+
+        omega = (rpm/60)*2*np.pi # (rad/sec)
+
+        pwr = torque*omega # (W)
+        hp = pwr/745.699872 # (hp)
+        self.register_output(engine_name + '_pwr', hp)
+
+        fuel_consumption = sfc*hp # (lb/hr)
+        self.register_output(engine_name + '_fc', fuel_consumption)
