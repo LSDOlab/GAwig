@@ -7,52 +7,6 @@ import caddee.api as cd
 from expansion_op import ac_expand
 from generate_ground_effect_mesh import generate_ground_effect_mesh
 
-def GE_sweep(nx, ny, num_nodes, AR, span, alpha_list, h_list):
-    chord = span/AR
-    nt = num_nodes + 1
-
-    num_alpha = len(alpha_list)
-    num_h = len(h_list)
-
-    CL = np.zeros((num_alpha, num_h))
-    CL_image = np.zeros_like(CL)
-    CDi = np.zeros_like(CL)
-    CDi_image = np.zeros_like(CL)
-
-    mesh_dict = {
-        "num_y": ny,
-        "num_x": nx,
-        "wing_type": "rect",
-        "symmetry": False,
-        "span": span,
-        "root_chord": chord,
-        "span_cos_spacing": False,
-        "chord_cos_spacing": False,
-    }
-    mesh_temp = generate_mesh(mesh_dict)
-
-    for alpha in alpha_list:
-        for h in h_list:
-            mesh, image_mesh = generate_ground_effect_mesh(mesh_temp, alpha, h, test_plot=False)
-
-            mesh_val = np.zeros((num_nodes, nx, ny, 3))
-            image_mesh_val = np.zeros((num_nodes, nx, ny, 3))
-            for j in range(num_nodes):
-                mesh_val[j, :, :, 0] = mesh.copy()[:, :, 0]
-                mesh_val[j, :, :, 1] = mesh.copy()[:, :, 1]
-                mesh_val[j, :, :, 2] = mesh.copy()[:, :, 2]
-
-                image_mesh_val[j, :, :, 0] = image_mesh.copy()[:, :, 0]
-                image_mesh_val[j, :, :, 1] = image_mesh.copy()[:, :, 1]
-                image_mesh_val[j, :, :, 2] = image_mesh.copy()[:, :, 2]
-
-            sim_GE = create_GE_sim(mesh=mesh_val, image_mesh=image_mesh_val)
-
-            sim_GE.run()
-            
-
-    return CL, CL_image, CDi, CDi_image
-
 def create_GE_sim(mesh, image_mesh):
     design_scenario = cd.DesignScenario(name='wig')
     wig_model = m3l.Model()
@@ -154,8 +108,60 @@ def create_GE_sim(mesh, image_mesh):
     model_csdl = overmodel.assemble()
     
 
-    sim = Simulator(model_csdl, analytics=True, name='GE')
+    sim = Simulator(model_csdl, analytics=True)
     return sim
+
+def GE_sweep(nx, ny, num_nodes, AR, span, alpha_list, h_list):
+    chord = span/AR
+    nt = num_nodes + 1
+
+    num_alpha = len(alpha_list)
+    num_h = len(h_list)
+
+    CL = np.zeros((num_nodes, num_alpha, num_h))
+    CL_image = np.zeros_like(CL)
+    CDi = np.zeros_like(CL)
+    CDi_image = np.zeros_like(CL)
+
+    mesh_dict = {
+        "num_y": ny,
+        "num_x": nx,
+        "wing_type": "rect",
+        "symmetry": False,
+        "span": span,
+        "root_chord": chord,
+        "span_cos_spacing": False,
+        "chord_cos_spacing": False,
+    }
+    mesh_temp = generate_mesh(mesh_dict)
+
+    for i, alpha in enumerate(alpha_list):
+        for j, h in enumerate(h_list):
+            mesh, image_mesh = generate_ground_effect_mesh(mesh_temp, alpha, h, test_plot=False)
+
+            mesh_val = np.zeros((num_nodes, nx, ny, 3))
+            image_mesh_val = np.zeros((num_nodes, nx, ny, 3))
+            for k in range(num_nodes):
+                mesh_val[k, :, :, 0] = mesh.copy()[:, :, 0]
+                mesh_val[k, :, :, 1] = mesh.copy()[:, :, 1]
+                mesh_val[k, :, :, 2] = mesh.copy()[:, :, 2]
+
+                image_mesh_val[k, :, :, 0] = image_mesh.copy()[:, :, 0]
+                image_mesh_val[k, :, :, 1] = image_mesh.copy()[:, :, 1]
+                image_mesh_val[k, :, :, 2] = image_mesh.copy()[:, :, 2]
+
+            sim_GE = create_GE_sim(mesh=mesh_val, image_mesh=image_mesh_val)
+
+            sim_GE.run()
+
+            CL[:,i,j] = sim_GE['operation.post_processor.ThrustDrag.wing_C_L'].reshape((num_nodes,))
+            CL_image[:,i,j] = sim_GE['operation.post_processor.ThrustDrag.wing_image_C_L'].reshape((num_nodes,))
+            CDi[:,i,j] = sim_GE['operation.post_processor.ThrustDrag.wing_C_D_i'].reshape((num_nodes,))
+            CDi_image[:,i,j] = sim_GE['operation.post_processor.ThrustDrag.wing_image_C_D_i'].reshape((num_nodes,))
+
+            del sim_GE
+            
+    return CL, CL_image, CDi, CDi_image
 
 AR = 8
 span = 8
@@ -164,8 +170,55 @@ ny = 13
 num_nodes = 20
 
 
-h_list = [1]
-# h_list.insert(0,span) # ensures first entry is OGE
-alpha_list = [15] 
+h_list = [4, 2, 1, 0.5, 0.25]
+h_list.insert(0,span) # ensures first entry is OGE
+alpha_list = [2, 5, 10, 15] 
 
 CL, CL_image, CDi, CDi_image = GE_sweep(nx, ny, num_nodes, AR, span, alpha_list, h_list)
+
+# STEADY STATE PLOTTING
+
+CL_OGE = CL[:,:,0]
+CDi_OGE = CDi[:,:,0]
+h_te_b = [h/span for h in h_list]
+
+import matplotlib.pyplot as plt
+plt.rcParams['text.usetex'] = True
+color = plt.cm.rainbow(np.linspace(0, 1, len(alpha_list)))
+
+fig, (ax1, ax2) = plt.subplots(2,1, sharex=True)
+
+ax1.plot([], [], 'k-', linewidth=3, label=r"OGE")
+ax1.plot([], [], 'k-*', linewidth=3, markersize=12, label=r"IGE")
+
+for i, alpha in enumerate(alpha_list):
+    ax1.plot([max(h_te_b), min(h_te_b)], [CL[-1,i,0]]*2, '-', linewidth=3, c=color[i])
+    ax1.plot(h_te_b, CL[-1,i,:], '-*', linewidth=3, markersize=12, c=color[i])
+
+ax1.set_ylabel(r'$C_L$', fontsize=40)
+ax1.set_xlabel(r'$h_{TE}/b$', fontsize=40)
+ax1.tick_params('y', labelsize=20)
+ax1.legend(loc='best', fontsize=20)
+ax1.grid()
+
+for i, alpha in enumerate(alpha_list):
+    ax2.plot([max(h_te_b), min(h_te_b)], [CDi[-1,i,0]]*2, '-', linewidth=3, c=color[i])
+    ax2.plot(h_te_b, CDi[-1,i,:], '-*', linewidth=3, markersize=12, c=color[i])
+
+ax2.set_ylabel(r'$C_{Di}$', fontsize=40)
+ax2.set_xlabel(r'$h_{TE}/b$', fontsize=40)
+ax2.tick_params('y', labelsize=20)
+ax2.tick_params('x', labelsize=20)
+ax2.grid()
+
+ax1.annotate(r'$\alpha = 15 ^\circ$', (0.62, 0.72), fontsize=30)
+ax1.annotate(r'$\alpha = 10 ^\circ$', (0.62, 0.49), fontsize=30)
+ax1.annotate(r'$\alpha = 5 ^\circ$', (0.62, 0.26), fontsize=30)
+ax1.annotate(r'$\alpha = 2 ^\circ$', (0.62, 0.12), fontsize=30)
+
+ax2.annotate(r'$\alpha = 15 ^\circ$', (0.62, 0.0181), fontsize=30)
+ax2.annotate(r'$\alpha = 10 ^\circ$', (0.62, 0.0084), fontsize=30)
+ax2.annotate(r'$\alpha = 5 ^\circ$', (0.62, 0.0025), fontsize=30)
+ax2.annotate(r'$\alpha = 2 ^\circ$', (0.62, 0.00065), fontsize=30)
+
+plt.show()
