@@ -36,13 +36,14 @@ class Engine(m3l.ExplicitOperation):
         self.arguments = {}
 
         fc = m3l.Variable(engine_name + '_fc', shape=(1,), operation=self)
+        pwr = m3l.Variable(engine_name + '_pwr', shape=(1,), operation=self)
 
-        return fc
+        return fc, pwr
     
 
 
 # INPUTS: specific fuel consumption, torque and rpm
-# OUTPUTS: fuel consumption (lb/hr)
+# OUTPUTS: fuel consumption (lb/hr) and power (hp)
 
 class EngineCSDL(ModuleCSDL):
     def initialize(self):
