@@ -111,24 +111,8 @@ for i in range(len(surface_names)):
 
     initial_conditions.append((wake_coords_0_name, np.zeros((num_nodes-1, ny, 3))))
 
-# profile_outputs = []
-
-# profile_outputs.append(('wing_L', (num_nodes,1)))
-# profile_outputs.append(('wing_D', (num_nodes,1)))
-
-# profile_params_dict = {
-#         'surface_names': ['wing'],
-#         'surface_shapes': surface_shapes,
-#         'delta_t': delta_t,
-#         'nt': nt
-#     }
-
 
 sub = True
-# sub_eval_list =    [0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,7]  # 4.9/3.78/58.8
-# sub_induced_list = [0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7]
-# sub_eval_list =    [0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7]  # 4.7/2.06/31.2
-# sub_induced_list = [0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3,4,5,6,7,4,5,6,7,4,5,6,7,4,5,6,7]
 
 def generate_sub_lists(interaction_groups):
     sub_eval_list = []
@@ -146,16 +130,7 @@ for i in range(int(num_surfaces/4)):
 # groups = [list(range(0,num_surfaces))]
 sub_eval_list, sub_induced_list = generate_sub_lists(groups)
 
-# submodel = PostProcessor2(
-#     num_nodes = num_nodes-1,
-#     surface_names = surface_names,
-#     surface_shapes = surface_shapes,
-#     delta_t = h_stepsize,
-#     nt = num_nodes + 1,
-#     sub = sub,
-#     sub_eval_list = sub_eval_list,
-#     sub_induced_list = sub_induced_list
-# )
+
 profile_parameters = {
     # num_nodes : num_nodes-1,
     'surface_names' : surface_names,
@@ -169,9 +144,7 @@ profile_parameters = {
 # pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
 pp_vars = []
 for name in surface_names:
-    pp_vars.append((name+'_L', (1,1)))
-
-# pp_vars = [('frame_vel', (1,3))]
+    pp_vars.append(('uvlm.'+name+'_L', (1,1)))
 
 
 model = m3l.DynamicModel()
@@ -186,8 +159,9 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
                             integrator='ForwardEuler',
                             approach='time-marching',
                             profile_outputs=pp_vars,
-                            profile_system=ProfileOPModel3,
-                            profile_parameters=profile_parameters,
+                            profile_system=None,
+                            profile_parameters=None,
+                            copycat_profile=True,
                             post_processor=None,
                             pp_vars=None)
 uvlm_op = model.assemble(return_operation=True)
@@ -199,23 +173,24 @@ for var in lift_vars:
     overmodel.register_output(var)
 model_csdl = overmodel.assemble()
 
-last_lifts = model_csdl.create_output('last_lifts', shape=(num_surfaces,1))
-i = 0
-for name in surface_names:
-    lift = model_csdl.create_input(name+'_lift', shape=(num_nodes, 1))
-    model_csdl.connect('operation.prob.'+name+'_L', name+'_lift')
-    last_lifts[i,0] = lift[-1,0]
-    i += 1
-lift_last = csdl.pnorm(last_lifts)
-model_csdl.register_output('lift_norm', lift_last)
+# last_lifts = model_csdl.create_output('last_lifts', shape=(num_surfaces,1))
+# i = 0
+# for name in surface_names:
+#     lift = model_csdl.create_input(name+'_lift', shape=(num_nodes, 1))
+#     model_csdl.connect('operation.prob.'+name+'_L', name+'_lift')
+#     last_lifts[i,0] = lift[-1,0]
+#     i += 1
+# lift_last = csdl.pnorm(last_lifts)
+# model_csdl.register_output('lift_norm', lift_last)
 
-model_csdl.add_objective('lift_norm', scaler=1e-3)
+# model_csdl.add_objective('lift_norm', scaler=1e-3)
 
 
 
 sim = python_csdl_backend.Simulator(model_csdl, analytics=True, lazy=lazy)
 
 sim.run()
+exit()
 sim.compute_total_derivatives()
 
 
