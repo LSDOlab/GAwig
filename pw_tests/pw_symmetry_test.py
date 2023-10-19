@@ -33,7 +33,7 @@ mesh_dict = {
     "chord_cos_spacing": False,
 }
 mesh_temp = generate_mesh(mesh_dict)
-mesh, _ = generate_ground_effect_mesh(mesh_temp, alpha, h, test_plot=False)
+mesh, image_mesh = generate_ground_effect_mesh(mesh_temp, alpha, h, test_plot=False)
 
 panel_neg_y = mesh.copy()[:,:int((ny+1)/2),:]
 panel_neg_y[:,:,1] -= 1
@@ -42,9 +42,20 @@ panel_pos_y = mesh.copy()[:,int((ny-1)/2):,:]
 panel_pos_y[:,:,1] += 1
 panel_pos_y[:,:,2] += h
 
+panel_neg_y_image = image_mesh.copy()[:,:int((ny+1)/2),:]
+panel_neg_y_image[:,:,1] -= 1
+panel_neg_y_image[:,:,2] -= h
+panel_pos_y_image = image_mesh.copy()[:,int((ny-1)/2):,:]
+panel_pos_y_image[:,:,1] += 1
+panel_pos_y_image[:,:,2] -= h
+
 mesh_val = np.zeros((num_nodes, nx, ny, 3))
 neg_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 pos_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
+image_mesh_val = np.zeros((num_nodes, nx, ny, 3))
+image_neg_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
+image_pos_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
+
 for j in range(num_nodes):
     mesh_val[j, :, :, 0] = mesh.copy()[:, :, 0]
     mesh_val[j, :, :, 1] = mesh.copy()[:, :, 1]
@@ -57,6 +68,18 @@ for j in range(num_nodes):
     pos_panel_val[j, :, :, 0] = panel_pos_y.copy()[:, :, 0]
     pos_panel_val[j, :, :, 1] = panel_pos_y.copy()[:, :, 1]
     pos_panel_val[j, :, :, 2] = panel_pos_y.copy()[:, :, 2]
+
+    image_mesh_val[j, :, :, 0] = image_mesh.copy()[:, :, 0]
+    image_mesh_val[j, :, :, 1] = image_mesh.copy()[:, :, 1]
+    image_mesh_val[j, :, :, 2] = image_mesh.copy()[:, :, 2]
+
+    image_neg_panel_val[j, :, :, 0] = panel_neg_y_image.copy()[:, :, 0]
+    image_neg_panel_val[j, :, :, 1] = panel_neg_y_image.copy()[:, :, 1]
+    image_neg_panel_val[j, :, :, 2] = panel_neg_y_image.copy()[:, :, 2]
+
+    image_pos_panel_val[j, :, :, 0] = panel_pos_y_image.copy()[:, :, 0]
+    image_pos_panel_val[j, :, :, 1] = panel_pos_y_image.copy()[:, :, 1]
+    image_pos_panel_val[j, :, :, 2] = panel_pos_y_image.copy()[:, :, 2]
 
 # u_vel = np.ones(num_nodes).reshape(num_nodes,1)*1
 # w_vel = np.zeros((num_nodes, 1))
@@ -95,12 +118,21 @@ uvlm_parameters = [('u',True,ac_states_expanded['u']),
 uvlm_parameters.append(('wing', True, mesh_val))
 uvlm_parameters.append(('neg_panel', True, neg_panel_val))
 uvlm_parameters.append(('pos_panel', True, pos_panel_val))
+uvlm_parameters.append(('wing_image', True, image_mesh_val))
+uvlm_parameters.append(('neg_panel_image', True, image_neg_panel_val))
+uvlm_parameters.append(('pos_panel_image', True, image_pos_panel_val))
 surface_names = [
     'wing',
     'neg_panel',
-    'pos_panel'
+    'pos_panel',
+    'wing_image',
+    'neg_panel_image',
+    'pos_panel_image'
 ]
 surface_shapes = [
+    (nx,ny,3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
     (nx,ny,3),
     (nx, int((ny+1)/2), 3),
     (nx, int((ny+1)/2), 3)
@@ -136,15 +168,15 @@ for i in range(len(surface_names)):
 #         'nt': nt
 #     }
 
-submodel = ProfileOpModel(
-    num_nodes = num_nodes,
-    surface_names = surface_names,
-    surface_shapes = surface_shapes,
-    delta_t = h_stepsize,
-    nt = num_nodes + 1,
-    # frame='inertial'
-)
-# pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3)), ('wing_C_L', (num_nodes,))]
+# sub_eval_list = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+# sub_induced_list = [0, 1, 2, 0, 1, 2, 0, 1, 2]
+sub_eval_list = []
+for i in range(len(surface_names)):
+    sub_eval_list.extend([i]*6)
+sub_induced_list = [0, 1, 2, 3, 4, 5] * 6
+sub = True
+
+sym_struct_list = [[0,3], [1,2,4,5]]
 
 submodel = PostProcessor(
     num_nodes = num_nodes,
@@ -152,8 +184,13 @@ submodel = PostProcessor(
     surface_shapes = surface_shapes,
     delta_t = h_stepsize,
     nt = num_nodes + 1,
+    # symmetry=True,
+    # frame='inertial',
+    sub=sub,
+    sub_eval_list=sub_eval_list,
+    sub_induced_list=sub_induced_list,
     symmetry=True,
-    frame='inertial'
+    sym_struct_list=sym_struct_list
 )
 # pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
 pp_vars = [('wing_C_L', (num_nodes-1, 1))]
@@ -164,10 +201,7 @@ INTERACTIONS:
 - neg_panel on wing ()
 - pos_panel on wing
 '''
-sub_eval_list = [0, 0, 0, 1, 1, 2, 2]
-sub_induced_list = [0, 1, 2, 0, 1, 0, 2]
 
-reflections = [[0], [1,2]]
 
 model = m3l.DynamicModel()
 uvlm = VASTSolverUnsteady(
@@ -176,7 +210,12 @@ uvlm = VASTSolverUnsteady(
     surface_shapes=surface_shapes, 
     delta_t=delta_t, 
     nt=num_nodes+1,
-    frame='inertial'
+    # frame='inertial',
+    sub=sub,
+    sub_eval_list=sub_eval_list,
+    sub_induced_list=sub_induced_list,
+    symmetry=True,
+    sym_struct_list=sym_struct_list
 )
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
