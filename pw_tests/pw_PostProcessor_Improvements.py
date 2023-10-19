@@ -144,7 +144,7 @@ profile_parameters = {
 # pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
 pp_vars = []
 for name in surface_names:
-    pp_vars.append(('uvlm.'+name+'_L', (1,1)))
+    pp_vars.append((name+'_L', (1,1)))
 
 
 model = m3l.DynamicModel()
@@ -173,26 +173,26 @@ for var in lift_vars:
     overmodel.register_output(var)
 model_csdl = overmodel.assemble()
 
-# last_lifts = model_csdl.create_output('last_lifts', shape=(num_surfaces,1))
-# i = 0
-# for name in surface_names:
-#     lift = model_csdl.create_input(name+'_lift', shape=(num_nodes, 1))
-#     model_csdl.connect('operation.prob.'+name+'_L', name+'_lift')
-#     last_lifts[i,0] = lift[-1,0]
-#     i += 1
-# lift_last = csdl.pnorm(last_lifts)
-# model_csdl.register_output('lift_norm', lift_last)
+last_lifts = model_csdl.create_output('last_lifts', shape=(num_surfaces,1))
+i = 0
+for name in surface_names:
+    lift = model_csdl.create_input(name+'_lift', shape=(num_nodes, 1))
+    model_csdl.connect('operation.prob.'+name+'_L', name+'_lift')
+    last_lifts[i,0] = lift[-1,0]
+    i += 1
+lift_last = csdl.pnorm(last_lifts)
+model_csdl.register_output('lift_norm', lift_last)
 
-# model_csdl.add_objective('lift_norm', scaler=1e-3)
+model_csdl.add_objective('lift_norm', scaler=1e-3)
 
 
 
 sim = python_csdl_backend.Simulator(model_csdl, analytics=True, lazy=lazy)
 
 sim.run()
-exit()
 sim.compute_total_derivatives()
-
+# sim.check_totals()
+# exit()
 
 
 

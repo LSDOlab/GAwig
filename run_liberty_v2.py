@@ -139,7 +139,7 @@ sys_rep.add_output(p2_point_name, p2_hub_back)
 
 
 
-nt = num_nodes = 20
+nt = num_nodes = 30
 
 # design scenario
 design_scenario = cd.DesignScenario(name='wig')
@@ -160,7 +160,7 @@ ac_expander = ac_expand(num_nodes=nt)
 ac_states_expanded = ac_expander.evaluate(ac_states)
 
 
-dt = 0.001
+dt = 0.002
 num_blades = 6
 prop_1_model = Rotor2(component=props[1], mesh_name=p1b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=-1)
 prop_1_model.set_module_input('rpm', val=1000, dv_flag=True)
@@ -179,6 +179,8 @@ uvlm_parameters = [('u',True,ac_states_expanded['u']),
                     ('gamma',True,ac_states_expanded['gamma']),
                     ('psiw',True,np.zeros((nt, 1)))]
 
+# TODO: connect rho, maybe other values
+
 surface_names = []
 surface_shapes = []
 initial_conditions = []
@@ -193,6 +195,8 @@ for var in prop_1_meshes:
     uvlm_parameters.append((name+'_coll_vel', True, np.zeros((nt, nx-1, ny-1, 3))))
     initial_conditions.append((name+'_gamma_w_0', np.zeros((nt-1, ny-1))))
     initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
+
+
 
 pp_vars = []
 for name in surface_names:
@@ -238,16 +242,22 @@ model_csdl = caddee_csdl_model
 
 model_csdl.connect('p1b1_mesh', 
                    'system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.p1b1_mesh')
+model_csdl.connect('p1_vector', 
+                   'system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.vector')
 
+model_csdl.connect('p1_point', 
+                   'system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.point')
 
 sim = Simulator(model_csdl, analytics=True, lazy=1)
 sim.run()
+
+
 
 if True:
     from vedo import dataurl, Plotter, Mesh, Video, Points, Axes, show
     axs = Axes(
         xrange=(0, 35),
-        yrange=(-10, 10),
+        yrange=(-100, 0),
         zrange=(-3, 4),
     )
     video = Video("rotor_test.gif", duration=10, backend='ffmpeg')
@@ -275,8 +285,10 @@ if True:
             vp += __doc__
         # cam1 = dict(focalPoint=(3.133, 1.506, -3.132))
         # video.action(cameras=[cam1, cam1])
-        vp.show(axs, elevation=-60, azimuth=-0,
-                axes=False, interactive=True)  # render the scene
+        # vp.show(axs, elevation=-60, azimuth=45, roll=-45,
+        #         axes=False, interactive=False)  # render the scene
+        vp.show(axs, elevation=-60, azimuth=-90, roll=90,
+                axes=False, interactive=False)  # render the scene
         video.add_frame()  # add individual frame
         # time.sleep(0.1)
         # vp.interactive().close()

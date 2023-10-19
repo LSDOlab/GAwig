@@ -194,7 +194,7 @@ class Rotor2(m3l.ExplicitOperation):
 
         mesh_vars = []
         for i in range(num_blades):
-            mesh_vars.append(m3l.Variable('rotor'+str(i), shape=(nt,ns,nc,3), operation=self))
+            mesh_vars.append(m3l.Variable('rotor'+str(i), shape=(nt,nc,ns,3), operation=self))
         return tuple(mesh_vars)
 
 
