@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams.update(plt.rcParamsDefault)
 import csdl
-from mirror import Mirror
+from mirror import Mirror, PropMirror
 from rotor import Rotor
 from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from mpl_toolkits.mplot3d import proj3d
@@ -123,6 +123,8 @@ wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surfa
 # spatial_rep.plot_meshes([wing_camber_surface])
 wing_vlm_mesh_name = 'wing_vlm_mesh'
 sys_rep.add_output(wing_vlm_mesh_name, wing_camber_surface)
+
+
 
 
 # right fuselage mesh:
@@ -310,6 +312,31 @@ wig_model.register_output(ac_states)
 
 
 
+theta = np.deg2rad(0)
+h = 10
+rotation_point = np.array([0,0,0])
+
+wing_mirror_model = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,nt=1,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=rotation_point)
+wing_mirror_model.set_module_input('theta', val=theta, dv_flag=False)
+wing_mirror_model.set_module_input('h', val=h, dv_flag=False)
+wing_mesh_out, wing_mirror_mesh = wing_mirror_model.evaluate()
+wig_model.register_output(wing_mesh_out)
+wig_model.register_output(wing_mirror_mesh)
+
+
+htail_mirror_model = Mirror(component=htail,mesh_name=htail_vlm_mesh_name,nt=1,ns=num_spanwise_vlm_htail,nc=num_chordwise_vlm_htail,point=rotation_point)
+htail_mirror_model.set_module_input('theta', val=theta, dv_flag=False)
+htail_mirror_model.set_module_input('h', val=h, dv_flag=False)
+htail_mesh_out, htail_mirror_mesh = htail_mirror_model.evaluate()
+wig_model.register_output(htail_mesh_out)
+wig_model.register_output(htail_mirror_mesh)
+
+
+
+
+
+
+
 nt = 4
 dt = 0.001
 num_blades = 6
@@ -317,6 +344,15 @@ prop_1_model = Rotor(component=prop_1, mesh_name=p1b1_mesh_name, num_blades=num_
 prop_1_model.set_module_input('rpm', val=1000, dv_flag=True)
 prop_1_mesh = prop_1_model.evaluate()
 wig_model.register_output(prop_1_mesh)
+
+prop1_mirror_model = PropMirror(component=prop_1,mesh_name='p1mesh',num_blades=num_blades,nt=nt,ns=num_spanwise_prop,nc=num_chordwise_prop,point=rotation_point)
+prop1_mirror_model.set_module_input('theta', val=theta, dv_flag=False)
+prop1_mirror_model.set_module_input('h', val=h, dv_flag=False)
+prop1_mesh_out, prop1_mirror_mesh = prop1_mirror_model.evaluate()
+wig_model.register_output(prop1_mesh_out)
+wig_model.register_output(prop1_mirror_mesh)
+
+
 
 prop_2_model = Rotor(component=prop_2, mesh_name=p2b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=-1)
 prop_2_model.set_module_input('rpm', val=1000, dv_flag=True)
@@ -438,6 +474,19 @@ caddee_csdl_model.connect('p8_point',
 
 
 
+# wing and htail mirror model connections:
+caddee_csdl_model.connect('wing_vlm_mesh', 
+                          'system_model.wig.wig.wig.wing_vlm_meshmirror.wing_vlm_mesh')
+
+caddee_csdl_model.connect('htail_vlm_mesh', 
+                          'system_model.wig.wig.wig.htail_vlm_meshmirror.htail_vlm_mesh')
+
+# prop mirror model connections:
+caddee_csdl_model.connect('system_model.wig.wig.wig.p1b1_mesh_rotor.rotor', 
+                          'system_model.wig.wig.wig.p1meshmirror.p1mesh')
+
+
+
 sim = Simulator(caddee_csdl_model, analytics=True)
 sim.run()
 
@@ -456,6 +505,14 @@ p6_mesh = sim['system_model.wig.wig.wig.p6b1_mesh_rotor.rotor']
 p7_mesh = sim['system_model.wig.wig.wig.p7b1_mesh_rotor.rotor']
 p8_mesh = sim['system_model.wig.wig.wig.p8b1_mesh_rotor.rotor']
 
+wing_mesh_mirror = sim['system_model.wig.wig.wig.wing_vlm_meshmirror.wing_vlm_mesh_mirror']
+wing_mesh_out = sim['system_model.wig.wig.wig.wing_vlm_meshmirror.wing_vlm_mesh_out']
+htail_mesh_mirror = sim['system_model.wig.wig.wig.htail_vlm_meshmirror.htail_vlm_mesh_mirror']
+htail_mesh_out = sim['system_model.wig.wig.wig.htail_vlm_meshmirror.htail_vlm_mesh_out']
+
+p1_mesh_out = sim['system_model.wig.wig.wig.p1meshmirror.p1mesh_out']
+p1_mesh_mirror = sim['system_model.wig.wig.wig.p1meshmirror.p1mesh_mirror']
+
 
 fig = plt.figure(figsize=(8, 8))
 ax = fig.add_subplot(111, projection='3d')
@@ -472,6 +529,19 @@ for i in range(num_blades):
         ax.plot_trisurf(p6_mesh[i,j,:,:,0].flatten(), p6_mesh[i,j,:,:,1].flatten(), p6_mesh[i,j,:,:,2].flatten())
         ax.plot_trisurf(p7_mesh[i,j,:,:,0].flatten(), p7_mesh[i,j,:,:,1].flatten(), p7_mesh[i,j,:,:,2].flatten())
         ax.plot_trisurf(p8_mesh[i,j,:,:,0].flatten(), p8_mesh[i,j,:,:,1].flatten(), p8_mesh[i,j,:,:,2].flatten())
+
+        # plot the mirrored and translated meshes
+        ax.plot_trisurf(p1_mesh_out[i,j,:,:,0].flatten(), p1_mesh_out[i,j,:,:,1].flatten(), p1_mesh_out[i,j,:,:,2].flatten())
+        ax.plot_trisurf(p1_mesh_mirror[i,j,:,:,0].flatten(), p1_mesh_mirror[i,j,:,:,1].flatten(), p1_mesh_mirror[i,j,:,:,2].flatten())
+
+# plot the wing mesh out:
+ax.plot_trisurf(wing_mesh_out[0,:,:,0].flatten(), wing_mesh_out[0,:,:,1].flatten(), wing_mesh_out[0,:,:,2].flatten())
+# plot the mirrored wing mesh out:
+ax.plot_trisurf(wing_mesh_mirror[0,:,:,0].flatten(), wing_mesh_mirror[0,:,:,1].flatten(), wing_mesh_mirror[0,:,:,2].flatten())
+# plot the htail mesh out:
+ax.plot_trisurf(htail_mesh_out[0,:,:,0].flatten(), htail_mesh_out[0,:,:,1].flatten(), htail_mesh_out[0,:,:,2].flatten())
+# plot the mirrored htail mesh out:
+ax.plot_trisurf(htail_mesh_mirror[0,:,:,0].flatten(), htail_mesh_mirror[0,:,:,1].flatten(), htail_mesh_mirror[0,:,:,2].flatten())
 
 plt.gca().set_aspect('equal', adjustable='box')
 plt.show()
