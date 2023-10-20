@@ -49,9 +49,9 @@ fuse = build_component('fuse', ['FuselageGeom'])
 
 # props
 num_props = 8
-props = []
+props = [] # we go from 1-indexed to 0-indexed here
 for i in range(num_props):
-    prop = build_component('prop_'+str(i), ['Prop'+str(i),'Hub'+str(i)])
+    prop = build_component('prop_'+str(i), ['Prop'+str(i+1),'Hub'+str(i+1)])
     props.append(prop)
 #endregion
 
@@ -69,6 +69,8 @@ wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surfa
 # spatial_rep.plot_meshes([wing_camber_surface])
 wing_vlm_mesh_name = 'wing_vlm_mesh'
 sys_rep.add_output(wing_vlm_mesh_name, wing_camber_surface)
+wing_camber_surface_np = wing_camber_surface.value # TODO: change this idk
+
 
 
 # right fuselage mesh:
@@ -101,41 +103,48 @@ htail_vlm_mesh_name = 'htail_vlm_mesh'
 sys_rep.add_output(htail_vlm_mesh_name, htail_camber_surface)
 
 
-# prop 1 blade 1 mesh:
+
+# prop meshes
 num_spanwise_prop= 5
 num_chordwise_prop = 2
-p1b1_leading_edge = props[1].project(np.linspace(np.array([39.754, -88.35, 4.769]), np.array([39.848-0.3, -93.75, 4.342-0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
-p1b1_trailing_edge = props[1].project(np.linspace(np.array([40.246, -88.35, 5.231]), np.array([40.152+0.3, -93.75, 5.658+0.5]), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
-p1b1_chord_surface = am.linspace(p1b1_leading_edge, p1b1_trailing_edge, num_chordwise_prop)
-# spatial_rep.plot_meshes([p1b1_chord_surface])
-p1b1_mesh_name = 'p1b1_mesh'
-sys_rep.add_output(p1b1_mesh_name, p1b1_chord_surface)
+offsets = [0,20,20,38,18,38,20,20]
+p1 = [39.754, -88.35, 4.769]
+p2 = [39.848-0.3, -93.75, 4.342-0.5]
+p3 = [40.246, -88.35, 5.231]
+p4 = [40.152+0.3, -93.75, 5.658+0.5]
+p5 = [40., -87., 5.]
+p6 = [37., -87., 5.]
 
-# prop 1 hub:
-hub_back, hub_front = props[1].project(np.array([40., -87., 5.])), props[1].project(np.array([37., -87., 5.]))
-prop1_vec = hub_front - hub_back
-p1_vector_name, p1_point_name = 'p1_vector', 'p1_point'
-sys_rep.add_output(p1_vector_name, prop1_vec)
-sys_rep.add_output(p1_point_name, hub_back)
+propb1_mesh_names = []
+prop_vector_names = []
+prop_point_names = []
 
+for i in range(num_props):
+    offset = offsets[i]
+    p1[1] = p1[1] + offset
+    p2[1] = p2[1] + offset
+    p3[1] = p3[1] + offset
+    p4[1] = p4[1] + offset
+    p5[1] = p5[1] + offset
+    p6[1] = p6[1] + offset
+    # prop blade 1 mesh
+    leading_edge = props[i].project(np.linspace(np.array(p1), np.array(p2), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+    trailing_edge = props[i].project(np.linspace(np.array(p3), np.array(p4), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
+    chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_prop)
+    # spatial_rep.plot_meshes([chord_surface])
+    propb1_mesh_name = 'p'+str(i)+'b1_mesh'
+    sys_rep.add_output(propb1_mesh_name, chord_surface)
 
-# prop 2 blade 1 mesh:
-p2b1_leading_edge = props[2].project(np.linspace(np.array([39.754, -88.35+20, 4.769]), np.array([39.848-0.3, -93.75+20, 4.342-0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
-p2b1_trailing_edge = props[2].project(np.linspace(np.array([40.246, -88.35+20, 5.231]), np.array([40.152+0.3, -93.75+20, 5.658+0.5]), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
-p2b1_chord_surface = am.linspace(p2b1_leading_edge, p2b1_trailing_edge, num_chordwise_prop)
-# spatial_rep.plot_meshes([p2b1_chord_surface])
-p2b1_mesh_name = 'p2b1_mesh'
-sys_rep.add_output(p2b1_mesh_name, p2b1_chord_surface)
-
-# prop 2 hub:
-p2_hub_back, p2_hub_front = props[2].project(np.array([40., -87.+20, 5.])), props[2].project(np.array([37., -87.+20, 5.]))
-prop2_vec = p2_hub_front - p2_hub_back
-p2_vector_name, p2_point_name = 'p2_vector', 'p2_point'
-sys_rep.add_output(p2_vector_name, prop2_vec)
-sys_rep.add_output(p2_point_name, p2_hub_back)
+    # prop hub:
+    hub_back, hub_front = props[i].project(np.array(p5)), props[i].project(np.array(p6))
+    prop_vec = hub_front - hub_back
+    prop_vector_name, prop_point_name = 'p' + str(i) + '_vector', 'p' + str(i) + '_point'
+    sys_rep.add_output(prop_vector_name, prop_vec)
+    sys_rep.add_output(prop_point_name, hub_back)
+    propb1_mesh_names.append(propb1_mesh_name)
+    prop_vector_names.append(prop_vector_name)
+    prop_point_names.append(prop_point_name)
 # endregion
-
-
 
 
 
@@ -160,12 +169,16 @@ ac_expander = ac_expand(num_nodes=nt)
 ac_states_expanded = ac_expander.evaluate(ac_states)
 
 
-dt = 0.002
+dt = 0.016*2
 num_blades = 6
-prop_1_model = Rotor2(component=props[1], mesh_name=p1b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=-1)
-prop_1_model.set_module_input('rpm', val=1000, dv_flag=True)
-prop_1_meshes = prop_1_model.evaluate()
-
+prop_meshes = []
+for i in range(num_props):
+    dir = -1
+    if i > num_blades/2:
+        dir = 1
+    prop_model = Rotor2(component=props[i], mesh_name=propb1_mesh_names[i], num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=dir)
+    prop_model.set_module_input('rpm', val=1000, dv_flag=True)
+    prop_meshes.append(prop_model.evaluate())
 
 
 uvlm_parameters = [('u',True,ac_states_expanded['u']),
@@ -181,38 +194,84 @@ uvlm_parameters = [('u',True,ac_states_expanded['u']),
 
 # TODO: connect rho, maybe other values
 
+def generate_sub_lists(interaction_groups):
+    sub_eval_list = []
+    sub_induced_list = []
+    for group in interaction_groups:
+        for i in group:
+            for j in group:
+                sub_eval_list.append(i)
+                sub_induced_list.append(j)
+    return sub_eval_list, sub_induced_list
+
+# ode stuff for props
 surface_names = []
 surface_shapes = []
 initial_conditions = []
-for var in prop_1_meshes:
-    shape = var.shape
-    nx = shape[1]
-    ny = shape[2]
-    name = var.name
-    surface_names.append(name)
-    surface_shapes.append(shape[1:4])
-    uvlm_parameters.append((name, True, var))
-    uvlm_parameters.append((name+'_coll_vel', True, np.zeros((nt, nx-1, ny-1, 3))))
-    initial_conditions.append((name+'_gamma_w_0', np.zeros((nt-1, ny-1))))
-    initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
+interaction_groups = []
+i = 0
+for prop_mesh in prop_meshes:
+    interaction_groups.append(list(range(num_blades*i,num_blades*(i+1))))
+    for var in prop_mesh:
+        shape = var.shape
+        nx = shape[1]
+        ny = shape[2]
+        name = var.name
+        surface_names.append(name)
+        surface_shapes.append(shape[1:4])
+        uvlm_parameters.append((name, True, var))
+        uvlm_parameters.append((name+'_coll_vel', True, np.zeros((nt, nx-1, ny-1, 3))))
+        initial_conditions.append((name+'_gamma_w_0', np.zeros((nt-1, ny-1))))
+        initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
+    i += 1
 
 
+# interactions for props
+sub_eval_list, sub_induced_list = generate_sub_lists(interaction_groups)
+
+# ode stuff for wing
+surface_names.append(wing_vlm_mesh_name)
+surface_shapes.append(wing_camber_surface_np.shape[1:4])
+# print(wing_camber_surface_np.shape[1:4])
+# exit()
+wing_mesh_expanded = np.repeat(wing_camber_surface_np, nt, axis=0)
+uvlm_parameters.append((wing_vlm_mesh_name, True, wing_mesh_expanded))
+uvlm_parameters.append((wing_vlm_mesh_name+'_coll_vel', True, np.zeros((nt, num_chordwise_vlm-1, num_spanwise_vlm-1, 3))))
+initial_conditions.append((wing_vlm_mesh_name+'_gamma_w_0', np.zeros((nt-1, num_spanwise_vlm-1))))
+initial_conditions.append((wing_vlm_mesh_name+'_wake_coords_0', np.zeros((nt-1, num_spanwise_vlm, 3))))
+
+# wing interactions
+wing_index = len(surface_names)-1
+for i in range(wing_index):
+    sub_eval_list.append(i)
+    sub_induced_list.append(wing_index)
+    sub_eval_list.append(wing_index)
+    sub_induced_list.append(i)
+sub_eval_list.append(wing_index)
+sub_induced_list.append(wing_index)
 
 pp_vars = []
 for name in surface_names:
     pp_vars.append((name+'_L', (nt, 1)))
 
 
-post_processor = PostProcessor(
-    num_nodes = nt-1,
-    surface_names = surface_names,
-    surface_shapes = surface_shapes,
-    delta_t = dt,
-    nt = nt + 1
-)
+# post_processor = PostProcessor(
+#     num_nodes = nt-1,
+#     surface_names = surface_names,
+#     surface_shapes = surface_shapes,
+#     delta_t = dt,
+#     nt = nt + 1
+# )
 
 model = m3l.DynamicModel()
-uvlm = VASTSolverUnsteady(num_nodes=num_nodes, surface_names=surface_names, surface_shapes=surface_shapes, delta_t=dt, nt=nt+1)
+uvlm = VASTSolverUnsteady(num_nodes = num_nodes, 
+                          surface_names = surface_names, 
+                          surface_shapes = surface_shapes, 
+                          delta_t = dt, 
+                          nt = nt+1,
+                          sub = True,
+                          sub_eval_list = sub_eval_list,
+                          sub_induced_list = sub_induced_list)
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
 model.set_dynamic_options(initial_conditions=initial_conditions,
@@ -222,8 +281,8 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
                           int_naming=('op_',''),
                           integrator='ForwardEuler',
                           approach='time-marching',
-                          post_processor=post_processor,
-                          pp_vars=pp_vars)
+                          copycat_profile=True,
+                          profile_outputs=pp_vars)
 uvlm_op = model.assemble(return_operation=True)
 lift_vars = uvlm_op.evaluate()[0:len(pp_vars)]
 
@@ -240,27 +299,35 @@ caddee_csdl_model = caddee.assemble_csdl()
 
 model_csdl = caddee_csdl_model
 
-model_csdl.connect('p1b1_mesh', 
-                   'system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.p1b1_mesh')
-model_csdl.connect('p1_vector', 
-                   'system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.vector')
-
-model_csdl.connect('p1_point', 
-                   'system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.point')
+for i in range(len(prop_meshes)):
+    i = str(i)
+    model_csdl.connect('p' + i + 'b1_mesh', 
+                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.p' + i + 'b1_mesh')
+    model_csdl.connect('p' + i + '_vector', 
+                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.vector')
+    model_csdl.connect('p' + i + '_point', 
+                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.point')
 
 sim = Simulator(model_csdl, analytics=True, lazy=1)
 sim.run()
+
+# import time
+# start = time.time()
+# sim.run()
+# end = time.time()
+# print('Total run time:')
+# print(end-start)
 
 
 
 if True:
     from vedo import dataurl, Plotter, Mesh, Video, Points, Axes, show
     axs = Axes(
-        xrange=(0, 35),
-        yrange=(-100, 0),
-        zrange=(-3, 4),
+        xrange=(0, 80),
+        yrange=(-100, 100),
+        zrange=(-5, 10),
     )
-    video = Video("rotor_test.gif", duration=10, backend='ffmpeg')
+    video = Video("rotor_test.gif", fps=10, backend='imageio')
     for i in range(nt - 1):
         vp = Plotter(
             bg='beige',
@@ -271,23 +338,37 @@ if True:
             interactive=1)
         # Any rendering loop goes here, e.g.:
         for surface_name in surface_names:
-            surface_name = surface_name
-            vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.' + surface_name][i, :, :, :], (-1, 3)),
-                        r=8,
-                        c='red')
-            vp += vps
-            vp += __doc__
-            vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.prob.' + 'op_' + surface_name+'_wake_coords'][i, 0:i, :, :],
-                                    (-1, 3)),
-                        r=8,
-                        c='blue')
-            vp += vps
-            vp += __doc__
+            if surface_name is not wing_vlm_mesh_name:
+                vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.input_model.'+surface_name[0:9]+'_rotor.' + surface_name][i, :, :, :], (-1, 3)),
+                            r=8,
+                            c='red')
+                vp += vps
+                vp += __doc__
+                vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.prob.' + 'op_' + surface_name+'_wake_coords'][i, 0:i, :, :],
+                                        (-1, 3)),
+                            r=8,
+                            c='blue')
+                vp += vps
+                vp += __doc__
+            else:
+                vps = Points(np.reshape(wing_mesh_expanded[i, :, :, :], (-1, 3)),
+                            r=8,
+                            c='red')
+                vp += vps
+                vp += __doc__
+                vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.prob.' + 'op_' + surface_name+'_wake_coords'][i, 0:i, :, :],
+                                        (-1, 3)),
+                            r=8,
+                            c='blue')
+                vp += vps
+                vp += __doc__
         # cam1 = dict(focalPoint=(3.133, 1.506, -3.132))
         # video.action(cameras=[cam1, cam1])
         # vp.show(axs, elevation=-60, azimuth=45, roll=-45,
         #         axes=False, interactive=False)  # render the scene
-        vp.show(axs, elevation=-60, azimuth=-90, roll=90,
+        # vp.show(axs, elevation=-60, azimuth=-90, roll=90,
+        #         axes=False, interactive=False, zoom=True)  # render the scene
+        vp.show(axs, elevation=-45, azimuth=-45, roll=45,
                 axes=False, interactive=False)  # render the scene
         video.add_frame()  # add individual frame
         # time.sleep(0.1)
