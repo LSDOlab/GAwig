@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams.update(plt.rcParamsDefault)
 import csdl
-from mirror import Mirror, PropMirror
+from mirror import Mirror
 from rotor import Rotor2
 from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from mpl_toolkits.mplot3d import proj3d
@@ -315,8 +315,9 @@ wig_model.register_output(ac_states)
 theta = np.deg2rad(0)
 h = 10
 rotation_point = np.array([0,0,0])
+nt = 4
 
-wing_mirror_model = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,nt=1,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=rotation_point)
+wing_mirror_model = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,nt=nt,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=rotation_point)
 wing_mirror_model.set_module_input('theta', val=theta, dv_flag=False)
 wing_mirror_model.set_module_input('h', val=h, dv_flag=False)
 wing_mesh_out, wing_mirror_mesh = wing_mirror_model.evaluate()
@@ -324,7 +325,7 @@ wig_model.register_output(wing_mesh_out)
 wig_model.register_output(wing_mirror_mesh)
 
 
-htail_mirror_model = Mirror(component=htail,mesh_name=htail_vlm_mesh_name,nt=1,ns=num_spanwise_vlm_htail,nc=num_chordwise_vlm_htail,point=rotation_point)
+htail_mirror_model = Mirror(component=htail,mesh_name=htail_vlm_mesh_name,nt=nt,ns=num_spanwise_vlm_htail,nc=num_chordwise_vlm_htail,point=rotation_point)
 htail_mirror_model.set_module_input('theta', val=theta, dv_flag=False)
 htail_mirror_model.set_module_input('h', val=h, dv_flag=False)
 htail_mesh_out, htail_mirror_mesh = htail_mirror_model.evaluate()
@@ -334,12 +335,9 @@ wig_model.register_output(htail_mirror_mesh)
 
 
 
-
-
-
-nt = 4
 dt = 0.001
 num_blades = 6
+
 prop_1_model = Rotor2(component=prop_1, mesh_name=p1b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, r_point=rotation_point, dir=-1)
 prop_1_model.set_module_input('rpm', val=1000, dv_flag=True)
 prop_1_model.set_module_input('theta', val=theta, dv_flag=True)
