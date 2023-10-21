@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 plt.rcParams.update(plt.rcParamsDefault)
 import csdl
 from mirror import Mirror, PropMirror
-from rotor import Rotor
+from rotor import Rotor2
 from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from mpl_toolkits.mplot3d import proj3d
 from caddee.core.caddee_core.system_representation.prescribed_actuations import PrescribedRotation
@@ -340,54 +340,61 @@ wig_model.register_output(htail_mirror_mesh)
 nt = 4
 dt = 0.001
 num_blades = 6
-prop_1_model = Rotor(component=prop_1, mesh_name=p1b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=-1)
+prop_1_model = Rotor2(component=prop_1, mesh_name=p1b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, r_point=rotation_point, dir=-1)
 prop_1_model.set_module_input('rpm', val=1000, dv_flag=True)
-prop_1_mesh = prop_1_model.evaluate()
-wig_model.register_output(prop_1_mesh)
+prop_1_model.set_module_input('theta', val=theta, dv_flag=True)
+prop_1_model.set_module_input('h', val=h, dv_flag=True)
+p1mesh, p1_mesh_vars = prop_1_model.evaluate()
+wig_model.register_output(p1mesh)
 
-prop1_mirror_model = PropMirror(component=prop_1,mesh_name='p1mesh',num_blades=num_blades,nt=nt,ns=num_spanwise_prop,nc=num_chordwise_prop,point=rotation_point)
-prop1_mirror_model.set_module_input('theta', val=theta, dv_flag=False)
-prop1_mirror_model.set_module_input('h', val=h, dv_flag=False)
-prop1_mesh_out, prop1_mirror_mesh = prop1_mirror_model.evaluate()
-wig_model.register_output(prop1_mesh_out)
-wig_model.register_output(prop1_mirror_mesh)
-
-
-
-prop_2_model = Rotor(component=prop_2, mesh_name=p2b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=-1)
+prop_2_model = Rotor2(component=prop_2, mesh_name=p2b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, r_point=rotation_point, dir=-1)
 prop_2_model.set_module_input('rpm', val=1000, dv_flag=True)
-prop_2_mesh = prop_2_model.evaluate()
-wig_model.register_output(prop_2_mesh)
+prop_2_model.set_module_input('theta', val=theta, dv_flag=True)
+prop_2_model.set_module_input('h', val=h, dv_flag=True)
+p2mesh, p2_mesh_vars = prop_2_model.evaluate()
+wig_model.register_output(p2mesh)
 
-prop_3_model = Rotor(component=prop_3, mesh_name=p3b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=-1)
+prop_3_model = Rotor2(component=prop_3, mesh_name=p3b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, r_point=rotation_point, dir=-1)
 prop_3_model.set_module_input('rpm', val=1000, dv_flag=True)
-prop_3_mesh = prop_3_model.evaluate()
-wig_model.register_output(prop_3_mesh)
+prop_3_model.set_module_input('theta', val=theta, dv_flag=True)
+prop_3_model.set_module_input('h', val=h, dv_flag=True)
+p3mesh, p3_mesh_vars = prop_3_model.evaluate()
+wig_model.register_output(p3mesh)
 
-prop_4_model = Rotor(component=prop_4, mesh_name=p4b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=-1)
+prop_4_model = Rotor2(component=prop_4, mesh_name=p4b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, r_point=rotation_point, dir=-1)
 prop_4_model.set_module_input('rpm', val=1000, dv_flag=True)
-prop_4_mesh = prop_4_model.evaluate()
-wig_model.register_output(prop_4_mesh)
+prop_4_model.set_module_input('theta', val=theta, dv_flag=True)
+prop_4_model.set_module_input('h', val=h, dv_flag=True)
+p4mesh, p4_mesh_vars = prop_4_model.evaluate()
+wig_model.register_output(p4mesh)
 
-prop_5_model = Rotor(component=prop_5, mesh_name=p5b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=1)
+prop_5_model = Rotor2(component=prop_5, mesh_name=p5b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, r_point=rotation_point, dir=1)
 prop_5_model.set_module_input('rpm', val=1000, dv_flag=True)
-prop_5_mesh = prop_5_model.evaluate()
-wig_model.register_output(prop_5_mesh)
+prop_5_model.set_module_input('theta', val=theta, dv_flag=True)
+prop_5_model.set_module_input('h', val=h, dv_flag=True)
+p5mesh, p5_mesh_vars = prop_5_model.evaluate()
+wig_model.register_output(p5mesh)
 
-prop_6_model = Rotor(component=prop_6, mesh_name=p6b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=1)
+prop_6_model = Rotor2(component=prop_6, mesh_name=p6b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, r_point=rotation_point, dir=1)
 prop_6_model.set_module_input('rpm', val=1000, dv_flag=True)
-prop_6_mesh = prop_6_model.evaluate()
-wig_model.register_output(prop_6_mesh)
+prop_6_model.set_module_input('theta', val=theta, dv_flag=True)
+prop_6_model.set_module_input('h', val=h, dv_flag=True)
+p6mesh, p6_mesh_vars = prop_6_model.evaluate()
+wig_model.register_output(p6mesh)
 
-prop_7_model = Rotor(component=prop_7, mesh_name=p7b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=1)
+prop_7_model = Rotor2(component=prop_7, mesh_name=p7b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, r_point=rotation_point, dir=1)
 prop_7_model.set_module_input('rpm', val=1000, dv_flag=True)
-prop_7_mesh = prop_7_model.evaluate()
-wig_model.register_output(prop_7_mesh)
+prop_7_model.set_module_input('theta', val=theta, dv_flag=True)
+prop_7_model.set_module_input('h', val=h, dv_flag=True)
+p7mesh, p7_mesh_vars = prop_7_model.evaluate()
+wig_model.register_output(p7mesh)
 
-prop_8_model = Rotor(component=prop_8, mesh_name=p8b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=1)
+prop_8_model = Rotor2(component=prop_8, mesh_name=p8b1_mesh_name, num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, r_point=rotation_point, dir=1)
 prop_8_model.set_module_input('rpm', val=1000, dv_flag=True)
-prop_8_mesh = prop_8_model.evaluate()
-wig_model.register_output(prop_8_mesh)
+prop_8_model.set_module_input('theta', val=theta, dv_flag=True)
+prop_8_model.set_module_input('h', val=h, dv_flag=True)
+p8mesh, p8_mesh_vars = prop_8_model.evaluate()
+wig_model.register_output(p8mesh)
 
 
 
@@ -397,6 +404,7 @@ wig_condition.add_m3l_model('wig_model', wig_model)
 design_scenario.add_design_condition(wig_condition)
 system_model.add_design_scenario(design_scenario=design_scenario)
 caddee_csdl_model = caddee.assemble_csdl()
+
 
 
 
@@ -481,9 +489,7 @@ caddee_csdl_model.connect('wing_vlm_mesh',
 caddee_csdl_model.connect('htail_vlm_mesh', 
                           'system_model.wig.wig.wig.htail_vlm_meshmirror.htail_vlm_mesh')
 
-# prop mirror model connections:
-caddee_csdl_model.connect('system_model.wig.wig.wig.p1b1_mesh_rotor.rotor', 
-                          'system_model.wig.wig.wig.p1meshmirror.p1mesh')
+
 
 
 
@@ -510,17 +516,30 @@ wing_mesh_out = sim['system_model.wig.wig.wig.wing_vlm_meshmirror.wing_vlm_mesh_
 htail_mesh_mirror = sim['system_model.wig.wig.wig.htail_vlm_meshmirror.htail_vlm_mesh_mirror']
 htail_mesh_out = sim['system_model.wig.wig.wig.htail_vlm_meshmirror.htail_vlm_mesh_out']
 
-p1_mesh_out = sim['system_model.wig.wig.wig.p1meshmirror.p1mesh_out']
-p1_mesh_mirror = sim['system_model.wig.wig.wig.p1meshmirror.p1mesh_mirror']
-
 
 fig = plt.figure(figsize=(8, 8))
 ax = fig.add_subplot(111, projection='3d')
-# ax.plot_trisurf(original[:,:,0].flatten(), original[:,:,1].flatten(), original[:,:,2].flatten(), color='orange')
 
 for i in range(num_blades):
+    p1blade_out = sim['system_model.wig.wig.wig.p1b1_mesh_rotor.rotor_out'+str(i)]
+    p1blade_mirror = sim['system_model.wig.wig.wig.p1b1_mesh_rotor.rotor_mirror'+str(i)]
+    p2blade_out = sim['system_model.wig.wig.wig.p2b1_mesh_rotor.rotor_out'+str(i)]
+    p2blade_mirror = sim['system_model.wig.wig.wig.p2b1_mesh_rotor.rotor_mirror'+str(i)]
+    p3blade_out = sim['system_model.wig.wig.wig.p3b1_mesh_rotor.rotor_out'+str(i)]
+    p3blade_mirror = sim['system_model.wig.wig.wig.p3b1_mesh_rotor.rotor_mirror'+str(i)]
+    p4blade_out = sim['system_model.wig.wig.wig.p4b1_mesh_rotor.rotor_out'+str(i)]
+    p4blade_mirror = sim['system_model.wig.wig.wig.p4b1_mesh_rotor.rotor_mirror'+str(i)]
+    p5blade_out = sim['system_model.wig.wig.wig.p5b1_mesh_rotor.rotor_out'+str(i)]
+    p5blade_mirror = sim['system_model.wig.wig.wig.p5b1_mesh_rotor.rotor_mirror'+str(i)]
+    p6blade_out = sim['system_model.wig.wig.wig.p6b1_mesh_rotor.rotor_out'+str(i)]
+    p6blade_mirror = sim['system_model.wig.wig.wig.p6b1_mesh_rotor.rotor_mirror'+str(i)]
+    p7blade_out = sim['system_model.wig.wig.wig.p7b1_mesh_rotor.rotor_out'+str(i)]
+    p7blade_mirror = sim['system_model.wig.wig.wig.p7b1_mesh_rotor.rotor_mirror'+str(i)]
+    p8blade_out = sim['system_model.wig.wig.wig.p8b1_mesh_rotor.rotor_out'+str(i)]
+    p8blade_mirror = sim['system_model.wig.wig.wig.p8b1_mesh_rotor.rotor_mirror'+str(i)]
+
+
     for j in range(nt):
-        #ax.plot_trisurf(p1_mesh[i,j,:,:,0].flatten(), p1_mesh[i,j,:,:,1].flatten(), p1_mesh[i,j,:,:,2].flatten(), color='blue')
         ax.plot_trisurf(p1_mesh[i,j,:,:,0].flatten(), p1_mesh[i,j,:,:,1].flatten(), p1_mesh[i,j,:,:,2].flatten())
         ax.plot_trisurf(p2_mesh[i,j,:,:,0].flatten(), p2_mesh[i,j,:,:,1].flatten(), p2_mesh[i,j,:,:,2].flatten())
         ax.plot_trisurf(p3_mesh[i,j,:,:,0].flatten(), p3_mesh[i,j,:,:,1].flatten(), p3_mesh[i,j,:,:,2].flatten())
@@ -531,8 +550,14 @@ for i in range(num_blades):
         ax.plot_trisurf(p8_mesh[i,j,:,:,0].flatten(), p8_mesh[i,j,:,:,1].flatten(), p8_mesh[i,j,:,:,2].flatten())
 
         # plot the mirrored and translated meshes
-        ax.plot_trisurf(p1_mesh_out[i,j,:,:,0].flatten(), p1_mesh_out[i,j,:,:,1].flatten(), p1_mesh_out[i,j,:,:,2].flatten())
-        ax.plot_trisurf(p1_mesh_mirror[i,j,:,:,0].flatten(), p1_mesh_mirror[i,j,:,:,1].flatten(), p1_mesh_mirror[i,j,:,:,2].flatten())
+        ax.plot_trisurf(p1blade_out[j,:,:,0].flatten(), p1blade_out[j,:,:,1].flatten(), p1blade_out[j,:,:,2].flatten())
+        ax.plot_trisurf(p1blade_mirror[j,:,:,0].flatten(), p1blade_mirror[j,:,:,1].flatten(), p1blade_mirror[j,:,:,2].flatten())
+
+        ax.plot_trisurf(p2blade_out[j,:,:,0].flatten(), p2blade_out[j,:,:,1].flatten(), p2blade_out[j,:,:,2].flatten())
+        ax.plot_trisurf(p2blade_mirror[j,:,:,0].flatten(), p2blade_mirror[j,:,:,1].flatten(), p2blade_mirror[j,:,:,2].flatten())
+        
+
+
 
 # plot the wing mesh out:
 ax.plot_trisurf(wing_mesh_out[0,:,:,0].flatten(), wing_mesh_out[0,:,:,1].flatten(), wing_mesh_out[0,:,:,2].flatten())

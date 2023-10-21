@@ -94,6 +94,7 @@ class RotorCSDL(ModuleCSDL):
 
         # a single blade mesh:
         mesh = self.declare_variable(mesh_name, shape=(nc,ns,3))
+        self.print_var(mesh)
         # the center of the rotor disk:
         point = self.declare_variable('point', shape=(3,))
         # normal vector to the rotor disk:
@@ -152,6 +153,7 @@ class Rotor2(m3l.ExplicitOperation):
         self.parameters.declare('nt')
         self.parameters.declare('dt')
         self.parameters.declare('dir')
+        self.parameters.declare('r_point')
 
     def assign_attributes(self):
         self.component = self.parameters['component']
@@ -163,6 +165,7 @@ class Rotor2(m3l.ExplicitOperation):
         self.nt = self.parameters['nt']
         self.dt = self.parameters['dt']
         self.dir = self.parameters['dir']
+        self.r_point = self.parameters['r_point']
 
     def compute(self):
         mesh_name = self.parameters['mesh_name']
@@ -172,6 +175,7 @@ class Rotor2(m3l.ExplicitOperation):
         nt = self.parameters['nt']
         dt = self.parameters['dt']
         dir = self.parameters['dir']
+        r_point = self.parameters['r_point']
         csdl_model = RotorCSDL2(module=self,
                                mesh_name=mesh_name,
                                num_blades=num_blades,
@@ -179,7 +183,8 @@ class Rotor2(m3l.ExplicitOperation):
                                nc=nc,
                                nt=nt,
                                dt=dt,
-                               dir=dir,)
+                               dir=dir,
+                               r_point=r_point,)
         return csdl_model
 
     def evaluate(self):
@@ -194,8 +199,19 @@ class Rotor2(m3l.ExplicitOperation):
 
         mesh_vars = []
         for i in range(num_blades):
-            mesh_vars.append(m3l.Variable(mesh_name+'rotor'+str(i), shape=(nt,nc,ns,3), operation=self))
-        return tuple(mesh_vars)
+            mesh_vars.append(m3l.Variable('rotor'+str(i), shape=(nt,nc,ns,3), operation=self))
+
+        mesh_out_vars = []
+        for i in range(num_blades):
+            mesh_out_vars.append(m3l.Variable('rotor_out'+str(i), shape=(nt,nc,ns,3), operation=self))
+
+        mirror_mesh_vars = []
+        for i in range(num_blades):
+            mirror_mesh_vars.append(m3l.Variable('rotor_mirror'+str(i), shape=(nt,nc,ns,3), operation=self))
+
+        debug_rotor = m3l.Variable(mesh_name + '_rotor', shape=(num_blades,nt,ns,nc,3), operation=self)
+
+        return debug_rotor, tuple(mesh_vars)
 
 
 # creates full rotor geometry from a single blade mesh, a point, and a normal vector
@@ -209,6 +225,7 @@ class RotorCSDL2(ModuleCSDL):
         self.parameters.declare('nt', default=2)
         self.parameters.declare('dt', default=0.001)
         self.parameters.declare('dir', default=1)
+        self.parameters.declare('r_point')
  
     def define(self):
         mesh_name = self.parameters['mesh_name']
@@ -218,6 +235,25 @@ class RotorCSDL2(ModuleCSDL):
         nt = self.parameters['nt']
         dt = self.parameters['dt']
         dir = self.parameters['dir']
+        r_point = self.parameters['r_point']
+
+
+
+
+        alpha = self.register_module_input('theta', shape=(1,), computed_upstream=False)
+        h = self.register_module_input('h', shape=(1,), computed_upstream=False)
+
+        # the rotation matrix:
+        rotation_matrix_y = self.create_output('rotation_matrix_y',shape=(3,3),val=0)
+        rotation_matrix_y[0,0] = csdl.reshape(csdl.cos(alpha), (1,1))
+        rotation_matrix_y[0,2] = csdl.reshape(csdl.sin(alpha), (1,1))
+        rotation_matrix_y[1,1] = self.create_input('one',shape=(1,1),val=1)
+        rotation_matrix_y[2,0] = csdl.reshape(-csdl.sin(alpha), (1,1))
+        rotation_matrix_y[2,2] = csdl.reshape(csdl.cos(alpha), (1,1))
+
+
+
+
 
 
         rad_per_blade = 2*np.pi/num_blades
@@ -239,7 +275,7 @@ class RotorCSDL2(ModuleCSDL):
 
 
         shifted_mesh = mesh - csdl.expand(point, (nc,ns,3), 'k->ijk')
-
+        debug_rot_mesh = self.create_output('debug_rot_mesh', shape=(num_blades,nt,nc,ns,3), val=0)
         for i in range(num_blades):
             rot_mesh = self.create_output('rot_mesh'+str(i), shape=(nt,nc,ns,3), val=0)
             set_angle = rad_per_blade*i
@@ -265,8 +301,39 @@ class RotorCSDL2(ModuleCSDL):
                         mesh_point = csdl.reshape(shifted_mesh[k,l,:], (3))
 
                         rot_mesh[j,k,l,:] = csdl.reshape(csdl.matvec(rot_mat, mesh_point), (1,1,1,3))
+                        debug_rot_mesh[i,j,k,l,:] = csdl.reshape(csdl.matvec(rot_mat, mesh_point), (1,1,1,1,3))
 
             rotor = rot_mesh + csdl.expand(point, (nt,nc,ns,3), 'm->ijkm')
-            self.register_output(mesh_name+'rotor'+str(i), rotor)
+            self.register_output('rotor'+str(i), rotor)
+
+
+
+            # NATIVE ROTOR MIRRORING!!!!!
+            mesh_in = 1*rotor
+            translated_mesh_points = mesh_in - np.tile(r_point, (nt, nc, ns, 1))
+            rotated_mesh_points = self.create_output('rotated_mesh_points_'+str(i), shape=(nt,nc,ns,3), val=0)
+            for j in range(nt):
+                for k in range(nc):
+                    for l in range(ns):
+                        eval_point = csdl.reshape(translated_mesh_points[j,k,l,:], (3))
+                        rotated_mesh_points[j,k,l,:] = csdl.reshape(csdl.matvec(rotation_matrix_y, eval_point), (1,1,1,3))
+
+            rotated_mesh = rotated_mesh_points + np.tile(r_point, (nt, nc, ns, 1))
+
+            # translate the mesh based on altitude:
+            dh = self.create_output('dh'+str(i), shape=(nt,nc,ns,3), val=0)
+            dh[:,:,:,2] = csdl.expand(h, (nt,nc,ns,1), 'i->abci')
+            mesh_out = rotated_mesh + dh
+            self.register_output('rotor_out'+str(i), mesh_out)
+
+            # create the mirrored mesh:
+            mirror = self.create_output('rotor_mirror'+str(i), shape=(nt,nc,ns,3), val=0)
+            mirror[:,:,:,0] = mesh_out[:,:,:,0]
+            mirror[:,:,:,1] = mesh_out[:,:,:,1]
+            mirror[:,:,:,2] = -1*mesh_out[:,:,:,2]
+
+
+        debug_rotor = debug_rot_mesh + csdl.expand(point, (num_blades,nt,nc,ns,3), 'm->ijklm')
+        self.register_output('rotor', debug_rotor)
 
 
