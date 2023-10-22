@@ -20,8 +20,11 @@ lda0_ldoge = ld_a0/ld_oge
 
 
 
-plt.semilogx(hs,lda0_ldoge,linewidth=2)
-plt.semilogx(hsref,ldref,linewidth=2)
+fig, ax = plt.subplots(constrained_layout=True)
+
+
+ax.semilogx(hs,lda0_ldoge,linewidth=2)
+ax.semilogx(hsref,ldref,linewidth=2)
 
 
 
@@ -30,14 +33,14 @@ plt.semilogx(hsref,ldref,linewidth=2)
 #plt.ylabel(r'$\frac{(L/D)_{IGE}}{(L/D)_{OGE}}$', fontsize=fontsize)
 
 
-plt.xticks([0.01,0.02,0.04,0.06,0.08,0.1,0.2,0.3], labels=[0.01,0.02,0.04,0.06,0.08,0.1,0.2,0.3], fontsize=fontsize - 3)
-plt.yticks([1,2,3,4], fontsize=fontsize - 3)
+ax.set_xticks([0.01,0.02,0.04,0.06,0.08,0.1,0.2,0.3], labels=[0.01,0.02,0.04,0.06,0.08,0.1,0.2,0.3], fontsize=fontsize - 3)
+ax.set_yticks([1,2,3,4], labels=[1,2,3,4], fontsize=fontsize - 3)
 
-plt.xlim([0.01,0.3])
-plt.ylim([1,4])
+ax.set_xlim([0.01,0.3])
+ax.set_ylim([1,4])
 
 #plt.legend([r'$\alpha=0^\circ$',r'$\alpha=2^\circ$',r'$\alpha=4^\circ$',r'$\alpha=6^\circ$'], fontsize=fontsize-4)
-plt.grid(color='lavender')
+ax.grid(color='lavender')
 
 
 #plt.savefig('ld_ige_oge.png', dpi=600, transparent=True, bbox_inches="tight")

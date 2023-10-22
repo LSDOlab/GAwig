@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams.update(plt.rcParamsDefault)
 plt.rcParams["font.family"] = "Times New Roman"
-plt.rcParams["figure.figsize"] = (8.3,3.6)
+plt.rcParams["figure.figsize"] = (8,4.5)
 
 fontsize = 16
 
@@ -29,11 +29,16 @@ fig, ax = plt.subplots(constrained_layout=True)
 ax.semilogx(hs,lda0_ldoge,linewidth=2,label='_nolegend_')
 ax.scatter(hs,lda0_ldoge,linewidth=2,marker='v',zorder=10)
 
-#plt.semilogx(hs,lda2_ldoge,linewidth=2)
-#plt.semilogx(hs,lda4_ldoge,linewidth=2)
-#plt.semilogx(hs,lda6_ldoge,linewidth=2)
+ax.semilogx(hs,lda2_ldoge,linewidth=2,label='_nolegend_')
+ax.scatter(hs,lda2_ldoge,linewidth=2,marker='s',zorder=10)
 
-ax.scatter(hsref,ldref,linewidth=2,zorder=10)
+ax.semilogx(hs,lda4_ldoge,linewidth=2,label='_nolegend_')
+ax.scatter(hs,lda4_ldoge,linewidth=2,marker='o',zorder=10)
+
+ax.semilogx(hs,lda6_ldoge,linewidth=2,label='_nolegend_')
+ax.scatter(hs,lda6_ldoge,linewidth=2,marker='D',zorder=10)
+
+# ax.scatter(hsref,ldref,linewidth=2,zorder=10)
 
 
 
@@ -41,7 +46,7 @@ ax.axvline(x=0.1,linewidth=2,linestyle='dashed',color='black')
 
 
 ax.set_xlabel(r'$\frac{h_{TE}}{\sqrt{S}}$', fontsize=fontsize)
-ax.set_ylabel(r'$\frac{\left(\frac{L}{D}\right)_{MAX~IGE}}{\left(\frac{L}{D}\right)_{MAX~OGE}}$', fontsize=fontsize)
+ax.set_ylabel(r'$\frac{\left(\frac{L}{D}\right)_{IGE}}{\left(\frac{L}{D}\right)_{OGE}}$', fontsize=fontsize)
 
 
 ax.set_xticks([0.01,0.02,0.04,0.06,0.08,0.1,0.2,0.3], labels=[0.01,0.02,0.04,0.06,0.08,0.1,0.2,0.3], fontsize=fontsize - 3)
@@ -50,7 +55,7 @@ ax.set_yticks([1,2,3,4], labels=[1,2,3,4], fontsize=fontsize - 3)
 ax.set_xlim([0.01,0.3])
 ax.set_ylim([1,4])
 
-ax.legend(['UCSD VAST','Brown et al. (Lockheed)','Min expected '+r'$\frac{h_{TE}}{\sqrt{S}}\approx \frac{8}{\sqrt{6000}}$'], fontsize=fontsize-4)
+ax.legend([r'$\alpha=0^{\circ}$',r'$\alpha=2^{\circ}$',r'$\alpha=4^{\circ}$',r'$\alpha=6^{\circ}$','Min expected '+r'$\frac{h_{TE}}{\sqrt{S}}\approx \frac{8}{\sqrt{6000}}$'], fontsize=fontsize-4)
 ax.grid(color='lavender')
 
 
@@ -64,7 +69,7 @@ secax = ax.secondary_xaxis('top',functions=(fun, inv))
 secax.set_xlabel(r'$\frac{h_{TE}}{b}$', fontsize=fontsize)
 secax.set_xticks([0.02,0.04,0.06,0.08,0.1,0.2,0.3,0.4,0.5], labels=[0.02,0.04,0.06,0.08,0.1,0.2,0.3,0.4,0.5], fontsize=fontsize - 3)
 
-ax.set_title('L/D IGE/OGE Ratios for the Clark-Y AR4 Wing')
+ax.set_title('L/D IGE/OGE Ratios for the Clark-Y AR4 Wing at Varying AOA')
 
-plt.savefig('ld_comp.png', dpi=600, transparent=True, bbox_inches="tight")
+plt.savefig('ld_alpha_sweep.png', dpi=600, transparent=True, bbox_inches="tight")
 plt.show()
