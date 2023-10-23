@@ -168,6 +168,9 @@ ac_states = wig_condition.evaluate_ac_states()
 ac_expander = ac_expand(num_nodes=nt)
 ac_states_expanded = ac_expander.evaluate(ac_states)
 
+theta = np.deg2rad(0)
+h = 10
+rotation_point = np.array([0,0,0])
 
 dt = 0.016*2
 num_blades = 6
@@ -176,10 +179,11 @@ for i in range(num_props):
     dir = -1
     if i > num_blades/2:
         dir = 1
-    prop_model = Rotor2(component=props[i], mesh_name=propb1_mesh_names[i], num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=dir)
+    prop_model = Rotor2(component=props[i], mesh_name=propb1_mesh_names[i], num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=dir, r_point=rotation_point)
     prop_model.set_module_input('rpm', val=1000, dv_flag=True)
-    prop_meshes.append(prop_model.evaluate())
-
+    prop_model.set_module_input('theta', val=theta, dv_flag=True)
+    prop_model.set_module_input('h', val=h, dv_flag=True)
+    prop_meshes.append(prop_model.evaluate()[1])
 
 uvlm_parameters = [('u',True,ac_states_expanded['u']),
                     ('v',True,ac_states_expanded['v']),
@@ -224,7 +228,6 @@ for prop_mesh in prop_meshes:
         initial_conditions.append((name+'_gamma_w_0', np.zeros((nt-1, ny-1))))
         initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
     i += 1
-
 
 # interactions for props
 sub_eval_list, sub_induced_list = generate_sub_lists(interaction_groups)
