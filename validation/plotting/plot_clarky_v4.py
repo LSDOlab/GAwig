@@ -46,14 +46,14 @@ ax.grid(color='lavender')
 
 
 def fun(x):
-    return x*np.sqrt(6000)/30.5
+    return x*np.sqrt(1.032256)/0.508
 
 def inv(x):
-    return x*30.5/np.sqrt(6000)
+    return x*0.508/np.sqrt(1.032256)
 
 secax = ax.secondary_xaxis('top',functions=(fun, inv))
 secax.set_xlabel(r'$\frac{h_{TE}}{b}$', fontsize=fontsize)
-secax.set_xticks([0.1,0.3,0.5,0.7,0.9,1.1], labels=[0.1,0.3,0.5,0.7,0.9,1.1], fontsize=fontsize - 3)
+secax.set_xticks([0.1,0.2,0.5,0.7,0.9,1.1], labels=[0.1,0.2,0.5,0.7,0.9,1.1], fontsize=fontsize - 3)
 
 ax.set_title('L/D Max for the Clark-Y AR2 Wing')
 
