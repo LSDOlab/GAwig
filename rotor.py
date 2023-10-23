@@ -199,7 +199,7 @@ class Rotor2(m3l.ExplicitOperation):
 
         mesh_vars = []
         for i in range(num_blades):
-            mesh_vars.append(m3l.Variable('rotor'+str(i), shape=(nt,nc,ns,3), operation=self))
+            mesh_vars.append(m3l.Variable(self.name+str(i), shape=(nt,nc,ns,3), operation=self))
 
         mesh_out_vars = []
         for i in range(num_blades):
@@ -304,7 +304,7 @@ class RotorCSDL2(ModuleCSDL):
                         debug_rot_mesh[i,j,k,l,:] = csdl.reshape(csdl.matvec(rot_mat, mesh_point), (1,1,1,1,3))
 
             rotor = rot_mesh + csdl.expand(point, (nt,nc,ns,3), 'm->ijkm')
-            self.register_output('rotor'+str(i), rotor)
+            self.register_output(mesh_name + '_rotor'+str(i), rotor)
 
 
 
