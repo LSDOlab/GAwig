@@ -207,11 +207,11 @@ class Rotor2(m3l.ExplicitOperation):
 
         mirror_mesh_vars = []
         for i in range(num_blades):
-            mirror_mesh_vars.append(m3l.Variable('rotor_mirror'+str(i), shape=(nt,nc,ns,3), operation=self))
+            mirror_mesh_vars.append(m3l.Variable(self.name+str(i)+'_mirror', shape=(nt,nc,ns,3), operation=self))
 
         debug_rotor = m3l.Variable(mesh_name + '_rotor', shape=(num_blades,nt,ns,nc,3), operation=self)
 
-        return debug_rotor, tuple(mesh_vars)
+        return tuple(mesh_vars), tuple(mirror_mesh_vars)
 
 
 # creates full rotor geometry from a single blade mesh, a point, and a normal vector
@@ -327,7 +327,7 @@ class RotorCSDL2(ModuleCSDL):
             self.register_output('rotor_out'+str(i), mesh_out)
 
             # create the mirrored mesh:
-            mirror = self.create_output('rotor_mirror'+str(i), shape=(nt,nc,ns,3), val=0)
+            mirror = self.create_output(mesh_name + '_rotor'+str(i)+'_mirror', shape=(nt,nc,ns,3), val=0)
             mirror[:,:,:,0] = mesh_out[:,:,:,0]
             mirror[:,:,:,1] = mesh_out[:,:,:,1]
             mirror[:,:,:,2] = -1*mesh_out[:,:,:,2]
