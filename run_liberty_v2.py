@@ -50,7 +50,7 @@ htail = build_component('htail', ['HTail'])
 fuse = build_component('fuse', ['FuselageGeom'])
 
 # props
-num_props = 2
+num_props = 8
 props = [] # we go from 1-indexed to 0-indexed here
 for i in range(num_props):
     prop = build_component('prop_'+str(i), ['Prop'+str(i+1),'Hub'+str(i+1)])
@@ -211,8 +211,8 @@ for i in range(num_props):
     prop_model.set_module_input('rpm', val=1000, dv_flag=True)
     prop_model.set_module_input('theta', val=theta, dv_flag=True)
     prop_model.set_module_input('h', val=h, dv_flag=True)
-    props, mirror_props = prop_model.evaluate()
-    prop_meshes.append(props + mirror_props)
+    prop_mesh_out, mirror_prop_meshes = prop_model.evaluate()
+    prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
 num_blades = num_blades*2
 
 uvlm_parameters = [('u',True,ac_states_expanded['u']),
