@@ -20,6 +20,8 @@ from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from mpl_toolkits.mplot3d import proj3d
 from caddee.core.caddee_core.system_representation.prescribed_actuations import PrescribedRotation
 from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, PostProcessor
+from VAST.core.profile_model import gen_profile_output_list, PPSubmodel
+
 
 
 
@@ -48,7 +50,7 @@ htail = build_component('htail', ['HTail'])
 fuse = build_component('fuse', ['FuselageGeom'])
 
 # props
-num_props = 8
+num_props = 1
 props = [] # we go from 1-indexed to 0-indexed here
 for i in range(num_props):
     prop = build_component('prop_'+str(i), ['Prop'+str(i+1),'Hub'+str(i+1)])
@@ -148,7 +150,7 @@ for i in range(num_props):
 
 
 
-nt = num_nodes = 30
+nt = num_nodes = 5
 
 # design scenario
 design_scenario = cd.DesignScenario(name='wig')
@@ -266,6 +268,10 @@ for name in surface_names:
 #     nt = nt + 1
 # )
 
+profile_outputs = gen_profile_output_list(surface_names, surface_shapes)
+ode_surface_shapes = [(num_nodes, ) + item for item in surface_shapes]
+post_processor = PPSubmodel(surface_names = surface_names, ode_surface_shapes=ode_surface_shapes, delta_t=dt, nt=num_nodes+1, symmetry=False)
+
 model = m3l.DynamicModel()
 uvlm = VASTSolverUnsteady(num_nodes = num_nodes, 
                           surface_names = surface_names, 
@@ -285,7 +291,9 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
                           integrator='ForwardEuler',
                           approach='time-marching',
                           copycat_profile=True,
-                          profile_outputs=pp_vars)
+                          profile_outputs=profile_outputs,
+                          post_processor=post_processor,
+                          pp_vars=pp_vars)
 uvlm_op = model.assemble(return_operation=True)
 lift_vars = uvlm_op.evaluate()[0:len(pp_vars)]
 
