@@ -20,11 +20,11 @@ from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from mpl_toolkits.mplot3d import proj3d
 from caddee.core.caddee_core.system_representation.prescribed_actuations import PrescribedRotation
 from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, PostProcessor
+from deflect_flap import deflect_flap
 
 
 
-
-file_name = 'GAwig/LibertyLifter3.stp'
+file_name = 'LibertyLifter3.stp'
 caddee = cd.CADDEE()
 caddee.system_model = system_model = cd.SystemModel()
 caddee.system_representation = sys_rep = cd.SystemRepresentation()
@@ -32,7 +32,7 @@ caddee.system_parameterization = sys_param = cd.SystemParameterization(system_re
 spatial_rep = sys_rep.spatial_representation
 spatial_rep.import_file(file_name=file_name)
 spatial_rep.refit_geometry(file_name=file_name)
-# spatial_rep.plot(plot_types=['mesh'])
+spatial_rep.plot(plot_types=['mesh'])
 
 
 
@@ -66,11 +66,26 @@ chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_vlm)
 wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 0., 2.]), direction=np.array([0., 0., -2.]), grid_search_n=30, plot=False)
 wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 2.]), direction=np.array([0., 0., 2.]), grid_search_n=30, plot=False)
 wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surface_wireframe, 1)
-# spatial_rep.plot_meshes([wing_camber_surface])
-wing_vlm_mesh_name = 'wing_vlm_mesh'
-sys_rep.add_output(wing_vlm_mesh_name, wing_camber_surface)
-wing_camber_surface_np = wing_camber_surface.value # TODO: change this idk
+spatial_rep.plot_meshes([wing_camber_surface])
+wing_camber_surface_np = wing_camber_surface.value.reshape((num_chordwise_vlm, num_spanwise_vlm, 3))
 
+flap_mesh = deflect_flap(wing_camber_surface_np, 30, 2)
+spatial_rep.plot_meshes([flap_mesh])
+
+wing_vlm_mesh_name = 'wing_vlm_mesh'
+# print()
+# exit()
+# sys_rep.add_output(wing_vlm_mesh_name, wing_camber_surface)
+
+# print(wing_camber_surface.shape)
+# print(type(wing_camber_surface))
+# print(type(am.array(flap_mesh.reshape((14, -1))).reshape((1, 14, 22, 3))))
+# exit()
+# sys_rep.add_output(wing_vlm_mesh_name, am.array(flap_mesh.reshape((14, -1))).reshape((1, 14, 22, 3)))
+wing_camber_surface_np = flap_mesh.reshape((1, 14, 22, 3))# wing_camber_surface.value # TODO: change this idk
+# print(flap_mesh.shape)
+# print(wing_camber_surface_np.shape)
+# print(wing_camber_surface.value)
 
 
 # right fuselage mesh:
