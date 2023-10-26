@@ -34,7 +34,7 @@ class Mirror(m3l.ExplicitOperation):
         nc = self.parameters['nc']
         nt = self.parameters['nt']
         point = self.parameters['point']
-        csdl_model = MirrorCSDL(module=self,mesh_name=mesh_name,ns=ns,nc=nc,nt=nt,point=point)
+        csdl_model = MirrorCSDL(module=self,mesh_name=mesh_name,ns=ns,nc=nc,nt=nt,point=point,mesh_value=self.mesh)
         return csdl_model
 
     def evaluate(self):
@@ -62,6 +62,7 @@ class MirrorCSDL(ModuleCSDL):
         self.parameters.declare('nc')
         self.parameters.declare('nt')
         self.parameters.declare('point')
+        self.parameters.declare('mesh_value', default=None)
  
     def define(self):
         mesh_name = self.parameters['mesh_name']
@@ -69,6 +70,7 @@ class MirrorCSDL(ModuleCSDL):
         nc = self.parameters['nc']
         nt = self.parameters['nt']
         point = self.parameters['point']
+        mesh_value = self.parameters['mesh_value']
 
         alpha = self.register_module_input('theta', shape=(1,), computed_upstream=False)
         h = self.register_module_input('h', shape=(1,), computed_upstream=False)
@@ -82,7 +84,7 @@ class MirrorCSDL(ModuleCSDL):
         rotation_matrix_y[2,0] = csdl.reshape(-csdl.sin(alpha), (1,1))
         rotation_matrix_y[2,2] = csdl.reshape(csdl.cos(alpha), (1,1))
 
-        mesh_in_one_by = self.declare_variable(mesh_name, shape=(nc,ns,3))
+        mesh_in_one_by = self.declare_variable(mesh_name, shape=(nc,ns,3), val=mesh_value)
         mesh_in = csdl.expand(mesh_in_one_by, (nt,nc,ns,3), 'ijk->lijk')
         #mesh_in = self.register_module_input(mesh_name, shape=(nt,nc,ns,3), promotes=True)
         self.register_output('debug_mesh', 1*mesh_in)
