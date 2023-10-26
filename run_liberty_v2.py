@@ -3,18 +3,14 @@ import m3l
 from python_csdl_backend import Simulator
 from modopt.scipy_library import SLSQP
 from modopt.csdl_library import CSDLProblem
-from caddee.core.caddee_core.system_representation.component.component import LiftingSurface, Component
+from caddee.core.caddee_core.system_representation.component.component import LiftingSurface
 import array_mapper as am
-import lsdo_geo as lg
-from VAST.core.vast_solver import VASTFluidSover
-from VAST.core.fluid_problem import FluidProblem
-from VAST.core.generate_mappings_m3l import VASTNodalForces
 import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams.update(plt.rcParamsDefault)
 import csdl
 from mirror import Mirror
-from rotor import Rotor, Rotor2
+from rotor import Rotor2
 from expansion_op import ac_expand
 from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from mpl_toolkits.mplot3d import proj3d
@@ -22,6 +18,7 @@ from caddee.core.caddee_core.system_representation.prescribed_actuations import 
 from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, PostProcessor
 from deflect_flap import deflect_flap
 from VAST.core.profile_model import gen_profile_output_list, PPSubmodel
+from last_n_average import LastNAverage
 
 
 
@@ -107,7 +104,7 @@ ltop = fuse.project(np.linspace(np.array([0, -27, -0.25]), np.array([120, -27, 9
 lbot = fuse.project(np.linspace(np.array([0, -27, -10]), np.array([120, -27, -2]), num_long_vlm+2)[1:-1], direction=np.array([0., 0., -1.]), plot=False)
 left_fuse_surface = am.linspace(ltop, lbot, num_vert_vlm)
 left_fuse_surface_reordered = np.swapaxes(left_fuse_surface.value, 0, 1)
-spatial_rep.plot_meshes([left_fuse_surface])
+# spatial_rep.plot_meshes([left_fuse_surface])
 left_fuse_mesh_name = 'left_fuselage_mesh'
 sys_rep.add_output(left_fuse_mesh_name, left_fuse_surface)
 
@@ -169,9 +166,7 @@ for i in range(num_props):
     prop_point_names.append(prop_point_name)
 # endregion
 
-
-
-nt = num_nodes = 15
+nt = num_nodes = 5
 
 # design scenario
 design_scenario = cd.DesignScenario(name='wig')
@@ -179,7 +174,7 @@ design_scenario = cd.DesignScenario(name='wig')
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.21623, dv_flag=True, lower=0.1, upper=0.3)
+wig_condition.set_module_input(name='mach_number', val=0.35, dv_flag=True, lower=0.1, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0))
 wig_condition.set_module_input(name='flight_path_angle', val=0)
@@ -231,7 +226,7 @@ for i in range(num_props):
     prop_model = Rotor2(component=props[i], mesh_name=propb1_mesh_names[i], num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=dir, r_point=rotation_point)
     prop_model.set_module_input('rpm', val=1000, dv_flag=True)
     prop_model.set_module_input('theta', val=theta, dv_flag=True)
-    prop_model.set_module_input('h', val=h, dv_flag=True)
+    prop_model.set_module_input('h', val=h, dv_flag=False)
     prop_mesh_out, mirror_prop_meshes = prop_model.evaluate()
     prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
 num_blades = num_blades*2
@@ -309,10 +304,11 @@ pp_vars = []
 # for name in surface_names:
 #     pp_vars.append((name+'_L', (nt, 1)))
 
-
-pp_vars.append('panel_forces_x')
-pp_vars.append('panel_forces_y')
-pp_vars.append('panel_forces_z')
+num_panels = int((num_props*num_blades/2*(num_spanwise_prop-1)*(num_chordwise_prop-1) + (num_spanwise_vlm-1)*(num_chordwise_vlm-1) + (num_long_vlm-1)*(num_vert_vlm-1)*2)*2)
+print(num_panels)
+pp_vars.append(('panel_forces_x',(nt,num_panels,1)))
+pp_vars.append(('panel_forces_y',(nt,num_panels,1)))
+pp_vars.append(('panel_forces_z',(nt,num_panels,1)))
 
 profile_outputs = gen_profile_output_list(surface_names, surface_shapes)
 ode_surface_shapes = [(num_nodes, ) + item for item in surface_shapes]
@@ -344,8 +340,11 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
 uvlm_op = model.assemble(return_operation=True)
 outputs = uvlm_op.evaluate()[0:len(pp_vars)]
 
+average_op = LastNAverage(n=2)
+ave_outputs = average_op.evaluate(outputs)
+
 overmodel = m3l.Model()
-for var in outputs:
+for var in ave_outputs:
     overmodel.register_output(var)
 
 # add the cruise m3l model to the cruise condition
@@ -371,13 +370,6 @@ for i in range(len(prop_meshes)):
 # caddee_csdl_model.connect('wing_vlm_mesh', 
 #                           'system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.wing_vlm_mesh')
 
-# # right fuse mirror model connection:
-# caddee_csdl_model.connect('right_fuselage_mesh', 
-#                           'system_model.wig.wig.wig.operation.input_model.right_fuselage_meshmirror.right_fuselage_mesh')
-
-# uncommont this if you add the tail
-# caddee_csdl_model.connect('htail_vlm_mesh', 
-#                           'system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.htail_vlm_mesh') # TODO: check this name
 
 sim = Simulator(model_csdl, analytics=True, lazy=1)
 sim.run()
