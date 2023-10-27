@@ -67,7 +67,7 @@ def create_GE_sim(mesh, image_mesh):
         surface_shapes = surface_shapes,
         delta_t = h_stepsize,
         nt = num_nodes + 1,
-        symmetry=True,
+        # symmetry=True,
         frame='inertial'
     )
     pp_vars = [
@@ -165,8 +165,8 @@ def GE_sweep(nx, ny, num_nodes, AR, span, alpha_list, h_list):
 
 AR = 8
 span = 8
-nx = 5
-ny = 13
+nx = 7
+ny = 19
 num_nodes = 20
 
 
@@ -193,20 +193,20 @@ ax1.plot([], [], 'k-*', linewidth=3, markersize=12, label=r"IGE")
 
 for i, alpha in enumerate(alpha_list):
     ax1.plot([max(h_te_b), min(h_te_b)], [CL[-1,i,0]]*2, '-', linewidth=3, c=color[i])
-    ax1.plot(h_te_b, CL[-1,i,:], '-*', linewidth=3, markersize=12, c=color[i])
+    ax1.plot(h_te_b, CL[-1,i,:], '*', linewidth=3, markersize=12, c=color[i])
 
-ax1.set_ylabel(r'$C_L$', fontsize=40)
-ax1.set_xlabel(r'$h_{TE}/b$', fontsize=40)
+ax1.set_ylabel(r'$C_L$', fontsize=30)
+ax1.set_xlabel(r'$h_{TE}/b$', fontsize=30)
 ax1.tick_params('y', labelsize=20)
 ax1.legend(loc='best', fontsize=20)
 ax1.grid()
 
 for i, alpha in enumerate(alpha_list):
     ax2.plot([max(h_te_b), min(h_te_b)], [CDi[-1,i,0]]*2, '-', linewidth=3, c=color[i])
-    ax2.plot(h_te_b, CDi[-1,i,:], '-*', linewidth=3, markersize=12, c=color[i])
+    ax2.plot(h_te_b, CDi[-1,i,:], '*', linewidth=3, markersize=12, c=color[i])
 
-ax2.set_ylabel(r'$C_{Di}$', fontsize=40)
-ax2.set_xlabel(r'$h_{TE}/b$', fontsize=40)
+ax2.set_ylabel(r'$C_{Di}$', fontsize=30)
+ax2.set_xlabel(r'$h_{TE}/b$', fontsize=30)
 ax2.tick_params('y', labelsize=20)
 ax2.tick_params('x', labelsize=20)
 ax2.grid()
@@ -216,8 +216,8 @@ ax1.annotate(r'$\alpha = 10 ^\circ$', (0.62, 0.49), fontsize=30)
 ax1.annotate(r'$\alpha = 5 ^\circ$', (0.62, 0.26), fontsize=30)
 ax1.annotate(r'$\alpha = 2 ^\circ$', (0.62, 0.12), fontsize=30)
 
-ax2.annotate(r'$\alpha = 15 ^\circ$', (0.62, 0.0181), fontsize=30)
-ax2.annotate(r'$\alpha = 10 ^\circ$', (0.62, 0.0084), fontsize=30)
+ax2.annotate(r'$\alpha = 15 ^\circ$', (0.62, 0.0165), fontsize=30)
+ax2.annotate(r'$\alpha = 10 ^\circ$', (0.62, 0.0087), fontsize=30)
 ax2.annotate(r'$\alpha = 5 ^\circ$', (0.62, 0.0025), fontsize=30)
 ax2.annotate(r'$\alpha = 2 ^\circ$', (0.62, 0.00065), fontsize=30)
 
