@@ -11,7 +11,7 @@ class Engine(m3l.ExplicitOperation):
         self.parameters.declare('mesh', default=None)
         self.num_nodes = None
         self.parameters.declare('engine_name')
-        self.parameters.declare('sfc')
+        self.parameters.declare('sfc', default=0.46)
 
     def assign_attributes(self):
         self.component = self.parameters['component']
@@ -29,11 +29,14 @@ class Engine(m3l.ExplicitOperation):
                                )
         return csdl_model
 
-    def evaluate(self):
+    def evaluate(self, torque):
         engine_name = self.parameters['engine_name']
  
         self.name = engine_name + '_engine'
-        self.arguments = {}
+        self.arguments = {
+            # 'rpm': rpm,
+            'torque' : torque,
+        }
 
         fc = m3l.Variable(engine_name + '_fc', shape=(1,), operation=self)
         pwr = m3l.Variable(engine_name + '_pwr', shape=(1,), operation=self)

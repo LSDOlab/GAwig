@@ -37,7 +37,7 @@ class Mirror(m3l.ExplicitOperation):
         csdl_model = MirrorCSDL(module=self,mesh_name=mesh_name,ns=ns,nc=nc,nt=nt,point=point,mesh_value=self.mesh)
         return csdl_model
 
-    def evaluate(self):
+    def evaluate(self):#, theta : m3l.Variable, h : m3l.Variable):
         mesh_name = self.parameters['mesh_name']
         ns = self.parameters['ns']
         nc = self.parameters['nc']
@@ -45,6 +45,9 @@ class Mirror(m3l.ExplicitOperation):
  
         self.name = mesh_name + 'mirror'
         self.arguments = {}
+        #     'theta' : theta,
+        #     'h' : h,
+        # }
 
         mirror_mesh = m3l.Variable(mesh_name + '_mirror', shape=(nt,nc,ns,3), operation=self)
         mesh_out = m3l.Variable(mesh_name + '_out', shape=(nt,nc,ns,3), operation=self)
@@ -72,8 +75,8 @@ class MirrorCSDL(ModuleCSDL):
         point = self.parameters['point']
         mesh_value = self.parameters['mesh_value']
 
-        alpha = self.register_module_input('theta', shape=(1,), computed_upstream=False)
-        h = self.register_module_input('h', shape=(1,), computed_upstream=False)
+        alpha = self.declare_variable('theta', shape=(1,))
+        h = self.declare_variable('h', shape=(1,))
         #h = self.register_module_input('h', shape=(1), promotes=True)
 
         # the rotation matrix:
