@@ -1,4 +1,5 @@
-from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, ProfileOpModel, ProfileOpModel2, PostProcessor
+from VAST.core.vast_solver_unsteady import VASTSolverUnsteady
+from VAST.core.profile_model import gen_profile_output_list, PPSubmodel
 import python_csdl_backend
 from VAST.utils.generate_mesh import *
 import m3l
@@ -11,16 +12,17 @@ from generate_ground_effect_mesh import generate_ground_effect_mesh
 # define mesh here
 ########################################
 nx = 5
-ny = 5
+ny = 11
 AR = 8
 span = 8
 chord = span/AR
-num_nodes = 10
+num_nodes = 15
 h = 2
 
 nt = num_nodes+1
 alpha = 15
 
+h_stepsize = delta_t = 1/4
 
 mesh_dict = {
     "num_y": ny,
@@ -42,6 +44,14 @@ panel_pos_y = mesh.copy()[:,int((ny-1)/2):,:]
 panel_pos_y[:,:,1] += 1
 panel_pos_y[:,:,2] += h
 
+panel_2_neg_y = mesh.copy()[:,:int((ny+1)/2),:]
+panel_2_neg_y[:,:,1] -= 2
+panel_2_neg_y[:,:,2] += 2*h
+panel_2_pos_y = mesh.copy()[:,int((ny-1)/2):,:]
+panel_2_pos_y[:,:,1] += 2
+panel_2_pos_y[:,:,2] += 2*h
+
+
 panel_neg_y_image = image_mesh.copy()[:,:int((ny+1)/2),:]
 panel_neg_y_image[:,:,1] -= 1
 panel_neg_y_image[:,:,2] -= h
@@ -49,12 +59,23 @@ panel_pos_y_image = image_mesh.copy()[:,int((ny-1)/2):,:]
 panel_pos_y_image[:,:,1] += 1
 panel_pos_y_image[:,:,2] -= h
 
+panel_2_neg_y_image = image_mesh.copy()[:,:int((ny+1)/2),:]
+panel_2_neg_y_image[:,:,1] -= 2
+panel_2_neg_y_image[:,:,2] -= 2*h
+panel_2_pos_y_image = image_mesh.copy()[:,int((ny-1)/2):,:]
+panel_2_pos_y_image[:,:,1] += 2
+panel_2_pos_y_image[:,:,2] -= 2*h
+
 mesh_val = np.zeros((num_nodes, nx, ny, 3))
 neg_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 pos_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
+neg_panel_2_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
+pos_panel_2_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 image_mesh_val = np.zeros((num_nodes, nx, ny, 3))
 image_neg_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 image_pos_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
+image_neg_panel_2_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
+image_pos_panel_2_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 
 for j in range(num_nodes):
     mesh_val[j, :, :, 0] = mesh.copy()[:, :, 0]
@@ -69,6 +90,14 @@ for j in range(num_nodes):
     pos_panel_val[j, :, :, 1] = panel_pos_y.copy()[:, :, 1]
     pos_panel_val[j, :, :, 2] = panel_pos_y.copy()[:, :, 2]
 
+    neg_panel_2_val[j, :, :, 0] = panel_2_neg_y.copy()[:, :, 0]
+    neg_panel_2_val[j, :, :, 1] = panel_2_neg_y.copy()[:, :, 1]
+    neg_panel_2_val[j, :, :, 2] = panel_2_neg_y.copy()[:, :, 2]
+
+    pos_panel_2_val[j, :, :, 0] = panel_2_pos_y.copy()[:, :, 0]
+    pos_panel_2_val[j, :, :, 1] = panel_2_pos_y.copy()[:, :, 1]
+    pos_panel_2_val[j, :, :, 2] = panel_2_pos_y.copy()[:, :, 2]
+
     image_mesh_val[j, :, :, 0] = image_mesh.copy()[:, :, 0]
     image_mesh_val[j, :, :, 1] = image_mesh.copy()[:, :, 1]
     image_mesh_val[j, :, :, 2] = image_mesh.copy()[:, :, 2]
@@ -80,6 +109,14 @@ for j in range(num_nodes):
     image_pos_panel_val[j, :, :, 0] = panel_pos_y_image.copy()[:, :, 0]
     image_pos_panel_val[j, :, :, 1] = panel_pos_y_image.copy()[:, :, 1]
     image_pos_panel_val[j, :, :, 2] = panel_pos_y_image.copy()[:, :, 2]
+
+    image_neg_panel_2_val[j, :, :, 0] = panel_2_neg_y_image.copy()[:, :, 0]
+    image_neg_panel_2_val[j, :, :, 1] = panel_2_neg_y_image.copy()[:, :, 1]
+    image_neg_panel_2_val[j, :, :, 2] = panel_2_neg_y_image.copy()[:, :, 2]
+
+    image_pos_panel_2_val[j, :, :, 0] = panel_2_pos_y_image.copy()[:, :, 0]
+    image_pos_panel_2_val[j, :, :, 1] = panel_2_pos_y_image.copy()[:, :, 1]
+    image_pos_panel_2_val[j, :, :, 2] = panel_2_pos_y_image.copy()[:, :, 2]
 
 # u_vel = np.ones(num_nodes).reshape(num_nodes,1)*1
 # w_vel = np.zeros((num_nodes, 1))
@@ -121,13 +158,21 @@ uvlm_parameters.append(('pos_panel', True, pos_panel_val))
 uvlm_parameters.append(('wing_image', True, image_mesh_val))
 uvlm_parameters.append(('neg_panel_image', True, image_neg_panel_val))
 uvlm_parameters.append(('pos_panel_image', True, image_pos_panel_val))
+# uvlm_parameters.append(('neg_panel_2', True, neg_panel_2_val))
+# uvlm_parameters.append(('pos_panel_2', True, pos_panel_2_val))
+# uvlm_parameters.append(('neg_panel_2_image', True, image_neg_panel_2_val))
+# uvlm_parameters.append(('pos_panel_2_image', True, image_pos_panel_2_val))
 surface_names = [
     'wing',
     'neg_panel',
     'pos_panel',
     'wing_image',
     'neg_panel_image',
-    'pos_panel_image'
+    'pos_panel_image',
+    # 'neg_panel_2',
+    # 'pos_panel_2',
+    # 'neg_panel_2_image',
+    # 'pos_panel_2_image',
 ]
 surface_shapes = [
     (nx,ny,3),
@@ -135,14 +180,16 @@ surface_shapes = [
     (nx, int((ny+1)/2), 3),
     (nx,ny,3),
     (nx, int((ny+1)/2), 3),
-    (nx, int((ny+1)/2), 3)
+    (nx, int((ny+1)/2), 3),
+    # (nx, int((ny+1)/2), 3),
+    # (nx, int((ny+1)/2), 3),
+    # (nx, int((ny+1)/2), 3),
+    # (nx, int((ny+1)/2), 3),
 ]
 
 system_size = 0
 for i in range(len(surface_shapes)):
     system_size += surface_shapes[i][0] * surface_shapes[i][1]
-
-h_stepsize = delta_t = 1/4
 
 initial_conditions = []
 for i in range(len(surface_names)):
@@ -172,28 +219,17 @@ for i in range(len(surface_names)):
 # sub_induced_list = [0, 1, 2, 0, 1, 2, 0, 1, 2]
 sub_eval_list = []
 for i in range(len(surface_names)):
+    # sub_eval_list.extend([i]*10)
     sub_eval_list.extend([i]*6)
+# sub_induced_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] * 10
 sub_induced_list = [0, 1, 2, 3, 4, 5] * 6
 sub = True
 
+# sym_struct_list = [[0,3], [1,2,4,5], [6,7,8,9]]
 sym_struct_list = [[0,3], [1,2,4,5]]
+# sym_struct_list = [[0,1]]
 
-submodel = PostProcessor(
-    num_nodes = num_nodes,
-    surface_names = surface_names,
-    surface_shapes = surface_shapes,
-    delta_t = h_stepsize,
-    nt = num_nodes + 1,
-    # symmetry=True,
-    # frame='inertial',
-    sub=sub,
-    sub_eval_list=sub_eval_list,
-    sub_induced_list=sub_induced_list,
-    symmetry=True,
-    sym_struct_list=sym_struct_list
-)
-# pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
-pp_vars = [('wing_C_L', (num_nodes-1, 1))]
+
 
 '''
 INTERACTIONS:
@@ -201,7 +237,25 @@ INTERACTIONS:
 - neg_panel on wing ()
 - pos_panel on wing
 '''
-
+profile_outputs = gen_profile_output_list(surface_names, surface_shapes)
+ode_surface_shapes = [(num_nodes, ) + item for item in surface_shapes]
+post_processor = PPSubmodel(
+    surface_names = surface_names,
+    ode_surface_shapes = ode_surface_shapes,
+    delta_t = h_stepsize,
+    nt = num_nodes + 1,
+    sub=sub,
+    sub_eval_list=sub_eval_list,
+    sub_induced_list=sub_induced_list,
+    symmetry=True,
+    sym_struct_list=sym_struct_list
+)
+pp_vars = []
+# for name in surface_names:
+#     pp_vars.append((name+'_L', (nt, 1)))
+pp_vars.append('panel_forces_x')
+pp_vars.append('panel_forces_y')
+pp_vars.append('panel_forces_z')
 
 model = m3l.DynamicModel()
 uvlm = VASTSolverUnsteady(
@@ -226,28 +280,35 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
                             int_naming=('op_',''),
                             integrator='ForwardEuler',
                             approach='time-marching checkpointing',
-                            profile_outputs=None,
-                            profile_system=None,
-                            profile_parameters=None,
-                            post_processor=submodel,
+                            copycat_profile=True,
+                            profile_outputs=profile_outputs,
+                            post_processor=post_processor,
                             pp_vars=pp_vars)
 uvlm_op = model.assemble(return_operation=True)
-
-wing_C_L, int1, _, _, _, _, _ = uvlm_op.evaluate()
+outputs = uvlm_op.evaluate()[0:len(pp_vars)]
+# wing_C_L, int1, _, _, _, _, _ = uvlm_op.evaluate()
 # int1, int2, _, _, _, _, _, _ = uvlm_op.evaluate()
+# data = uvlm_op.evaluate()
+# wing_C_L = data[0]
 
 
 overmodel = m3l.Model()
+for var in outputs:
+    overmodel.register_output(var)
 # overmodel.register_output(panel_forces)
-overmodel.register_output(wing_C_L)
+# overmodel.register_output(wing_C_L)
 model_csdl = overmodel.assemble()
 
 
+import time 
 
+start = time.time()
 sim = python_csdl_backend.Simulator(model_csdl, analytics=True)
-
+setup_time = time.time()
 sim.run()
-
+run_time = time.time()
+1
+exit()
 wing_CL = sim['operation.post_processor.ThrustDrag.wing_C_L']
 wing_CDi = sim['operation.post_processor.ThrustDrag.wing_C_D_i']
 
