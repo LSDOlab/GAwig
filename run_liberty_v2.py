@@ -186,7 +186,7 @@ for i in range(num_props):
     prop_point_names.append(prop_point_name)
 # endregion
 
-nt = num_nodes = 20
+nt = num_nodes = 15
 
 # design scenario
 
@@ -210,8 +210,6 @@ ac_states = wig_condition.evaluate_ac_states()
 ac_expander = ac_expand(num_nodes=nt)
 ac_states_expanded = ac_expander.evaluate(ac_states)
 
-theta = np.deg2rad(5)
-h = 100
 rotation_point = np.array([0,0,0])
 
 non_rotor_surfaces = []
@@ -233,7 +231,7 @@ left_fuse_mesh_out, left_fuse_mirror_mesh = left_fuse_mirror_model.evaluate()
 # non_rotor_surfaces.append(left_fuse_mesh_out)
 # non_rotor_surfaces.append(left_fuse_mirror_mesh)
 
-dt = 0.016 * 0.5
+dt = 0.016 * 1
 num_blades = 2
 prop_meshes = []
 for i in range(num_props):
