@@ -211,7 +211,7 @@ sys_rep.add_output(p3_point_name, p3_hub_back)
 p4b1_leading_edge = prop_4.project(np.linspace(np.array([39.754, -88.35+40+38, 4.769]), np.array([39.848-0.3, -93.75+40+38, 4.342-0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
 p4b1_trailing_edge = prop_4.project(np.linspace(np.array([40.246, -88.35+40+38, 5.231]), np.array([40.152+0.3, -93.75+40+38, 5.658+0.5]), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
 p4b1_chord_surface = am.linspace(p4b1_leading_edge, p4b1_trailing_edge, num_chordwise_prop)
-# spatial_rep.plot_meshes([p4b1_chord_surface])
+#spatial_rep.plot_meshes([p4b1_chord_surface])
 p4b1_mesh_name = 'p4b1_mesh'
 sys_rep.add_output(p4b1_mesh_name, p4b1_chord_surface)
 
@@ -224,10 +224,10 @@ sys_rep.add_output(p4_point_name, p4_hub_back)
 
 
 # prop 5 blade 1 mesh:
-p5b1_leading_edge = prop_5.project(np.linspace(np.array([39.754, -88.35+40+38+18, 4.769]), np.array([39.848-0.3, -93.75+40+38+18, 4.342-0.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
-p5b1_trailing_edge = prop_5.project(np.linspace(np.array([40.246, -88.35+40+38+18, 5.231]), np.array([40.152+0.3, -93.75+40+38+18, 5.658+0.5]), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
+p5b1_leading_edge = prop_5.project(np.linspace(np.array([39.754, -88.35+40+38+18, 5.231]), np.array([39.848-0.75, -93.75+40+38+18, 5.658-1.5]), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+p5b1_trailing_edge = prop_5.project(np.linspace(np.array([40.246, -88.35+40+38+18, 4.769]), np.array([40.152+0.75, -93.75+40+38+18, 4.342+0.75]), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
 p5b1_chord_surface = am.linspace(p5b1_leading_edge, p5b1_trailing_edge, num_chordwise_prop)
-# spatial_rep.plot_meshes([p5b1_chord_surface])
+spatial_rep.plot_meshes([p5b1_chord_surface])
 p5b1_mesh_name = 'p5b1_mesh'
 sys_rep.add_output(p5b1_mesh_name, p5b1_chord_surface)
 
@@ -289,7 +289,7 @@ sys_rep.add_output(p8_point_name, p8_hub_back)
 
 
 
-
+exit()
 
 
 
