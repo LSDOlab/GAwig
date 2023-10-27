@@ -187,7 +187,7 @@ class Rotor2(m3l.ExplicitOperation):
                                r_point=r_point,)
         return csdl_model
 
-    def evaluate(self):
+    def evaluate(self):#, h : m3l.Variable, rpm : m3l.Variable, theta : m3l.Variable):
         mesh_name = self.parameters['mesh_name']
         num_blades = self.parameters['num_blades']
         ns = self.parameters['ns']
@@ -196,6 +196,10 @@ class Rotor2(m3l.ExplicitOperation):
  
         self.name = mesh_name + '_rotor'
         self.arguments = {}
+        #     'rpm' : rpm,
+        #     'theta' : theta,
+        #     'h' : h, 
+        # }
 
         mesh_vars = []
         for i in range(num_blades):
@@ -240,8 +244,8 @@ class RotorCSDL2(ModuleCSDL):
 
 
 
-        alpha = self.register_module_input('theta', shape=(1,), computed_upstream=False)
-        h = self.register_module_input('h', shape=(1,), computed_upstream=False)
+        alpha = self.declare_variable('theta', shape=(1,))
+        h = self.declare_variable('h', shape=(1,))
 
         # the rotation matrix:
         rotation_matrix_y = self.create_output('rotation_matrix_y',shape=(3,3),val=0)
@@ -258,8 +262,8 @@ class RotorCSDL2(ModuleCSDL):
 
         rad_per_blade = 2*np.pi/num_blades
 
-        # rpm = self.declare_variable('rpm', shape=(1,))
-        rpm = self.register_module_input('rpm', shape=(1,), computed_upstream=False)
+        rpm = self.declare_variable('rpm', shape=(1,))
+        # rpm = self.register_module_input('rpm', shape=(1,), computed_upstream=False)
         rps = rpm/60
         rad_per_sec = rps*2*np.pi
         rad_per_dt = rad_per_sec*dt
