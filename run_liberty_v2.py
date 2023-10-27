@@ -60,18 +60,22 @@ for i in range(num_props):
 num_spanwise_vlm = 31 # * 2 + 1
 num_spanwise_temp = num_spanwise_vlm+1
 num_chordwise_vlm = 5
-start = 0.001
-end = 1
+log_space = False
+if log_space:
+    start = 0.001
+    end = 1
 
-le_half_points = ((((np.logspace(start, end, int(num_spanwise_temp/2), endpoint=True)))-10**start)/(10**end-10**start)-1)*103
-le_points = np.concatenate([le_half_points, np.flip(le_half_points*-1)[1:]])
-le_points = np.vstack((30*np.ones(num_spanwise_vlm), le_points, 6*np.ones(num_spanwise_vlm))).T
-leading_edge = wing.project(le_points, direction=np.array([0., 0., -1.]), plot=False)
+    le_half_points = ((((np.logspace(start, end, int(num_spanwise_temp/2), endpoint=True)))-10**start)/(10**end-10**start)-1)*103
+    le_points = np.concatenate([le_half_points, np.flip(le_half_points*-1)[1:]])
+    le_points = np.vstack((30*np.ones(num_spanwise_vlm), le_points, 6*np.ones(num_spanwise_vlm))).T
+    leading_edge = wing.project(le_points, direction=np.array([0., 0., -1.]), plot=False)
 
-te_half_points = ((((np.logspace(start, end, int(num_spanwise_temp/2), endpoint=True)))-10**start)/(10**end-10**start)-1)*105
-te_points = np.concatenate([te_half_points, np.flip(te_half_points*-1)[1:]])
-te_points = np.vstack((80*np.ones(num_spanwise_vlm), te_points, 6*np.ones(num_spanwise_vlm))).T
-trailing_edge = wing.project(te_points, direction=np.array([0., 0., -1.]), plot=False)
+    te_half_points = ((((np.logspace(start, end, int(num_spanwise_temp/2), endpoint=True)))-10**start)/(10**end-10**start)-1)*105
+    te_points = np.concatenate([te_half_points, np.flip(te_half_points*-1)[1:]])
+    te_points = np.vstack((80*np.ones(num_spanwise_vlm), te_points, 6*np.ones(num_spanwise_vlm))).T
+    trailing_edge = wing.project(te_points, direction=np.array([0., 0., -1.]), plot=False)
+
+else:
 
 chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_vlm)
 # spatial_rep.plot_meshes([chord_surface])
