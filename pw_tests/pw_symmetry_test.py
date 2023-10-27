@@ -11,12 +11,12 @@ from generate_ground_effect_mesh import generate_ground_effect_mesh
 ########################################
 # define mesh here
 ########################################
-nx = 5
-ny = 11
+nx = 7
+ny = 21
 AR = 8
 span = 8
 chord = span/AR
-num_nodes = 15
+num_nodes = 10
 h = 2
 
 nt = num_nodes+1
@@ -158,10 +158,10 @@ uvlm_parameters.append(('pos_panel', True, pos_panel_val))
 uvlm_parameters.append(('wing_image', True, image_mesh_val))
 uvlm_parameters.append(('neg_panel_image', True, image_neg_panel_val))
 uvlm_parameters.append(('pos_panel_image', True, image_pos_panel_val))
-# uvlm_parameters.append(('neg_panel_2', True, neg_panel_2_val))
-# uvlm_parameters.append(('pos_panel_2', True, pos_panel_2_val))
-# uvlm_parameters.append(('neg_panel_2_image', True, image_neg_panel_2_val))
-# uvlm_parameters.append(('pos_panel_2_image', True, image_pos_panel_2_val))
+uvlm_parameters.append(('neg_panel_2', True, neg_panel_2_val))
+uvlm_parameters.append(('pos_panel_2', True, pos_panel_2_val))
+uvlm_parameters.append(('neg_panel_2_image', True, image_neg_panel_2_val))
+uvlm_parameters.append(('pos_panel_2_image', True, image_pos_panel_2_val))
 surface_names = [
     'wing',
     'neg_panel',
@@ -169,10 +169,10 @@ surface_names = [
     'wing_image',
     'neg_panel_image',
     'pos_panel_image',
-    # 'neg_panel_2',
-    # 'pos_panel_2',
-    # 'neg_panel_2_image',
-    # 'pos_panel_2_image',
+    'neg_panel_2',
+    'pos_panel_2',
+    'neg_panel_2_image',
+    'pos_panel_2_image',
 ]
 surface_shapes = [
     (nx,ny,3),
@@ -181,10 +181,10 @@ surface_shapes = [
     (nx,ny,3),
     (nx, int((ny+1)/2), 3),
     (nx, int((ny+1)/2), 3),
-    # (nx, int((ny+1)/2), 3),
-    # (nx, int((ny+1)/2), 3),
-    # (nx, int((ny+1)/2), 3),
-    # (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
 ]
 
 system_size = 0
@@ -219,15 +219,16 @@ for i in range(len(surface_names)):
 # sub_induced_list = [0, 1, 2, 0, 1, 2, 0, 1, 2]
 sub_eval_list = []
 for i in range(len(surface_names)):
-    # sub_eval_list.extend([i]*10)
-    sub_eval_list.extend([i]*6)
-# sub_induced_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] * 10
-sub_induced_list = [0, 1, 2, 3, 4, 5] * 6
+    sub_eval_list.extend([i]*10)
+    # sub_eval_list.extend([i]*4)
+sub_induced_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] * 10
+# sub_induced_list = [0, 1, 2, 3] * 4
 sub = True
 
-# sym_struct_list = [[0,3], [1,2,4,5], [6,7,8,9]]
-sym_struct_list = [[0,3], [1,2,4,5]]
-# sym_struct_list = [[0,1]]
+sym_struct_list = [[0,3], [1,2,4,5], [6,7,8,9]]
+# sym_struct_list = [[0,3], [1,2,4,5]]
+# sym_struct_list = [[0,1, 2, 3], [4,5,6,7]]
+# sym_struct_list = [[0,1, 2, 3]]
 
 
 
@@ -244,11 +245,11 @@ post_processor = PPSubmodel(
     ode_surface_shapes = ode_surface_shapes,
     delta_t = h_stepsize,
     nt = num_nodes + 1,
-    sub=sub,
-    sub_eval_list=sub_eval_list,
-    sub_induced_list=sub_induced_list,
-    symmetry=True,
-    sym_struct_list=sym_struct_list
+    # sub=sub,
+    # sub_eval_list=sub_eval_list,
+    # sub_induced_list=sub_induced_list,
+    # symmetry=True,
+    # sym_struct_list=sym_struct_list
 )
 pp_vars = []
 # for name in surface_names:
@@ -264,6 +265,7 @@ uvlm = VASTSolverUnsteady(
     surface_shapes=surface_shapes, 
     delta_t=delta_t, 
     nt=num_nodes+1,
+    # free_wake=True,
     # frame='inertial',
     sub=sub,
     sub_eval_list=sub_eval_list,
@@ -305,10 +307,20 @@ import time
 start = time.time()
 sim = python_csdl_backend.Simulator(model_csdl, analytics=True)
 setup_time = time.time()
+print('simulator setup time:', setup_time-start)
+
+sim_start_1 = time.time()
 sim.run()
-run_time = time.time()
-1
+run_time_1 = time.time()
+print('simulator 1 run time:', run_time_1 - sim_start_1)
 exit()
+sim_start_2 = time.time()
+sim.run()
+run_time_2 = time.time()
+
+print('simulator 2 run time:', run_time_2 - sim_start_2)
+1
+
 wing_CL = sim['operation.post_processor.ThrustDrag.wing_C_L']
 wing_CDi = sim['operation.post_processor.ThrustDrag.wing_C_D_i']
 

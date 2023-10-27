@@ -1,4 +1,5 @@
 from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, ProfileOpModel, ProfileOpModel2, PostProcessor
+from VAST.core.profile_model import gen_profile_output_list, PPSubmodel
 import python_csdl_backend
 from VAST.utils.generate_mesh import *
 import m3l
@@ -121,14 +122,13 @@ submodel = ProfileOpModel(
 )
 # pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3)), ('wing_C_L', (num_nodes,))]
 
-submodel = PostProcessor(
-    num_nodes = num_nodes,
+profile_outputs = gen_profile_output_list(surface_names, surface_shapes)
+ode_surface_shapes = [(num_nodes, ) + item for item in surface_shapes]
+post_processor = PPSubmodel(
     surface_names = surface_names,
-    surface_shapes = surface_shapes,
+    ode_surface_shapes = ode_surface_shapes,
     delta_t = h_stepsize,
     nt = num_nodes + 1,
-    symmetry=True,
-    frame='inertial'
 )
 # pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
 pp_vars = [('wing_C_L', (num_nodes-1, 1))]
@@ -140,8 +140,8 @@ uvlm = VASTSolverUnsteady(
     surface_shapes=surface_shapes, 
     delta_t=delta_t, 
     nt=num_nodes+1,
-    frame='inertial',
     free_wake=True
+    # frame='inertial',
 )
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
@@ -152,14 +152,15 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
                             int_naming=('op_',''),
                             integrator='ForwardEuler',
                             approach='time-marching checkpointing',
-                            profile_outputs=None,
-                            profile_system=None,
-                            profile_parameters=None,
-                            post_processor=submodel,
+                            copycat_profile=True,
+                            profile_outputs=profile_outputs,
+                            post_processor=post_processor,
                             pp_vars=pp_vars)
 uvlm_op = model.assemble(return_operation=True)
 
-wing_C_L, int1, _ = uvlm_op.evaluate()
+# wing_C_L, int1, _ = uvlm_op.evaluate()
+outputs = uvlm_op.evaluate()
+wing_C_L = outputs[0]
 # int1, int2, _, _, _, _, _, _ = uvlm_op.evaluate()
 
 
@@ -217,7 +218,7 @@ if True:
         # cam1 = dict(focalPoint=(3.133, 1.506, -3.132))
         # video.action(cameras=[cam1, cam1])
         vp.show(axs, elevation=-90, azimuth=-0,
-                axes=False, interactive=False)  # render the scene
+                axes=False, interactive=True)  # render the scene
         video.add_frame()  # add individual frame
         # time.sleep(0.1)
         # vp.interactive().close()

@@ -66,15 +66,19 @@ num_chordwise_vlm = 25
 leading_edge = wing.project(np.linspace(np.array([0, -1.016, 0.01]), np.array([0, 1.016, 0.01]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
 trailing_edge = wing.project(np.linspace(np.array([0.508, -1.016, 0]), np.array([0.508, 1.016, 0]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
 chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_vlm)
-# spatial_rep.plot_meshes([chord_surface])
+spatial_rep.plot_meshes([chord_surface])
+exit()
 
 
-wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 0., 0.5]), direction=np.array([0., 0., 1.]), grid_search_n=50, plot=False)
+# wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 0., 0.5]), direction=np.array([0., 0., 1.]), grid_search_n=50, plot=False)
+# wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 1.]), direction=np.array([0., 0., 1.]), grid_search_n=50, plot=False)
+wing_upper_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 1]), direction=np.array([0., 0., 1.]), grid_search_n=50, plot=False)
 wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 1.]), direction=np.array([0., 0., 1.]), grid_search_n=50, plot=False)
 wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surface_wireframe, 1)
-# spatial_rep.plot_meshes([wing_camber_surface])
+spatial_rep.plot_meshes([wing_camber_surface])
 wing_vlm_mesh_name = 'wing_vlm_mesh'
 sys_rep.add_output(wing_vlm_mesh_name, wing_camber_surface)
+exit()
 
 
 # left plate mesh
@@ -95,6 +99,8 @@ right_plate_vlm_mesh = am.linspace(right_plate_leading_edge, right_plate_trailin
 right_plate_vlm_mesh_name = 'right_plate_vlm_mesh'
 sys_rep.add_output(right_plate_vlm_mesh_name, right_plate_vlm_mesh)
 
+# spatial_rep.plot_meshes([wing_camber_surface, left_plate_vlm_mesh, right_plate_vlm_mesh])
+exit()
 
 
 

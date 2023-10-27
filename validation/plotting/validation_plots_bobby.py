@@ -59,21 +59,21 @@ if False:
 
 fig, (ax1, ax2, ax3) = plt.subplots(1,3, sharey=True)
 
-ax1.plot(h_04_VAST['alpha'], h_04_VAST['CL'], 'r-*', linewidth=3, markersize=8, label=r'VAST')
-ax1.plot(h_04_data['alpha'], h_04_data['CL'], 'k-', linewidth=3, markersize=8, label=r'Data')
+ax1.plot(h_04_VAST['alpha'], h_04_VAST['CL'], 'r-', linewidth=3, markersize=8, label=r'VAST')
+ax1.plot(h_04_data['alpha'], h_04_data['CL'], 'k*', linewidth=3, markersize=8, label=r'Data')
 ax1.set_title(r'$\frac{h_o}{\sqrt{S}} = 0.04$', fontsize=20)
 ax1.set_xticks(h_04_VAST['alpha'])
 ax1.grid()
 
-ax2.plot(h_08_VAST['alpha'], h_08_VAST['CL'], 'r-*', linewidth=3, markersize=8, label=r'VAST')
-ax2.plot(h_08_data['alpha'], h_08_data['CL'], 'k-', linewidth=3, markersize=8, label=r'Data')
+ax2.plot(h_08_VAST['alpha'], h_08_VAST['CL'], 'r-', linewidth=3, markersize=8, label=r'VAST')
+ax2.plot(h_08_data['alpha'], h_08_data['CL'], 'k*', linewidth=3, markersize=8, label=r'Data')
 ax2.set_title(r'$\frac{h_o}{\sqrt{S}} = 0.08$', fontsize=20)
 ax2.set_xticks(h_08_VAST['alpha'])
 ax2.grid()
 ax2.legend(fontsize=20)
 
-ax3.plot(h_16_VAST['alpha'], h_16_VAST['CL'], 'r-*', linewidth=3, markersize=8, label=r'VAST')
-ax3.plot(h_16_data['alpha'], h_16_data['CL'], 'k-', linewidth=3, markersize=8, label=r'Data')
+ax3.plot(h_16_VAST['alpha'], h_16_VAST['CL'], 'r-', linewidth=3, markersize=8, label=r'VAST')
+ax3.plot(h_16_data['alpha'], h_16_data['CL'], 'k*', linewidth=3, markersize=8, label=r'Data')
 ax3.set_title(r'$\frac{h_o}{\sqrt{S}} = 0.16$', fontsize=20)
 ax3.set_xticks(h_16_VAST['alpha'])
 ax3.set_yticks(np.arange(0, 1.41, 0.2))

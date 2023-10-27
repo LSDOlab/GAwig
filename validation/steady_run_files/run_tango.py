@@ -48,8 +48,8 @@ sys_rep.add_component(wing)
 
 
 # wing mesh
-num_spanwise_vlm = 15
-num_chordwise_vlm = 45
+num_spanwise_vlm = 21
+num_chordwise_vlm = 15
 leading_edge = wing.project(np.linspace(np.array([0, -2.593, 0.0]), np.array([0, 2.593, 0.0]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
 trailing_edge = wing.project(np.linspace(np.array([.604, -2.593, 0]), np.array([.604, 2.593, 0]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
 chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_vlm)
@@ -62,7 +62,7 @@ wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surfa
 spatial_rep.plot_meshes([wing_camber_surface])
 wing_vlm_mesh_name = 'wing_vlm_mesh'
 sys_rep.add_output(wing_vlm_mesh_name, wing_camber_surface)
-
+exit()
 
 sys_param.setup()
 
