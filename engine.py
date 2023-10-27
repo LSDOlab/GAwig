@@ -29,11 +29,14 @@ class Engine(m3l.ExplicitOperation):
                                )
         return csdl_model
 
-    def evaluate(self):
+    def evaluate(self, rpm, torque):
         engine_name = self.parameters['engine_name']
  
         self.name = engine_name + '_engine'
-        self.arguments = {}
+        self.arguments = {
+            'rpm': rpm,
+            'torque' : torque,
+        }
 
         fc = m3l.Variable(engine_name + '_fc', shape=(1,), operation=self)
         pwr = m3l.Variable(engine_name + '_pwr', shape=(1,), operation=self)

@@ -265,11 +265,11 @@ class RotorCSDL2(ModuleCSDL):
         rad_per_dt = rad_per_sec*dt
 
         # a single blade mesh:
-        mesh = self.declare_variable(mesh_name, shape=(nc,ns,3))
+        mesh = self.declare_variable(mesh_name, shape=(nc,ns,3))*0.3048
         # the center of the rotor disk:
-        point = self.declare_variable('point', shape=(3,))
+        point = self.declare_variable('point', shape=(3,))*0.3048
         # normal vector to the rotor disk:
-        vector = self.declare_variable('vector', shape=(3,))
+        vector = self.declare_variable('vector', shape=(3,))*0.3048
         normalized_vector = vector/csdl.expand(csdl.pnorm(vector, 2), (3,))
         x, y, z = normalized_vector[0], normalized_vector[1], normalized_vector[2]
 

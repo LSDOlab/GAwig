@@ -33,6 +33,7 @@ spatial_rep.import_file(file_name=file_name)
 spatial_rep.refit_geometry(file_name=file_name)
 spatial_rep.plot(plot_types=['mesh'])
 
+overmodel = m3l.Model()
 
 
 # region components
@@ -47,7 +48,7 @@ htail = build_component('htail', ['HTail'])
 fuse = build_component('fuse', ['FuselageGeom'])
 
 # props
-num_props = 2
+num_props = 0
 props = [] # we go from 1-indexed to 0-indexed here
 for i in range(num_props):
     prop = build_component('prop_'+str(i), ['Prop'+str(i+1),'Hub'+str(i+1)])
@@ -56,10 +57,22 @@ for i in range(num_props):
 
 # region meshes
 # wing mesh:
-num_spanwise_vlm = 22
+num_spanwise_vlm = 21
+num_spanwise_temp = num_spanwise_vlm+1
 num_chordwise_vlm = 14
-leading_edge = wing.project(np.linspace(np.array([30, -103, 6]), np.array([30, 103, 6]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
-trailing_edge = wing.project(np.linspace(np.array([80, -105, 6]), np.array([80, 105, 6]), num_spanwise_vlm), direction=np.array([0., 0., -1.]), plot=False)
+start = 0.001
+end = 1
+
+le_half_points = ((((np.logspace(start, end, int(num_spanwise_temp/2), endpoint=True)))-10**start)/(10**end-10**start)-1)*103
+le_points = np.concatenate([le_half_points, np.flip(le_half_points*-1)[1:]])
+le_points = np.vstack((30*np.ones(num_spanwise_vlm), le_points, 6*np.ones(num_spanwise_vlm))).T
+leading_edge = wing.project(le_points, direction=np.array([0., 0., -1.]), plot=False)
+
+te_half_points = ((((np.logspace(start, end, int(num_spanwise_temp/2), endpoint=True)))-10**start)/(10**end-10**start)-1)*105
+te_points = np.concatenate([te_half_points, np.flip(te_half_points*-1)[1:]])
+te_points = np.vstack((80*np.ones(num_spanwise_vlm), te_points, 6*np.ones(num_spanwise_vlm))).T
+trailing_edge = wing.project(te_points, direction=np.array([0., 0., -1.]), plot=False)
+
 chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_vlm)
 # spatial_rep.plot_meshes([chord_surface])
 wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 0., 2.]), direction=np.array([0., 0., -2.]), grid_search_n=30, plot=False)
@@ -68,7 +81,7 @@ wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surfa
 spatial_rep.plot_meshes([wing_camber_surface])
 wing_camber_surface_np = wing_camber_surface.value.reshape((num_chordwise_vlm, num_spanwise_vlm, 3))
 
-flap_mesh = deflect_flap(wing_camber_surface_np, 30, 2)
+flap_mesh = deflect_flap(wing_camber_surface_np, 30, 1)
 spatial_rep.plot_meshes([flap_mesh])
 
 wing_vlm_mesh_name = 'wing_vlm_mesh'
@@ -81,7 +94,7 @@ wing_vlm_mesh_name = 'wing_vlm_mesh'
 # print(type(am.array(flap_mesh.reshape((14, -1))).reshape((1, 14, 22, 3))))
 # exit()
 # sys_rep.add_output(wing_vlm_mesh_name, am.array(flap_mesh.reshape((14, -1))).reshape((1, 14, 22, 3)))
-wing_camber_surface_np = flap_mesh #.reshape((1, 14, 22, 3))# wing_camber_surface.value # TODO: change this idk
+# wing_camber_surface_np = flap_mesh #.reshape((1, 14, 22, 3))# wing_camber_surface.value # TODO: change this idk
 # print(flap_mesh.shape)
 # print(wing_camber_surface_np.shape)
 # print(wing_camber_surface.value)
@@ -166,7 +179,7 @@ for i in range(num_props):
     prop_point_names.append(prop_point_name)
 # endregion
 
-nt = num_nodes = 5
+nt = num_nodes = 35
 
 # design scenario
 design_scenario = cd.DesignScenario(name='wig')
@@ -174,7 +187,7 @@ design_scenario = cd.DesignScenario(name='wig')
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.35, dv_flag=True, lower=0.1, upper=0.3)
+wig_condition.set_module_input(name='mach_number', val=0.2, dv_flag=True, lower=0.1, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0))
 wig_condition.set_module_input(name='flight_path_angle', val=0)
@@ -183,17 +196,17 @@ wig_condition.set_module_input(name='yaw_angle', val=0)
 wig_condition.set_module_input(name='wind_angle', val=0)
 wig_condition.set_module_input(name='observer_location', val=np.array([0, 0, 1000]))
 
-ac_states = wig_condition.evaluate_ac_states(units='ft')
+ac_states = wig_condition.evaluate_ac_states()
 ac_expander = ac_expand(num_nodes=nt)
 ac_states_expanded = ac_expander.evaluate(ac_states)
 
-theta = np.deg2rad(0)
-h = 20
+theta = np.deg2rad(10)
+h = 100
 rotation_point = np.array([0,0,0])
 
 non_rotor_surfaces = []
 # wing mirroring
-wing_mirror_model = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,nt=nt,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np)
+wing_mirror_model = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,nt=nt,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np*0.3048)
 wing_mirror_model.set_module_input('theta', val=theta, dv_flag=False)
 wing_mirror_model.set_module_input('h', val=h, dv_flag=False)
 wing_mesh_out, wing_mirror_mesh = wing_mirror_model.evaluate()
@@ -201,22 +214,22 @@ non_rotor_surfaces.append(wing_mesh_out)
 non_rotor_surfaces.append(wing_mirror_mesh)
 
 # right fuselage mirroring
-right_fuse_mirror_model = Mirror(component=fuse,mesh_name=right_fuse_mesh_name,nt=nt,ns=num_vert_vlm,nc=num_long_vlm,point=rotation_point, mesh=right_fuse_surface_reordered)
+right_fuse_mirror_model = Mirror(component=fuse,mesh_name=right_fuse_mesh_name,nt=nt,ns=num_vert_vlm,nc=num_long_vlm,point=rotation_point, mesh=right_fuse_surface_reordered*0.3048)
 right_fuse_mirror_model.set_module_input('theta', val=theta, dv_flag=False)
 right_fuse_mirror_model.set_module_input('h', val=h, dv_flag=False)
 right_fuse_mesh_out, right_fuse_mirror_mesh = right_fuse_mirror_model.evaluate()
-non_rotor_surfaces.append(right_fuse_mesh_out)
-non_rotor_surfaces.append(right_fuse_mirror_mesh)
+# non_rotor_surfaces.append(right_fuse_mesh_out)
+# non_rotor_surfaces.append(right_fuse_mirror_mesh)
 
 # left fuselage mirroring
-left_fuse_mirror_model = Mirror(component=fuse,mesh_name=left_fuse_mesh_name,nt=nt,ns=num_vert_vlm,nc=num_long_vlm,point=rotation_point, mesh=left_fuse_surface_reordered)
+left_fuse_mirror_model = Mirror(component=fuse,mesh_name=left_fuse_mesh_name,nt=nt,ns=num_vert_vlm,nc=num_long_vlm,point=rotation_point, mesh=left_fuse_surface_reordered*0.3048)
 left_fuse_mirror_model.set_module_input('theta', val=theta, dv_flag=False)
 left_fuse_mirror_model.set_module_input('h', val=h, dv_flag=False)
 left_fuse_mesh_out, left_fuse_mirror_mesh = left_fuse_mirror_model.evaluate()
-non_rotor_surfaces.append(left_fuse_mesh_out)
-non_rotor_surfaces.append(left_fuse_mirror_mesh)
+# non_rotor_surfaces.append(left_fuse_mesh_out)
+# non_rotor_surfaces.append(left_fuse_mirror_mesh)
 
-dt = 0.016*2
+dt = 0.016 * 20
 num_blades = 2
 prop_meshes = []
 for i in range(num_props):
@@ -260,6 +273,7 @@ surface_shapes = []
 initial_conditions = []
 interaction_groups = []
 i = 0
+
 for prop_mesh in prop_meshes:
     interaction_groups.append(list(range(num_blades*i,num_blades*(i+1))))
     for var in prop_mesh:
@@ -300,15 +314,36 @@ for surface in non_rotor_surfaces:
     sub_eval_list.append(index)
     sub_induced_list.append(index)
 
+print(surface_names)
 pp_vars = []
 # for name in surface_names:
 #     pp_vars.append((name+'_L', (nt, 1)))
 
-num_panels = int((num_props*num_blades/2*(num_spanwise_prop-1)*(num_chordwise_prop-1) + (num_spanwise_vlm-1)*(num_chordwise_vlm-1) + (num_long_vlm-1)*(num_vert_vlm-1)*2)*2)
+num_panels = int((num_props*num_blades/2*(num_spanwise_prop-1)*(num_chordwise_prop-1) + (num_spanwise_vlm-1)*(num_chordwise_vlm-1))*2)# + (num_long_vlm-1)*(num_vert_vlm-1)*2)*2)
 print(num_panels)
 pp_vars.append(('panel_forces_x',(nt,num_panels,1)))
 pp_vars.append(('panel_forces_y',(nt,num_panels,1)))
 pp_vars.append(('panel_forces_z',(nt,num_panels,1)))
+
+pp_vars.append(('wing_vlm_mesh_out_L', (nt, 1)))
+pp_vars.append(('wing_vlm_mesh_out_D', (nt, 1)))
+
+# pp_vars.append(('p0b1_mesh_rotor0_out_panel_forces_x', (nt, 4))) # Prop 1 blade 1 fx
+# pp_vars.append(('p0b1_mesh_rotor1_out_panel_forces_x', (nt, 4))) # Prop 1 blade 2 fx
+# pp_vars.append(('p0b1_mesh_rotor0_out_panel_forces_y', (nt, 4))) # Prop 1 blade 1 fy
+# pp_vars.append(('p0b1_mesh_rotor1_out_panel_forces_y', (nt, 4))) # Prop 1 blade 2 fy
+# pp_vars.append(('p0b1_mesh_rotor0_out_panel_forces_z', (nt, 4))) # Prop 1 blade 1 fz
+# pp_vars.append(('p0b1_mesh_rotor1_out_panel_forces_z', (nt, 4))) # Prop 1 blade 2 fz
+
+# pp_vars.append('p1b1_mesh_rotor0_out_L', (nt, 1)) # Prop 2 blade 1 lift
+# pp_vars.append('p1b1_mesh_rotor1_out_L', (nt, 1)) # Prop 2 blade 2 lift
+
+# pp_vars.append('p0b1_mesh_rotor0_out_D', (nt, 1)) # Prop 1 blade 1 drag
+# pp_vars.append('p0b1_mesh_rotor1_out_D', (nt, 1)) # Prop 1 blade 2 drag
+
+# pp_vars.append('p1b1_mesh_rotor0_out_D', (nt, 1)) # Prop 2 blade 1 drag
+# pp_vars.append('p1b1_mesh_rotor1_out_D', (nt, 1)) # Prop 2 blade 2 drag
+
 
 profile_outputs = gen_profile_output_list(surface_names, surface_shapes)
 ode_surface_shapes = [(num_nodes, ) + item for item in surface_shapes]
@@ -320,7 +355,7 @@ uvlm = VASTSolverUnsteady(num_nodes = num_nodes,
                           surface_shapes = surface_shapes, 
                           delta_t = dt, 
                           nt = nt+1,
-                          sub = True,
+                          sub = False,
                           sub_eval_list = sub_eval_list,
                           sub_induced_list = sub_induced_list,
                           free_wake=True,)
@@ -340,12 +375,44 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
 uvlm_op = model.assemble(return_operation=True)
 outputs = uvlm_op.evaluate()[0:len(pp_vars)]
 
-average_op = LastNAverage(n=2)
-ave_outputs = average_op.evaluate(outputs)
+average_op = LastNAverage(n=5)
+ave_outputs = average_op.evaluate(outputs) # time averaged qts
 
-overmodel = m3l.Model()
+fx = ave_outputs[0]
+fy = ave_outputs[1]
+fz = ave_outputs[2]
+
+wing_lift = ave_outputs[3]
+wing_drag = ave_outputs[4]
+
+# fx_prop1_b1 = ave_outputs[5]
+# fx_prop1_b2 = ave_outputs[6]
+
+# prop_1_blade_1_lift = ave_outputs[5]
+# prop_1_blade_2_lift = ave_outputs[6]
+
+# prop_2_blade_1_lift = ave_outputs[7]
+# prop_2_blade_2_lift = ave_outputs[8]
+
+# prop_1_blade_1_drag = ave_outputs[9]
+# prop_1_blade_2_drag = ave_outputs[10]
+
+# prop_2_blade_1_drag = ave_outputs[11]
+# prop_2_blade_2_drag = ave_outputs[12]
+
+# prop_fx_list = [
+#     (fx_prop1_b1, fx_prop1_b2), 
+# ]
+
 for var in ave_outputs:
     overmodel.register_output(var)
+
+
+# for i in range(num_props):
+#     torque_model = TorqueModel()
+#     torque = torque_model.evaluate(prop_fx_list[i])
+#     engine_model = Engine()
+#     fc, pwr = engine_model.evaluate(torque)    
 
 # add the cruise m3l model to the cruise condition
 wig_condition.add_m3l_model('wig_model', overmodel)
@@ -357,14 +424,14 @@ caddee_csdl_model = caddee.assemble_csdl()
 
 model_csdl = caddee_csdl_model
 
-for i in range(len(prop_meshes)):
-    i = str(i)
-    model_csdl.connect('p' + i + 'b1_mesh', 
-                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.p' + i + 'b1_mesh')
-    model_csdl.connect('p' + i + '_vector', 
-                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.vector')
-    model_csdl.connect('p' + i + '_point', 
-                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.point')
+# for i in range(len(prop_meshes)):
+#     i = str(i)
+#     model_csdl.connect('p' + i + 'b1_mesh', 
+#                     'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.p' + i + 'b1_mesh')
+#     model_csdl.connect('p' + i + '_vector', 
+#                     'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.vector')
+#     model_csdl.connect('p' + i + '_point', 
+#                     'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.point')
     
 # wing mirror model connections:
 # caddee_csdl_model.connect('wing_vlm_mesh', 
@@ -380,15 +447,36 @@ sim.run()
 # end = time.time()
 # print('Total run time:')
 # print(end-start)
+# print('Fx Prop 1')
+# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor0_out_panel_forces_x_ave'])
+# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor1_out_panel_forces_x_ave'])
+# print('\n')
+# print('Fy Prop 1')
+# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor0_out_panel_forces_y_ave'])
+# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor1_out_panel_forces_y_ave'])
+# print('\n')
+# print('Fz Prop 1')
+# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor0_out_panel_forces_z_ave'])
+# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor1_out_panel_forces_z_ave'])
 
-
+# print('\n')
+# print('Wing panel forces x, y, z')
+# print(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.wing_vlm_mesh_out_panel_forces_x'])
+# print(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.wing_vlm_mesh_out_panel_forces_y'])
+# print(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.wing_vlm_mesh_out_panel_forces_z'])
+print('\n')
+L = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave']
+D = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D_ave']
+print(L)
+print(D)
+print(L/D)
 
 if True:
     from vedo import dataurl, Plotter, Mesh, Video, Points, Axes, show
     axs = Axes(
-        xrange=(0, 80),
-        yrange=(-100, 100),
-        zrange=(-5, 10),
+        xrange=(0, 80*0.3048),
+        yrange=(-100*0.3048, 100*0.3048),
+        zrange=(0.3048, 100*0.3048),
     )
     video = Video("rotor_test.gif", fps=10, backend='imageio')
     for i in range(nt - 1):
@@ -401,40 +489,43 @@ if True:
             interactive=0)
         # Any rendering loop goes here, e.g.:
         for surface_name in surface_names:
-            if 'rotor' in surface_name:
-                vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.input_model.'+surface_name[0:9]+'_rotor.' + surface_name][i, :, :, :], (-1, 3)),
-                            r=8,
-                            c='red')
-                vp += vps
-                vp += __doc__
-                vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.prob.' + 'op_' + surface_name+'_wake_coords'][i, 0:i, :, :],
-                                        (-1, 3)),
-                            r=8,
-                            c='blue')
-                vp += vps
-                vp += __doc__
+            if 'mirror' in surface_name:
+                pass
             else:
-                # system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.wing_vlm_mesh_out
-                if 'wing' in surface_name:
-                    vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.' + surface_name][i, :, :, :], (-1, 3)),
+                if 'rotor' in surface_name:
+                    vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.input_model.'+surface_name[0:9]+'_rotor.' + surface_name][i, :, :, :], (-1, 3)),
                                 r=8,
                                 c='red')
-                elif 'right' in surface_name:
-                    vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.input_model.right_fuselage_meshmirror.' + surface_name][i, :, :, :], (-1, 3)),
+                    vp += vps
+                    vp += __doc__
+                    vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.prob.' + 'op_' + surface_name+'_wake_coords'][i, 0:i, :, :],
+                                            (-1, 3)),
                                 r=8,
-                                c='red')
-                elif 'left' in surface_name:
-                    vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.input_model.left_fuselage_meshmirror.' + surface_name][i, :, :, :], (-1, 3)),
+                                c='blue')
+                    vp += vps
+                    vp += __doc__
+                else:
+                    # system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.wing_vlm_mesh_out
+                    if 'wing' in surface_name:
+                        vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.' + surface_name][i, :, :, :], (-1, 3)),
+                                    r=8,
+                                    c='red')
+                    elif 'right' in surface_name:
+                        vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.input_model.right_fuselage_meshmirror.' + surface_name][i, :, :, :], (-1, 3)),
+                                    r=8,
+                                    c='red')
+                    elif 'left' in surface_name:
+                        vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.input_model.left_fuselage_meshmirror.' + surface_name][i, :, :, :], (-1, 3)),
+                                    r=8,
+                                    c='red')
+                    vp += vps
+                    vp += __doc__
+                    vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.prob.' + 'op_' + surface_name+'_wake_coords'][i, 0:i, :, :],
+                                            (-1, 3)),
                                 r=8,
-                                c='red')
-                vp += vps
-                vp += __doc__
-                vps = Points(np.reshape(sim['system_model.wig.wig.wig.operation.prob.' + 'op_' + surface_name+'_wake_coords'][i, 0:i, :, :],
-                                        (-1, 3)),
-                            r=8,
-                            c='blue')
-                vp += vps
-                vp += __doc__
+                                c='blue')
+                    vp += vps
+                    vp += __doc__
         # cam1 = dict(focalPoint=(3.133, 1.506, -3.132))
         # video.action(cameras=[cam1, cam1])
         # vp.show(axs, elevation=-60, azimuth=45, roll=-45,
@@ -442,7 +533,7 @@ if True:
         # vp.show(axs, elevation=-60, azimuth=-90, roll=90,
         #         axes=False, interactive=False, zoom=True)  # render the scene
         vp.show(axs, elevation=-45, azimuth=-45, roll=45,
-                axes=False, interactive=False)  # render the scene
+                axes=False, interactive=True)  # render the scene
         video.add_frame()  # add individual frame
         # time.sleep(0.1)
         # vp.interactive().close()
