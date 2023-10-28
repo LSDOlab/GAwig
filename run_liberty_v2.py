@@ -56,7 +56,7 @@ for i in [0, 7]:#range(num_props):
 
 # region meshes
 # wing mesh:
-num_spanwise_vlm = 40 # * 2 + 1
+num_spanwise_vlm = 6 # * 2 + 1
 num_spanwise_temp = num_spanwise_vlm+1
 num_chordwise_vlm = 5
 log_space = False
@@ -156,28 +156,33 @@ p4 = [40.152+0.3, -93.75, 5.658+0.5]
 p5 = [40., -87., 5.]
 p6 = [37., -87., 5.]
 
+
+leading_edge = props[0].project(np.linspace(np.array(p1), np.array(p2), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+trailing_edge = props[0].project(np.linspace(np.array(p3), np.array(p4), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
+chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_prop)
+prop0b0_mesh = chord_surface.value
+
 propb1_mesh_names = []
 prop_vector_names = []
 prop_point_names = []
+prop_meshes_np = [prop0b0_mesh]
+
+
+p5_list = [p5]
+p6_list = [p6]
+for i in range(1,8):
+    p5_list.append([p5[0], p5_list[i-1][1]+offsets[i], p5[2]])
+    p6_list.append([p6[0], p6_list[i-1][1]+offsets[i], p6[2]])
+
+
+
 
 for i in range(num_props):
-    offset = offsets[i]
-    p1[1] = p1[1] + offset
-    p2[1] = p2[1] + offset
-    p3[1] = p3[1] + offset
-    p4[1] = p4[1] + offset
-    p5[1] = p5[1] + offset
-    p6[1] = p6[1] + offset
-    # prop blade 1 mesh
-    leading_edge = props[i].project(np.linspace(np.array(p1), np.array(p2), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
-    trailing_edge = props[i].project(np.linspace(np.array(p3), np.array(p4), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
-    chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_prop)
-    spatial_rep.plot_meshes([chord_surface])
+
     propb1_mesh_name = 'p'+str(i)+'b1_mesh'
-    sys_rep.add_output(propb1_mesh_name, chord_surface)
 
     # prop hub:
-    hub_back, hub_front = props[i].project(np.array(p5)), props[i].project(np.array(p6))
+    hub_back, hub_front = props[i].project(np.array(p5_list[i])), props[i].project(np.array(p6_list[i]))
     prop_vec = hub_front - hub_back
     prop_vector_name, prop_point_name = 'p' + str(i) + '_vector', 'p' + str(i) + '_point'
     sys_rep.add_output(prop_vector_name, prop_vec)
@@ -185,6 +190,18 @@ for i in range(num_props):
     propb1_mesh_names.append(propb1_mesh_name)
     prop_vector_names.append(prop_vector_name)
     prop_point_names.append(prop_point_name)
+
+for i in range(1,num_props):
+    if i < num_props/2:
+        shape = prop0b0_mesh.shape[0:2]
+        offset = np.zeros(prop0b0_mesh.shape)
+        offset[:,:,1] = offsets[i]*np.ones(shape)
+        prop_meshes_np.append(prop_meshes_np[i-1] + offset)
+    else:
+        ref_mesh = prop_meshes_np[num_props-1 - i].copy()
+        ref_mesh[:,:,1] = -1*ref_mesh[:,:,1]
+        prop_meshes_np.append(ref_mesh)
+
 # endregion
 
 nt = num_nodes = 35
@@ -239,7 +256,7 @@ for i in range(num_props):
     dir = -1
     if i >= num_props/2:
         dir = 1
-    prop_model = Rotor2(component=props[i], mesh_name=propb1_mesh_names[i], num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=dir, r_point=rotation_point)
+    prop_model = Rotor2(component=props[i], mesh_name=propb1_mesh_names[i], num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=dir, r_point=rotation_point, mesh=prop_meshes_np[i])
     prop_mesh_out, mirror_prop_meshes = prop_model.evaluate()
     prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
 num_blades = num_blades*2
@@ -274,6 +291,8 @@ initial_conditions = []
 interaction_groups = []
 i = 0
 
+symmetry_list = []
+
 for prop_mesh in prop_meshes:
     interaction_groups.append(list(range(num_blades*i,num_blades*(i+1))))
     for var in prop_mesh:
@@ -291,6 +310,11 @@ for prop_mesh in prop_meshes:
 
 # interactions for props
 sub_eval_list, sub_induced_list = generate_sub_lists(interaction_groups)
+
+# symmetry for props
+for i in range(int(num_props/2)):
+    for j in range(int(num_blades/2)):
+        symmetry_list.append([i*num_blades+j, (num_props-1-i)*num_blades , i*num_blades+j + num_blades/2])
 
 # ode stuff and interactions for non-rotors:
 for surface in non_rotor_surfaces:

@@ -5,8 +5,8 @@ import numpy as np
 def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = True, wake_color='cyan', rotor_wake_color='red', surface_color='gray'):
     vedo.settings.default_backend = 'vtk'
     axs = Axes(
-        xrange=(0, 80),
-        yrange=(-100, 100),
+        xrange=(0, 25),
+        yrange=(-30, 30),
         zrange=(-5, 10),
     )
     video = Video("rotor_test.gif", fps=10, backend='imageio')
