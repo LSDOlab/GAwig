@@ -177,14 +177,15 @@ class Rotor2(m3l.ExplicitOperation):
         dir = self.parameters['dir']
         r_point = self.parameters['r_point']
         csdl_model = RotorCSDL2(module=self,
-                               mesh_name=mesh_name,
-                               num_blades=num_blades,
-                               ns=ns,
-                               nc=nc,
-                               nt=nt,
-                               dt=dt,
-                               dir=dir,
-                               r_point=r_point,)
+                                mesh=self.mesh,
+                                mesh_name=mesh_name,
+                                num_blades=num_blades,
+                                ns=ns,
+                                nc=nc,
+                                nt=nt,
+                                dt=dt,
+                                dir=dir,
+                                r_point=r_point,)
         return csdl_model
 
     def evaluate(self):#, h : m3l.Variable, rpm : m3l.Variable, theta : m3l.Variable):
@@ -230,6 +231,7 @@ class RotorCSDL2(ModuleCSDL):
         self.parameters.declare('dt', default=0.001)
         self.parameters.declare('dir', default=1)
         self.parameters.declare('r_point')
+        self.parameters.declare('mesh')
  
     def define(self):
         mesh_name = self.parameters['mesh_name']
@@ -240,6 +242,7 @@ class RotorCSDL2(ModuleCSDL):
         dt = self.parameters['dt']
         dir = self.parameters['dir']
         r_point = self.parameters['r_point']
+        mesh = self.parameters['mesh']
 
 
 
@@ -269,7 +272,7 @@ class RotorCSDL2(ModuleCSDL):
         rad_per_dt = rad_per_sec*dt
 
         # a single blade mesh:
-        mesh = self.declare_variable(mesh_name, shape=(nc,ns,3))*0.3048
+        mesh = self.declare_variable(mesh_name, shape=(nc,ns,3), val=mesh)*0.3048
         # the center of the rotor disk:
         point = self.declare_variable('point', shape=(3,))*0.3048
         # normal vector to the rotor disk:
