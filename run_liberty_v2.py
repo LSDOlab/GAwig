@@ -47,10 +47,12 @@ htail = build_component('htail', ['HTail'])
 fuse = build_component('fuse', ['FuselageGeom'])
 
 # props
-num_props = 8
+num_props = 2
 props = [] # we go from 1-indexed to 0-indexed here
+prop_indices = list(range(0,int(num_props/2))) + list(range(int(8-num_props/2),8))
+
 for i in range(num_props):
-    prop = build_component('prop_'+str(i), ['Prop'+str(i+1),'Hub'+str(i+1)])
+    prop = build_component('prop_'+str(i), ['Prop'+str(prop_indices[i]+1),'Hub'+str(prop_indices[i]+1)])
     props.append(prop)
 #endregion
 
@@ -181,7 +183,7 @@ for i in range(num_props):
     propb1_mesh_name = 'p'+str(i)+'b1_mesh'
 
     # prop hub:
-    hub_back, hub_front = props[i].project(np.array(p5_list[i])), props[i].project(np.array(p6_list[i]))
+    hub_back, hub_front = props[i].project(np.array(p5_list[prop_indices[i]])), props[i].project(np.array(p6_list[prop_indices[i]]))
     prop_vec = hub_front - hub_back
     prop_vector_name, prop_point_name = 'p' + str(i) + '_vector', 'p' + str(i) + '_point'
     sys_rep.add_output(prop_vector_name, prop_vec)
