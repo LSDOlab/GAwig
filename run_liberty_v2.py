@@ -47,9 +47,9 @@ htail = build_component('htail', ['HTail'])
 fuse = build_component('fuse', ['FuselageGeom'])
 
 # props
-num_props = 8
+num_props = 0
 props = [] # we go from 1-indexed to 0-indexed here
-for i in range(num_props):
+for i in [0, 7]:#range(num_props):
     prop = build_component('prop_'+str(i), ['Prop'+str(i+1),'Hub'+str(i+1)])
     props.append(prop)
 #endregion
@@ -101,7 +101,7 @@ wing_vlm_mesh_name = 'wing_vlm_mesh'
 # print(type(am.array(flap_mesh.reshape((14, -1))).reshape((1, 14, 22, 3))))
 # exit()
 # sys_rep.add_output(wing_vlm_mesh_name, am.array(flap_mesh.reshape((14, -1))).reshape((1, 14, 22, 3)))
-wing_camber_surface_np = flap_mesh #.reshape((1, 14, 22, 3))# wing_camber_surface.value # TODO: change this idk
+# wing_camber_surface_np = flap_mesh #.reshape((1, 14, 22, 3))# wing_camber_surface.value # TODO: change this idk
 # print(flap_mesh.shape)
 # print(wing_camber_surface_np.shape)
 # print(wing_camber_surface.value)
@@ -145,9 +145,10 @@ sys_rep.add_output(htail_vlm_mesh_name, htail_camber_surface)
 
 
 # prop meshes
-num_spanwise_prop= 6
+num_spanwise_prop= 12
 num_chordwise_prop = 2
-offsets = [0,20,20,38,18,38,20,20]
+offsets = [0,20+20+38+18+38+20+20]
+# offsets = [0,20,20,38,18,38,20,20]
 p1 = [39.754, -88.35, 4.769]
 p2 = [39.848-0.3, -93.75, 4.342-0.5]
 p3 = [40.246, -88.35, 5.231]
@@ -171,7 +172,7 @@ for i in range(num_props):
     leading_edge = props[i].project(np.linspace(np.array(p1), np.array(p2), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
     trailing_edge = props[i].project(np.linspace(np.array(p3), np.array(p4), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
     chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_prop)
-    # spatial_rep.plot_meshes([chord_surface])
+    spatial_rep.plot_meshes([chord_surface])
     propb1_mesh_name = 'p'+str(i)+'b1_mesh'
     sys_rep.add_output(propb1_mesh_name, chord_surface)
 
@@ -186,7 +187,7 @@ for i in range(num_props):
     prop_point_names.append(prop_point_name)
 # endregion
 
-nt = num_nodes = 15
+nt = num_nodes = 35
 
 # design scenario
 
@@ -231,12 +232,12 @@ left_fuse_mesh_out, left_fuse_mirror_mesh = left_fuse_mirror_model.evaluate()
 # non_rotor_surfaces.append(left_fuse_mesh_out)
 # non_rotor_surfaces.append(left_fuse_mirror_mesh)
 
-dt = 0.016 * 1
+dt = 0.016 * 0.5
 num_blades = 2
 prop_meshes = []
 for i in range(num_props):
     dir = -1
-    if i > num_blades/2:
+    if i >= num_props/2:
         dir = 1
     prop_model = Rotor2(component=props[i], mesh_name=propb1_mesh_names[i], num_blades=num_blades, ns=num_spanwise_prop, nc=num_chordwise_prop, nt=nt, dt=dt, dir=dir, r_point=rotation_point)
     prop_mesh_out, mirror_prop_meshes = prop_model.evaluate()
@@ -362,7 +363,7 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
 uvlm_op = model.assemble(return_operation=True)
 outputs = uvlm_op.evaluate()[0:len(pp_vars)]
 
-average_op = LastNAverage(n=5)
+average_op = LastNAverage(n=num_nodes)
 ave_outputs = average_op.evaluate(outputs) # time averaged qts
 
 fx = ave_outputs[0]
@@ -410,35 +411,35 @@ model_csdl.connect('height_above_water', 'system_model.wig.wig.wig.operation.inp
 model_csdl.connect('aircraft_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.theta')
 
 
-for i in range(len(prop_meshes)):
-    i = str(i)
+# for i in range(len(prop_meshes)):
+#     i = str(i)
 
-    rpm = model_csdl.create_input(f'rpm_rotor_{i}', val=1000)
+#     rpm = model_csdl.create_input(f'rpm_rotor_{i}', val=1000)
 
-    model_csdl.connect('p' + i + 'b1_mesh', 
-                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.p' + i + 'b1_mesh')
-    model_csdl.connect('p' + i + '_vector', 
-                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.vector')
-    model_csdl.connect('p' + i + '_point', 
-                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.point')
+#     model_csdl.connect('p' + i + 'b1_mesh', 
+#                     'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.p' + i + 'b1_mesh')
+#     model_csdl.connect('p' + i + '_vector', 
+#                     'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.vector')
+#     model_csdl.connect('p' + i + '_point', 
+#                     'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.point')
     
-    model_csdl.connect('height_above_water', 
-                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.h')
+#     model_csdl.connect('height_above_water', 
+#                     'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.h')
     
-    model_csdl.connect('aircraft_pitch', 
-                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.theta')
+#     model_csdl.connect('aircraft_pitch', 
+#                     'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.theta')
     
-    model_csdl.connect(f'rpm_rotor_{i}', 
-                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.rpm')
+#     model_csdl.connect(f'rpm_rotor_{i}', 
+#                     'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.rpm')
     
-    model_csdl.connect(f'rpm_rotor_{i}', 
-                    f'system_model.wig.wig.wig.torque_operation_rotor_{i}.rpm')
+#     model_csdl.connect(f'rpm_rotor_{i}', 
+#                     f'system_model.wig.wig.wig.torque_operation_rotor_{i}.rpm')
     
-    model_csdl.connect(f'rpm_rotor_{i}',
-                    f'system_model.wig.wig.wig.engine_{i}_engine.rpm')
+#     model_csdl.connect(f'rpm_rotor_{i}',
+#                     f'system_model.wig.wig.wig.engine_{i}_engine.rpm')
     
-    model_csdl.connect('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u',
-                        f'system_model.wig.wig.wig.torque_operation_rotor_{i}.velocity')
+#     model_csdl.connect('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u',
+#                         f'system_model.wig.wig.wig.torque_operation_rotor_{i}.velocity')
     
 # wing mirror model connections:
 # caddee_csdl_model.connect('wing_vlm_mesh', 
@@ -481,15 +482,19 @@ print(L)
 print(D)
 print(L/D)
 
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_0.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_1.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_4.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_5.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_6.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_7.total_thrust'])
+
+print('\n')
+print(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.wing_vlm_mesh_out_C_L'])
+print(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.wing_vlm_mesh_out_C_D_i'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_0.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_1.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_4.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_5.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_6.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_7.total_thrust'])
 
 if True:
-    plot_wireframe(sim, surface_names, nt, plot_mirror=False)
+    plot_wireframe(sim, surface_names, nt, plot_mirror=False, interactive=True)
 
