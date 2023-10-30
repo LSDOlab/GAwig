@@ -47,7 +47,7 @@ htail = build_component('htail', ['HTail'])
 fuse = build_component('fuse', ['FuselageGeom'])
 
 # props
-num_props = 8
+num_props = 4
 props = [] # we go from 1-indexed to 0-indexed here
 prop_indices = list(range(0,int(num_props/2))) + list(range(int(8-num_props/2),8))
 
@@ -157,16 +157,16 @@ p4 = [40.152+0.3, -93.75, 5.658+0.5]
 p5 = [40., -87., 5.]
 p6 = [37., -87., 5.]
 
+if num_props > 0:
+    leading_edge = props[0].project(np.linspace(np.array(p1), np.array(p2), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
+    trailing_edge = props[0].project(np.linspace(np.array(p3), np.array(p4), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
+    chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_prop)
+    prop0b0_mesh = chord_surface.value
 
-leading_edge = props[0].project(np.linspace(np.array(p1), np.array(p2), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
-trailing_edge = props[0].project(np.linspace(np.array(p3), np.array(p4), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
-chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_prop)
-prop0b0_mesh = chord_surface.value
-
-propb1_mesh_names = []
-prop_vector_names = []
-prop_point_names = []
-prop_meshes_np = [prop0b0_mesh]
+    propb1_mesh_names = []
+    prop_vector_names = []
+    prop_point_names = []
+    prop_meshes_np = [prop0b0_mesh]
 
 
 p5_list = [p5]
@@ -252,7 +252,7 @@ left_fuse_mesh_out, left_fuse_mirror_mesh = left_fuse_mirror_model.evaluate()
 # non_rotor_surfaces.append(left_fuse_mirror_mesh)
 
 dt = 0.016 * 1
-num_blades = 6
+num_blades = 2
 prop_meshes = []
 for i in range(num_props):
     dir = -1
@@ -313,10 +313,6 @@ for prop_mesh in prop_meshes:
 # interactions for props
 sub_eval_list, sub_induced_list = generate_sub_lists(interaction_groups)
 
-# symmetry for props
-for i in range(int(num_props/2)):
-    for j in range(int(num_blades/2)):
-        symmetry_list.append([i*num_blades+j, (num_props-1-i)*num_blades , i*num_blades+j + num_blades/2])
 
 # ode stuff and interactions for non-rotors:
 for surface in non_rotor_surfaces:
@@ -340,7 +336,36 @@ for surface in non_rotor_surfaces:
     sub_eval_list.append(index)
     sub_induced_list.append(index)
 
-print(surface_names)
+
+# print(surface_names[0])
+# print(surface_names[12])
+# exit()
+
+# symmetry for props
+for i in range(int(num_props/2)):
+    for j in range(int(num_blades/2)):
+        symmetry_list.append([int(i*num_blades+j),                                       # left blade
+                              int((num_props-1-i)*num_blades + j),                       # right blade
+                              int(i*num_blades+j + num_blades/2),                        # left mirror blade
+                              int((num_props-1-i)*num_blades + j + num_blades/2)])       # right mirror blade
+
+# symmetry for wing
+if wing_mesh_out.name in surface_names:
+    wing_index = surface_names.index(wing_mesh_out.name)
+    wing_mirror_index = surface_names.index(wing_mirror_mesh.name)
+    symmetry_list.append([wing_index, wing_mirror_index])
+
+# symmetry for fuselages
+if right_fuse_mesh_out.name in surface_names:
+    fuselage0_index = surface_names.index(right_fuse_mesh_out.name)
+    fuselage1_index = surface_names.index(left_fuse_mesh_out.name)
+    fuselage0_mirror_index = surface_names.index(right_fuse_mirror_mesh.name)
+    fuselage1_mirror_index = surface_names.index(left_fuse_mirror_mesh.name)
+    symmetry_list.append([fuselage0_index, fuselage1_index, fuselage0_mirror_index, fuselage1_mirror_index])
+
+# print(symmetry_list)
+# exit()
+
 pp_vars = []
 # for name in surface_names:
 #     pp_vars.append((name+'_L', (nt, 1)))
@@ -372,6 +397,8 @@ uvlm = VASTSolverUnsteady(num_nodes = num_nodes,
                           sub = True,
                           sub_eval_list = sub_eval_list,
                           sub_induced_list = sub_induced_list,
+                        #   symmetry = False,
+                        #   sym_struct_list = symmetry_list,
                           free_wake=True,)
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
@@ -508,8 +535,8 @@ print(L/D)
 
 print(sim['system_model.wig.wig.wig.torque_operation_rotor_0.total_thrust'])
 print(sim['system_model.wig.wig.wig.torque_operation_rotor_1.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
+print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
+print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_4.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_5.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_6.total_thrust'])
