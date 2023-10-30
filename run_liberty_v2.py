@@ -47,7 +47,7 @@ htail = build_component('htail', ['HTail'])
 fuse = build_component('fuse', ['FuselageGeom'])
 
 # props
-num_props = 2
+num_props = 8
 props = [] # we go from 1-indexed to 0-indexed here
 prop_indices = list(range(0,int(num_props/2))) + list(range(int(8-num_props/2),8))
 
@@ -58,9 +58,9 @@ for i in range(num_props):
 
 # region meshes
 # wing mesh:
-num_spanwise_vlm = 6 # * 2 + 1
+num_spanwise_vlm = 12 # * 2 + 1
 num_spanwise_temp = num_spanwise_vlm+1
-num_chordwise_vlm = 5
+num_chordwise_vlm = 8
 log_space = False
 if log_space:
     start = 0.001
@@ -205,7 +205,7 @@ for i in range(1,num_props):
 
 # endregion
 
-nt = num_nodes = 5
+nt = num_nodes = 10
 
 
 # design scenario
@@ -252,7 +252,7 @@ left_fuse_mesh_out, left_fuse_mirror_mesh = left_fuse_mirror_model.evaluate()
 # non_rotor_surfaces.append(left_fuse_mirror_mesh)
 
 dt = 0.016 * 1
-num_blades = 2
+num_blades = 6
 prop_meshes = []
 for i in range(num_props):
     dir = -1
