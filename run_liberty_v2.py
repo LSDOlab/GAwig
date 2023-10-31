@@ -28,10 +28,11 @@ num_props = 2
 num_blades = 2
 rpm = 1090.
 nt = 10
+dt = 0.016 * 1
 h = 30                       # m
 pitch = np.deg2rad(0)        # rad
 blade_angle = np.deg2rad(0)  # rad
-rotor_delta = [0,5,0]        # m
+rotor_delta = [0,0,0]        # m
 rotation_point = np.array([0,0,0])
 do_wing = True
 do_fuselage = True
@@ -259,8 +260,6 @@ if do_fuselage:
         non_rotor_surfaces.append(right_fuse_mirror_mesh)
 
 
-
-dt = 0.016 * 1
 prop_meshes = []
 for i in range(num_props):
     blade_angle_value = np.array([blade_angle])
