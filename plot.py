@@ -31,6 +31,7 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
                 min_gamma = np.min([min_gamma, np.min(gamma_w)])
                 max_gamma = np.max([max_gamma, np.max(gamma_w)])
         # Any rendering loop goes here, e.g.
+        draw_scalarbar = True
         for surface_name in surface_names:
             if 'mirror' in surface_name and not plot_mirror:
                 pass
@@ -72,7 +73,9 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
                         connectivity.append([k*ny+j,(k+1)*ny+j,(k+1)*ny+j+1,k*ny+j+1])
                 vps = Mesh([np.reshape(wake_points, (-1, 3)), connectivity], c=color, alpha=1)
                 vps.cmap(cmap, gamma_w, on='cells', vmin=min_gamma, vmax=max_gamma)
-                vps.add_scalarbar()
+                if draw_scalarbar:
+                    vps.add_scalarbar()
+                    draw_scalarbar = False
                 vps.linewidth(1)
                 vp += vps
                 vp += __doc__
