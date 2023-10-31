@@ -37,17 +37,17 @@ class Mirror(m3l.ExplicitOperation):
         csdl_model = MirrorCSDL(module=self,mesh_name=mesh_name,ns=ns,nc=nc,nt=nt,point=point,mesh_value=self.mesh)
         return csdl_model
 
-    def evaluate(self):#, theta : m3l.Variable, h : m3l.Variable):
+    def evaluate(self, theta : m3l.Variable, h : m3l.Variable):
         mesh_name = self.parameters['mesh_name']
         ns = self.parameters['ns']
         nc = self.parameters['nc']
         nt = self.parameters['nt']
  
         self.name = mesh_name + 'mirror'
-        self.arguments = {}
-        #     'theta' : theta,
-        #     'h' : h,
-        # }
+        self.arguments = {
+            'theta' : theta,
+            'h' : h,
+        }
 
         mirror_mesh = m3l.Variable(mesh_name + '_mirror', shape=(nt,nc,ns,3), operation=self)
         mesh_out = m3l.Variable(mesh_name + '_out', shape=(nt,nc,ns,3), operation=self)
