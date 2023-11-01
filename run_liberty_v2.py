@@ -35,9 +35,13 @@ blade_angle = np.deg2rad(0)  # rad
 rotor_delta = [0,0,0]        # m
 rotation_point = np.array([0,0,0])
 do_wing = True
+do_flaps = False
 do_fuselage = True
 mirror = True
+sub = False
+free_wake = True
 symmetry = False # only works with mirror = True
+log_space = False # log spacing spanwise for wing mesh
 # endregion
 
 # region caddee setup
@@ -54,6 +58,7 @@ spatial_rep.refit_geometry(file_name=file_name)
 
 # region components
 def build_component(name, search_names):
+    # returns component with given name made from surfaces containing search_names
     primitive_names = list(spatial_rep.get_primitives(search_names=search_names).keys())
     component = LiftingSurface(name=name, spatial_representation=spatial_rep, primitive_names=primitive_names)
     sys_rep.add_component(component)
@@ -66,7 +71,6 @@ fuse = build_component('fuse', ['FuselageGeom'])
 # props
 props = [] # we go from 1-indexed to 0-indexed here
 prop_indices = list(range(0,int(num_props/2))) + list(range(int(8-num_props/2),8))
-
 for i in range(num_props):
     prop = build_component('prop_'+str(i), ['Prop'+str(prop_indices[i]+1),'Hub'+str(prop_indices[i]+1)])
     props.append(prop)
@@ -74,13 +78,13 @@ for i in range(num_props):
 
 # region meshes
 # wing mesh:
-num_spanwise_vlm = 12 # * 2 + 1
-num_spanwise_temp = num_spanwise_vlm+1
+num_spanwise_vlm = 12
 num_chordwise_vlm = 8
-log_space = False
+
 if log_space:
     start = 0.001
     end = 1
+    num_spanwise_temp = num_spanwise_vlm + 1 # used for log spacing
 
     le_half_points = ((((np.logspace(start, end, int(num_spanwise_temp/2), endpoint=True)))-10**start)/(10**end-10**start)-1)*103
     le_points = np.concatenate([le_half_points, np.flip(le_half_points*-1)[1:]])
@@ -105,14 +109,12 @@ wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 
 wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surface_wireframe, 1)
 # spatial_rep.plot_meshes([wing_camber_surface])
 wing_camber_surface_np = wing_camber_surface.value.reshape((num_chordwise_vlm, num_spanwise_vlm, 3))
-
-flap_mesh = deflect_flap(wing_camber_surface_np, 30, 1)
-# spatial_rep.plot_meshes([flap_mesh])
-
 wing_vlm_mesh_name = 'wing_vlm_mesh'
-wing_camber_surface_np = flap_mesh #.reshape((1, 14, 22, 3))# wing_camber_surface.value # TODO: change this idk
 
-
+if do_flaps:
+    flap_mesh = deflect_flap(wing_camber_surface_np, 30, 1)
+    # spatial_rep.plot_meshes([flap_mesh])
+    wing_camber_surface_np = flap_mesh
 
 # right fuselage mesh:
 num_long_vlm = 22
@@ -124,7 +126,6 @@ right_fuse_surface_reordered = np.swapaxes(right_fuse_surface.value, 0, 1)
 # spatial_rep.plot_meshes([right_fuse_surface])
 right_fuse_mesh_name = 'right_fuselage_mesh'
 sys_rep.add_output(right_fuse_mesh_name, right_fuse_surface)
-
 
 # left fuselage mesh:
 ltop = fuse.project(np.linspace(np.array([0, -27, -0.25]), np.array([120, -27, 9]), num_long_vlm+2)[1:-1], direction=np.array([0., 0., -1.]), plot=False)
@@ -149,12 +150,10 @@ htail_camber_surface = am.linspace(htail_upper_surface_wireframe, htail_lower_su
 htail_vlm_mesh_name = 'htail_vlm_mesh'
 sys_rep.add_output(htail_vlm_mesh_name, htail_camber_surface)
 
-
-
 # prop meshes
 num_spanwise_prop= 6
 num_chordwise_prop = 2
-offsets = [0,20,20,38,18,38,20,20]
+offsets = [0,20,20,38,18,38,20,20] # gaps between rotors, left to right
 p1 = [39.754, -88.35, 4.769]
 p2 = [39.848-0.3, -93.75, 4.342-0.5]
 p3 = [40.246, -88.35, 5.231]
@@ -162,6 +161,7 @@ p4 = [40.152+0.3, -93.75, 5.658+0.5]
 p5 = [40., -87., 5.]
 p6 = [37., -87., 5.]
 
+# create mesh for prop 0, blade 0
 if num_props > 0:
     leading_edge = props[0].project(np.linspace(np.array(p1), np.array(p2), num_spanwise_prop), direction=np.array([0., 0, -1.]), grid_search_n=50, plot=False)
     trailing_edge = props[0].project(np.linspace(np.array(p3), np.array(p4), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
@@ -173,7 +173,7 @@ if num_props > 0:
     prop_point_names = []
     prop_meshes_np = [prop0b0_mesh]
 
-
+# list of hub front/back for different rotors
 p5_list = [p5]
 p6_list = [p6]
 for i in range(1,8):
@@ -207,7 +207,6 @@ for i in range(1,num_props):
         ref_mesh = prop_meshes_np[num_props-1 - i].copy()
         ref_mesh[:,:,1] = -1*ref_mesh[:,:,1]
         prop_meshes_np.append(ref_mesh)
-
 # endregion
 
 # region design scenario
@@ -219,6 +218,7 @@ wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
 wig_condition.set_module_input(name='mach_number', val=0.2, dv_flag=True, lower=0.1, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
+# ptich angle is always zero, mirroring functions apply pitch by offsetting meshes
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0))
 wig_condition.set_module_input(name='flight_path_angle', val=0)
 wig_condition.set_module_input(name='roll_angle', val=0)
@@ -226,6 +226,7 @@ wig_condition.set_module_input(name='yaw_angle', val=0)
 wig_condition.set_module_input(name='wind_angle', val=0)
 wig_condition.set_module_input(name='observer_location', val=np.array([0, 0, 1000]))
 
+# expand states across time steps for ode
 ac_states = wig_condition.evaluate_ac_states()
 ac_expander = ac_expand(num_nodes=nt)
 ac_states_expanded = ac_expander.evaluate(ac_states)
@@ -308,6 +309,7 @@ uvlm_parameters = [('u',True,ac_states_expanded['u']),
 # TODO: connect rho, maybe other values
 
 def generate_sub_lists(interaction_groups):
+    # generates sub lists for groups of full interaction with no cross-interactoin
     sub_eval_list = []
     sub_induced_list = []
     for group in interaction_groups:
@@ -356,7 +358,7 @@ for surface in non_rotor_surfaces:
     initial_conditions.append((surface.name+'_gamma_w_0', np.zeros((nt-1, num_spanwise-1))))
     initial_conditions.append((surface.name+'_wake_coords_0', np.zeros((nt-1, num_spanwise, 3))))
 
-    # interactions
+    # interactions - fully interactive
     index = len(surface_names)-1
     for i in range(index):
         sub_eval_list.append(i)
@@ -372,7 +374,7 @@ if symmetry:
     # symmetry for props
     for i in range(int(num_props/2)):
         for j in range(int(num_blades/2)):
-            symmetry_list.append([int(i*num_blades+j),                                       # left blade
+            symmetry_list.append([int(i*num_blades+j),                                     # left blade
                                 int((num_props-1-i)*num_blades + j),                       # right blade
                                 int(i*num_blades+j + num_blades/2),                        # left mirror blade
                                 int((num_props-1-i)*num_blades + j + num_blades/2)])       # right mirror blade
@@ -434,12 +436,12 @@ uvlm = VASTSolverUnsteady(num_nodes = nt,
                           surface_shapes = surface_shapes, 
                           delta_t = dt, 
                           nt = nt+1,
-                          sub = True,
+                          sub = sub,
                           sub_eval_list = sub_eval_list,
                           sub_induced_list = sub_induced_list,
-                        #   symmetry = False,
-                        #   sym_struct_list = symmetry_list,
-                          free_wake=True,)
+                          symmetry = symmetry,
+                          sym_struct_list = symmetry_list,
+                          free_wake=free_wake,)
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
 model.set_dynamic_options(initial_conditions=initial_conditions,
