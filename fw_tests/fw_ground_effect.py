@@ -1,4 +1,5 @@
-from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, ProfileOpModel, ProfileOpModel2, PostProcessor
+from VAST.core.vast_solver_unsteady import VASTSolverUnsteady
+from VAST.core.profile_model import gen_profile_output_list, PPSubmodel
 import python_csdl_backend
 from VAST.utils.generate_mesh import *
 import m3l
@@ -12,7 +13,7 @@ ny = 13
 AR = 8
 span = 8
 chord = span/AR
-num_nodes = 20
+num_nodes = 10
 h = 1
 
 nt = num_nodes+1
@@ -26,7 +27,7 @@ wig_model = m3l.Model()
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.05, dv_flag=True, lower=0.1, upper=0.3)
+wig_condition.set_module_input(name='mach_number', val=0.3, dv_flag=True, lower=0.1, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0.), dv_flag=False, lower=np.deg2rad(-10), upper=np.deg2rad(10))
 wig_condition.set_module_input(name='flight_path_angle', val=0)
@@ -57,7 +58,7 @@ mesh_dict = {
     "symmetry": False,
     "span": span,
     "root_chord": chord,
-    "span_cos_spacing": False,
+    "span_cos_spacing": 0.5,
     "chord_cos_spacing": False,
 }
 mesh_temp = generate_mesh(mesh_dict)
@@ -85,7 +86,7 @@ surface_shapes = [
     (nx,ny,3),
 ]
 
-h_stepsize = delta_t = 1/4
+h_stepsize = delta_t = 1/32
 
 initial_conditions = []
 for i in range(len(surface_names)):
@@ -99,19 +100,34 @@ for i in range(len(surface_names)):
 
     initial_conditions.append((wake_coords_0_name, np.zeros((num_nodes-1, ny, 3))))
 
-submodel = PostProcessor(
-    num_nodes = num_nodes,
+sub_eval_list = []
+num_surfaces = len(surface_names)
+for i in range(num_surfaces):
+    sub_eval_list.extend([i]*num_surfaces)
+    
+sub_induced_list = [0, 1] * num_surfaces
+sub = True
+sym_struct_list = [[0, 1]]
+
+profile_outputs = gen_profile_output_list(surface_names, surface_shapes)
+ode_surface_shapes = [(num_nodes, ) + item for item in surface_shapes]
+post_processor = PPSubmodel(
     surface_names = surface_names,
-    surface_shapes = surface_shapes,
+    ode_surface_shapes = ode_surface_shapes,
     delta_t = h_stepsize,
     nt = num_nodes + 1,
-    symmetry=True
+    # sub=sub,
+    # sub_eval_list=sub_eval_list,
+    # sub_induced_list=sub_induced_list,
+    # symmetry=True,
+    # sym_struct_list=sym_struct_list
 )
-# pp_vars = [('panel_forces', (num_nodes, system_size, 3)), ('eval_pts_all', (num_nodes, system_size, 3))]
-pp_vars = [
-    ('wing_C_L', (num_nodes-1, 1)), 
-    ('wing_image_C_L', (num_nodes-1, 1))
-]
+pp_vars = []
+# for name in surface_names:
+#     pp_vars.append((name+'_L', (nt, 1)))
+pp_vars.append('panel_forces_x')
+pp_vars.append('panel_forces_y')
+pp_vars.append('panel_forces_z')
 
 model = m3l.DynamicModel()
 uvlm = VASTSolverUnsteady(
@@ -120,8 +136,13 @@ uvlm = VASTSolverUnsteady(
     surface_shapes=surface_shapes, 
     delta_t=delta_t, 
     nt=num_nodes+1,
-    frame='inertial',
-    free_wake=True
+    free_wake=True,
+    # frame='inertial',
+    # sub=sub,
+    # sub_eval_list=sub_eval_list,
+    # sub_induced_list=sub_induced_list,
+    # symmetry=True,
+    # sym_struct_list=sym_struct_list
 )
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
@@ -132,48 +153,54 @@ model.set_dynamic_options(initial_conditions=initial_conditions,
                             int_naming=('op_',''),
                             integrator='ForwardEuler',
                             approach='time-marching checkpointing',
-                            profile_outputs=None,
-                            profile_system=None,
-                            profile_parameters=None,
-                            post_processor=submodel,
+                            copycat_profile=True,
+                            profile_outputs=profile_outputs,
+                            post_processor=post_processor,
                             pp_vars=pp_vars)
 uvlm_op = model.assemble(return_operation=True)
-
-wing_C_L, wing_image_C_L, _, _, _, _  = uvlm_op.evaluate()
-# wing_C_L, _, _  = uvlm_op.evaluate()
-# int1, int2, _, _, _, _, _, _ = uvlm_op.evaluate()
-
+outputs = uvlm_op.evaluate()[0:len(pp_vars)]
 
 overmodel = m3l.Model()
+for var in outputs:
+    overmodel.register_output(var)
 # overmodel.register_output(panel_forces)
-overmodel.register_output(wing_C_L)
-overmodel.register_output(wing_image_C_L)
+# overmodel.register_output(wing_C_L)
 model_csdl = overmodel.assemble()
 
+import time
+
+start = time.time()
 sim = python_csdl_backend.Simulator(model_csdl, analytics=True)
+setup_time = time.time()
+print('simulator setup time:', setup_time - start)
 
+sim_start = time.time()
 sim.run()
+end_time_1 = time.time()
+print('simulator run time: ', end_time_1 - sim_start)
 
-wing_CL = sim['operation.post_processor.ThrustDrag.wing_C_L']
-wing_CDi = sim['operation.post_processor.ThrustDrag.wing_C_D_i']
-wing_image_CL = sim['operation.post_processor.ThrustDrag.wing_image_C_L']
-wing_image_CDi = sim['operation.post_processor.ThrustDrag.wing_image_C_D_i']
+# exit()
+if False:
+    wing_CL = sim['operation.post_processor.ThrustDrag.wing_C_L']
+    wing_CDi = sim['operation.post_processor.ThrustDrag.wing_C_D_i']
+    wing_image_CL = sim['operation.post_processor.ThrustDrag.wing_image_C_L']
+    wing_image_CDi = sim['operation.post_processor.ThrustDrag.wing_image_C_D_i']
 
-print('===============')
-print('wing CDi: ')
-print(wing_CDi)
-print('===============')
-print('wing image CDi: ')
-print(wing_image_CDi)
-print('===============')
-print('wing CL: ')
-print(wing_CL)
-print('===============')
-print('wing image CL: ')
-print(wing_image_CL)
-print('===============')
-print('CL sum: ')
-print(wing_CL + wing_image_CL)
+    print('===============')
+    print('wing CDi: ')
+    print(wing_CDi)
+    print('===============')
+    print('wing image CDi: ')
+    print(wing_image_CDi)
+    print('===============')
+    print('wing CL: ')
+    print(wing_CL)
+    print('===============')
+    print('wing image CL: ')
+    print(wing_image_CL)
+    print('===============')
+    print('CL sum: ')
+    print(wing_CL + wing_image_CL)
 
 
 if True:
@@ -208,8 +235,8 @@ if True:
             vp += __doc__
         # cam1 = dict(focalPoint=(3.133, 1.506, -3.132))
         # video.action(cameras=[cam1, cam1])
-        vp.show(axs, elevation=-90, azimuth=-0,
-                axes=False, interactive=True)  # render the scene
+        vp.show(axs, elevation=-75, azimuth=-45, roll=45.,
+                axes=False, interactive=False)  # render the scene
         video.add_frame()  # add individual frame
         # time.sleep(0.1)
         # vp.interactive().close()
