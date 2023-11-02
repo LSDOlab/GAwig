@@ -104,7 +104,7 @@ wing_vlm_mesh_name = 'wing_vlm_mesh'
 # print(type(am.array(flap_mesh.reshape((14, -1))).reshape((1, 14, 22, 3))))
 # exit()
 # sys_rep.add_output(wing_vlm_mesh_name, am.array(flap_mesh.reshape((14, -1))).reshape((1, 14, 22, 3)))
-# wing_camber_surface_np = flap_mesh #.reshape((1, 14, 22, 3))# wing_camber_surface.value # TODO: change this idk
+wing_camber_surface_np = flap_mesh #.reshape((1, 14, 22, 3))# wing_camber_surface.value # TODO: change this idk
 # print(flap_mesh.shape)
 # print(wing_camber_surface_np.shape)
 # print(wing_camber_surface.value)
@@ -215,7 +215,7 @@ for ii in range(len(num_spanwise_prop_list)):
 
         # endregion
 
-        nt = num_nodes = 20
+        nt = num_nodes = 35
 
         # design scenario
 
@@ -245,23 +245,23 @@ for ii in range(len(num_spanwise_prop_list)):
         # wing mirroring
         wing_mirror_model = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,nt=nt,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np*0.3048)
         wing_mesh_out, wing_mirror_mesh = wing_mirror_model.evaluate()
-        # non_rotor_surfaces.append(wing_mesh_out)
+        non_rotor_surfaces.append(wing_mesh_out)
         # non_rotor_surfaces.append(wing_mirror_mesh)
 
         # right fuselage mirroring
         right_fuse_mirror_model = Mirror(component=fuse,mesh_name=right_fuse_mesh_name,nt=nt,ns=num_vert_vlm,nc=num_long_vlm,point=rotation_point, mesh=right_fuse_surface_reordered*0.3048)
         right_fuse_mesh_out, right_fuse_mirror_mesh = right_fuse_mirror_model.evaluate()
-        # non_rotor_surfaces.append(right_fuse_mesh_out)
+        non_rotor_surfaces.append(right_fuse_mesh_out)
         # non_rotor_surfaces.append(right_fuse_mirror_mesh)
 
         # left fuselage mirroring
         left_fuse_mirror_model = Mirror(component=fuse,mesh_name=left_fuse_mesh_name,nt=nt,ns=num_vert_vlm,nc=num_long_vlm,point=rotation_point, mesh=left_fuse_surface_reordered*0.3048)
         left_fuse_mesh_out, left_fuse_mirror_mesh = left_fuse_mirror_model.evaluate()
-        # non_rotor_surfaces.append(left_fuse_mesh_out)
+        non_rotor_surfaces.append(left_fuse_mesh_out)
         # non_rotor_surfaces.append(left_fuse_mirror_mesh)
 
-        dt = 0.003
-        num_blades = 3
+        dt = 0.006
+        num_blades = 2
         prop_meshes = []
         prop_meshes_vel = []
         for i in range(num_props):
@@ -367,7 +367,7 @@ for ii in range(len(num_spanwise_prop_list)):
         #     pp_vars.append((name+'_L', (nt, 1)))
 
         # num_panels = int((num_props*num_blades/2*(num_spanwise_prop-1)*(num_chordwise_prop-1) + (num_spanwise_vlm-1)*(num_chordwise_vlm-1) + (num_long_vlm-1)*(num_vert_vlm-1)*2)) #*2)
-        num_panels = int((num_props*num_blades*(num_spanwise_prop-1)*(num_chordwise_prop-1)))# + (num_spanwise_vlm-1)*(num_chordwise_vlm-1)))# + (num_long_vlm-1)*(num_vert_vlm-1)*2)) #*2)
+        num_panels = int((num_props*num_blades*(num_spanwise_prop-1)*(num_chordwise_prop-1)) + (num_spanwise_vlm-1)*(num_chordwise_vlm-1) + (num_long_vlm-1)*(num_vert_vlm-1)*2) # *2)
         print(num_panels)
         pp_vars.append(('panel_forces_x',(nt,num_panels,1)))
         pp_vars.append(('panel_forces_y',(nt,num_panels,1)))
@@ -424,7 +424,7 @@ for ii in range(len(num_spanwise_prop_list)):
         uvlm_op = model.assemble(return_operation=True)
         outputs = uvlm_op.evaluate()[0:len(pp_vars)]
 
-        average_op = LastNAverage(n=20)
+        average_op = LastNAverage(n=10, end_offset=2)
         ave_outputs = average_op.evaluate(outputs) # time averaged qts
 
         fx = ave_outputs[0]
@@ -470,16 +470,16 @@ for ii in range(len(num_spanwise_prop_list)):
         pitch_angle = model_csdl.create_input('aircraft_pitch', val=np.deg2rad(0))
 
 
-        # model_csdl.connect('height_above_water', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.h')
-        # model_csdl.connect('aircraft_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.theta')
-        # model_csdl.connect('height_above_water', 'system_model.wig.wig.wig.operation.input_model.right_fuselage_meshmirror.h')
-        # model_csdl.connect('aircraft_pitch', 'system_model.wig.wig.wig.operation.input_model.right_fuselage_meshmirror.theta')
-        # model_csdl.connect('height_above_water', 'system_model.wig.wig.wig.operation.input_model.left_fuselage_meshmirror.h')
-        # model_csdl.connect('aircraft_pitch', 'system_model.wig.wig.wig.operation.input_model.left_fuselage_meshmirror.theta')
+        model_csdl.connect('height_above_water', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.h')
+        model_csdl.connect('aircraft_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.theta')
+        model_csdl.connect('height_above_water', 'system_model.wig.wig.wig.operation.input_model.right_fuselage_meshmirror.h')
+        model_csdl.connect('aircraft_pitch', 'system_model.wig.wig.wig.operation.input_model.right_fuselage_meshmirror.theta')
+        model_csdl.connect('height_above_water', 'system_model.wig.wig.wig.operation.input_model.left_fuselage_meshmirror.h')
+        model_csdl.connect('aircraft_pitch', 'system_model.wig.wig.wig.operation.input_model.left_fuselage_meshmirror.theta')
 
 
-        # point0= model_csdl.create_input('p0_point', val = np.array([[ 40., -87.,   10.]]))
-        # point1= model_csdl.create_input('p1_point', val = np.array([[ 40., -67.,   10.]]))
+        # point0= model_csdl.create_input('p0_point', val = np.array([[ 40., 47.,   10.]]))
+        # point1= model_csdl.create_input('p1_point', val = np.array([[ 40., -47.,   10.]]))
         # point2= model_csdl.create_input('p2_point', val = np.array([[ 40., 67.,   10.]]))
         # point3= model_csdl.create_input('p3_point', val = np.array([[ 40., 87.,   10.]]))
 
@@ -576,23 +576,23 @@ for ii in range(len(num_spanwise_prop_list)):
         thrust_prop_2 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor0_out_panel_forces_x'], axis=1)
         thrust_prop_2 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor1_out_panel_forces_x'], axis=1)
 
-        thrust_prop_3 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p2b1_mesh_rotor0_out_panel_forces_x'], axis=1)
-        thrust_prop_3 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p2b1_mesh_rotor1_out_panel_forces_x'], axis=1)
+        # thrust_prop_3 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p2b1_mesh_rotor0_out_panel_forces_x'], axis=1)
+        # thrust_prop_3 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p2b1_mesh_rotor1_out_panel_forces_x'], axis=1)
 
-        thrust_prop_4 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p3b1_mesh_rotor0_out_panel_forces_x'], axis=1)
-        thrust_prop_4 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p3b1_mesh_rotor1_out_panel_forces_x'], axis=1)
+        # thrust_prop_4 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p3b1_mesh_rotor0_out_panel_forces_x'], axis=1)
+        # thrust_prop_4 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p3b1_mesh_rotor1_out_panel_forces_x'], axis=1)
 
-        thrust_prop_5 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p4b1_mesh_rotor0_out_panel_forces_x'], axis=1)
-        thrust_prop_5 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p4b1_mesh_rotor1_out_panel_forces_x'], axis=1)
+        # thrust_prop_5 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p4b1_mesh_rotor0_out_panel_forces_x'], axis=1)
+        # thrust_prop_5 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p4b1_mesh_rotor1_out_panel_forces_x'], axis=1)
 
-        thrust_prop_6 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p5b1_mesh_rotor0_out_panel_forces_x'], axis=1)
-        thrust_prop_6 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p5b1_mesh_rotor1_out_panel_forces_x'], axis=1)
+        # thrust_prop_6 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p5b1_mesh_rotor0_out_panel_forces_x'], axis=1)
+        # thrust_prop_6 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p5b1_mesh_rotor1_out_panel_forces_x'], axis=1)
 
-        thrust_prop_7 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p6b1_mesh_rotor0_out_panel_forces_x'], axis=1)
-        thrust_prop_7 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p6b1_mesh_rotor1_out_panel_forces_x'], axis=1)
+        # thrust_prop_7 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p6b1_mesh_rotor0_out_panel_forces_x'], axis=1)
+        # thrust_prop_7 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p6b1_mesh_rotor1_out_panel_forces_x'], axis=1)
 
-        thrust_prop_8 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p7b1_mesh_rotor0_out_panel_forces_x'], axis=1)
-        thrust_prop_8 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p7b1_mesh_rotor1_out_panel_forces_x'], axis=1)
+        # thrust_prop_8 = np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p7b1_mesh_rotor0_out_panel_forces_x'], axis=1)
+        # thrust_prop_8 += np.sum(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p7b1_mesh_rotor1_out_panel_forces_x'], axis=1)
 
         # axs[ii, jj].plot(time, thrust_prop_1, label='prop 1')
         # axs[ii, jj].plot(time, thrust_prop_2, label='prop 2')
@@ -608,15 +608,15 @@ for ii in range(len(num_spanwise_prop_list)):
 
         axs.plot(time, thrust_prop_1, label='prop 1', color='r')
         axs.plot(time, thrust_prop_2, label='prop 2', color='g')
-        axs.plot(time, thrust_prop_3, label='prop 3', color='b')
-        axs.plot(time, thrust_prop_4, label='prop 4', color='y')#, linestyle='--')
-        axs.plot(time, thrust_prop_5, label='prop 5', color='y', linestyle='--')
-        axs.plot(time, thrust_prop_6, label='prop 6', color='b', linestyle='--')
-        axs.plot(time, thrust_prop_7, label='prop 7', color='g', linestyle='--')
-        axs.plot(time, thrust_prop_8, label='prop 8', color='r', linestyle='--')
+        # axs.plot(time, thrust_prop_3, label='prop 3', color='b')
+        # axs.plot(time, thrust_prop_4, label='prop 4', color='y')#, linestyle='--')
+        # axs.plot(time, thrust_prop_5, label='prop 5', color='y', linestyle='--')
+        # axs.plot(time, thrust_prop_6, label='prop 6', color='b', linestyle='--')
+        # axs.plot(time, thrust_prop_7, label='prop 7', color='g', linestyle='--')
+        # axs.plot(time, thrust_prop_8, label='prop 8', color='r', linestyle='--')
         axs.set_xlabel('time')
         axs.set_ylabel('Thrust')
-        # axs.set_ylim([250, 12000])
+        # axs.set_ylim([-7500, -13000])
         axs.set_title(f'Num spawise prop: {num_spanwise_prop} | Num chordwise prop: {num_chordwise_prop}')
         axs.legend()
 
@@ -624,6 +624,6 @@ plt.tight_layout()
 plt.show()
 
 
-if False:
+if True:
     plot_wireframe(sim, surface_names, nt, plot_mirror=False, interactive=True)
 
