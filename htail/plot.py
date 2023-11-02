@@ -2,14 +2,27 @@ import vedo
 from vedo import dataurl, Plotter, Mesh, Video, Points, Axes, show, Mesh
 import numpy as np
 
-def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = True, wake_color='cyan', rotor_wake_color='red', surface_color='gray'):
+def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = True, wake_color='cyan', rotor_wake_color='red', surface_color='gray', cmap='jet', absolute=True):
     vedo.settings.default_backend = 'vtk'
     axs = Axes(
-        xrange=(0, 25),
-        yrange=(-30, 30),
-        zrange=(0, 0),
+        xrange=(35,50),
+        yrange=(-10, 10),
+        zrange=(0, 10),
     )
     video = Video("rotor_test.gif", fps=10, backend='imageio')
+    # first get min and max gamma value:
+    min_gamma = 1e100
+    max_gamma = -1e100
+    for i in range(1, nt-1):
+        for surface_name in surface_names:
+            if 'mirror' in surface_name and not plot_mirror:
+                pass
+            else:
+                gamma_w = np.reshape(sim['system_model.wig.wig.wig.operation.prob.' + 'op_' + surface_name+'_gamma_w'][i, 0:i, :], (-1,1))
+                if absolute:
+                    gamma_w = np.absolute(gamma_w)
+                min_gamma = np.min([min_gamma, np.min(gamma_w)])
+                max_gamma = np.max([max_gamma, np.max(gamma_w)])
     for i in range(1, nt - 1):
         vp = Plotter(
             bg='beige',
@@ -18,7 +31,9 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
             #  pos=(0, 0),
             offscreen=False,
             interactive=1)
-        # Any rendering loop goes here, e.g.:
+
+        # Any rendering loop goes here, e.g.
+        draw_scalarbar = True
         for surface_name in surface_names:
             if 'mirror' in surface_name and not plot_mirror:
                 pass
@@ -48,6 +63,9 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
                 vp += vps
                 vp += __doc__
                 wake_points = sim['system_model.wig.wig.wig.operation.prob.' + 'op_' + surface_name+'_wake_coords'][i, 0:i, :, :]
+                gamma_w = np.reshape(sim['system_model.wig.wig.wig.operation.prob.' + 'op_' + surface_name+'_gamma_w'][i, 0:i, :], (-1,1))
+                if absolute:
+                    gamma_w = np.absolute(gamma_w)
                 wake_points = np.concatenate((np.reshape(mesh_points[-1,:,:],(1,ny,3)), wake_points))
                 nx = wake_points.shape[0]
                 ny = wake_points.shape[1]
@@ -56,7 +74,10 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
                     for j in range(ny-1):
                         connectivity.append([k*ny+j,(k+1)*ny+j,(k+1)*ny+j+1,k*ny+j+1])
                 vps = Mesh([np.reshape(wake_points, (-1, 3)), connectivity], c=color, alpha=1)
-                vps.linecolor('black')
+                vps.cmap(cmap, gamma_w, on='cells', vmin=min_gamma, vmax=max_gamma)
+                if draw_scalarbar:
+                    vps.add_scalarbar()
+                    draw_scalarbar = False
                 vps.linewidth(1)
                 vp += vps
                 vp += __doc__

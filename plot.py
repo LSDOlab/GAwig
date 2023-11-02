@@ -2,25 +2,18 @@ import vedo
 from vedo import dataurl, Plotter, Mesh, Video, Points, Axes, show, Mesh
 import numpy as np
 
-def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = True, wake_color='cyan', rotor_wake_color='red', surface_color='gray', cmap='jet', absolute=True):
+def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = True, wake_color='cyan', rotor_wake_color='red', surface_color='gray', cmap='jet', absolute=True, side_view=False):
     vedo.settings.default_backend = 'vtk'
     axs = Axes(
-        xrange=(0, 25),
+        xrange=(0,25),
         yrange=(-30, 30),
-        zrange=(0, 0),
+        zrange=(0, 10),
     )
     video = Video("rotor_test.gif", fps=10, backend='imageio')
-    for i in range(1, nt - 1):
-        vp = Plotter(
-            bg='beige',
-            bg2='lb',
-            # axes=0,
-            #  pos=(0, 0),
-            offscreen=False,
-            interactive=1)
-        # first get min and max gamma value:
-        min_gamma = 1e100
-        max_gamma = -1e100
+    # first get min and max gamma value:
+    min_gamma = 1e100
+    max_gamma = -1e100
+    for i in range(1, nt-1):
         for surface_name in surface_names:
             if 'mirror' in surface_name and not plot_mirror:
                 pass
@@ -30,6 +23,15 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
                     gamma_w = np.absolute(gamma_w)
                 min_gamma = np.min([min_gamma, np.min(gamma_w)])
                 max_gamma = np.max([max_gamma, np.max(gamma_w)])
+    for i in range(1, nt - 1):
+        vp = Plotter(
+            bg='beige',
+            bg2='lb',
+            # axes=0,
+            #  pos=(0, 0),
+            offscreen=False,
+            interactive=1)
+
         # Any rendering loop goes here, e.g.
         draw_scalarbar = True
         for surface_name in surface_names:
@@ -85,8 +87,12 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
         #         axes=False, interactive=False)  # render the scene
         # vp.show(axs, elevation=-60, azimuth=-90, roll=90,
         #         axes=False, interactive=False, zoom=True)  # render the scene
-        vp.show(axs, elevation=-45, azimuth=-45, roll=45,
-                axes=False, interactive=interactive)  # render the scene
+        if side_view:
+            vp.show(axs, elevation=-90, azimuth=0, roll=0,
+                    axes=False, interactive=interactive)  # render the scene
+        else:
+            vp.show(axs, elevation=-45, azimuth=-45, roll=45,
+                    axes=False, interactive=interactive)  # render the scene
         video.add_frame()  # add individual frame
         # time.sleep(0.1)
         # vp.interactive().close()

@@ -51,7 +51,7 @@ def run_htail(nt, dt, ns, nc, alpha, mach=0.2, plot=True, return_L = False):
     htail_leading_edge = htail.project(np.linspace(np.array([112, -27, 32]), np.array([112, 27, 32]), num_spanwise_vlm_htail), direction=np.array([0., 0., -1.]), plot=False)
     htail_trailing_edge = htail.project(np.linspace(np.array([126, -27, 32]), np.array([126, 27, 32]), num_spanwise_vlm_htail), direction=np.array([0., 0., -1.]), plot=False)
     htail_chord_surface = am.linspace(htail_leading_edge, htail_trailing_edge, num_chordwise_vlm_htail)
-    spatial_rep.plot_meshes([htail_chord_surface])
+    # spatial_rep.plot_meshes([htail_chord_surface])
     htail_upper_surface_wireframe = htail.project(htail_chord_surface.value + np.array([0., 0., 2.]), direction=np.array([0., 0., -2.]), grid_search_n=30, plot=False)
     htail_lower_surface_wireframe = htail.project(htail_chord_surface.value - np.array([0., 0., 2.]), direction=np.array([0., 0., 2.]), grid_search_n=30, plot=False)
     htail_camber_surface = am.linspace(htail_upper_surface_wireframe, htail_lower_surface_wireframe, 1).value
@@ -180,13 +180,12 @@ def run_htail(nt, dt, ns, nc, alpha, mach=0.2, plot=True, return_L = False):
 
     L_integrated = sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.htail_mesh_out_L']
 
-    print(np.sum(sim['system_model.wig.wig.wig.operation.prob.htail_mesh_out_s_panel'][0,:,:]))
-    exit()
-
-
+    # print(np.sum(sim['system_model.wig.wig.wig.operation.prob.htail_mesh_out_s_panel'][0,:,:]))
+    
     if plot:
-        plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True)
+        plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False)
 
+    del sim
     if return_L:
         return C_L_integrated, C_D_i_integrated, L_integrated
     else:
@@ -194,113 +193,117 @@ def run_htail(nt, dt, ns, nc, alpha, mach=0.2, plot=True, return_L = False):
 
 
 import pickle
+# sweeps
 sweep_nt = False
-sweep_nc = True
+sweep_nc = False
+sweep_nc_coarse = False
 sweep_ns = False
 sweep_aoa = False
+
+# plots
+plot_nt = True
+plot_time = False
+plot_nc = False
+plot_nc_coarse = False
+plot_ns = False
+plot_aoa = False
+
+
+nt0 = 25
+nc0 = 25
+ns0 = 15
+
+nt_list = [5,10,20,30,40,50,75,100]
+nc_list = [2,5,10,20,30,40,50,75,100,125,150,175,200]
+nc_coarse_list = [50,75,100,125,150,175,200]
+ns_list = [2,5,10,20,30,40,50,75,100]
+aoa_list = np.linspace(-15,15,11)
+
+def save_data(CL, CD, fname):
+    list = [CL, CD]
+    open_file = open(fname, "wb")
+    pickle.dump(list, open_file)
+    open_file.close()
+
+# nt = nt0
+# t_end = 1.
+# dt = t_end/nt
+# CL, CD = run_htail(nt=nt, dt = dt, ns = ns0, nc = nc0, alpha=5, plot=True)
+# print(CL[-1])
+# save_data(CL, CD, 'test3.pickle')
+
+# file = open('test2.pickle', 'rb')
+# data = pickle.load(file)
+# file.close()
+
+# CL_history = data[0]
+# CD_history = data[1]
+# times = np.linspace(0,1,20)
+
+# import matplotlib.pyplot as plt
+# fig, ax = plt.subplots(2, sharex=True)
+# ax[0].plot(times, CL_history, '-', color='black')
+# ax[0].set_ylabel('C_L')
+# ax[0].grid()
+# ax[0].set_ylim([0.2, 0.4])
+
+# ax[1].plot(times, CD_history, '-', color='black')
+# plt.xlabel('time (s)')
+# ax[1].set_ylabel('C_D_i')
+# ax[1].grid()
+# ax[1].set_ylim([0.0, 0.04])
+# # ax.set_xlim([0, 100])
+# # ax.set_ylim([0, .01])
+# plt.show()
 
 
 if sweep_nt:
     # sweep of nt:
     t_end = 1.
-    nt_list = [10,20,30,40,50,60,70,80,90,100]
     CL_list = []
     CD_list = []
     for nt in nt_list:
         dt = t_end/nt
-        CL, CD = run_htail(nt=nt, dt = dt, ns = 10, nc = 2, alpha=5, plot=False)
+        CL, CD = run_htail(nt=nt, dt = dt, ns = ns0, nc = nc0, alpha=5, plot=False)
         CL_list.append(CL)
         CD_list.append(CD)
-
-    dt_sweep_list = [CL_list,CD_list]
-    open_file = open('dt_sweep.pickle', "wb")
-    pickle.dump(dt_sweep_list, open_file)
-    open_file.close()
-
-    CL_tf = [cl[-1] for cl in CL_list]
-    CD_tf = [cd[-1] for cd in CD_list]
-
-
-    import matplotlib.pyplot as plt
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(nt_list, CL_tf, color='tab:blue')
-    plt.xlabel('nt')
-    plt.ylabel('C_L')
-    ax.set_xlim([0, 100])
-    ax.set_ylim([0, .4])
-    plt.show()
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(nt_list, CD_tf, color='tab:orange')
-    plt.xlabel('nt')
-    plt.ylabel('C_D_i')
-    ax.set_xlim([0, 100])
-    ax.set_ylim([0, .01])
-    plt.show()
+    save_data(CL_list, CD_list, 'dt_sweep.pickle')
 
 if sweep_nc:
     # sweep of nc:
     t_end = 1.
-    nt = 50
-    nc_list = [2,4,8,16,32,64]
+    nt = nt0
     CL_list = []
     CD_list = []
     L_list = []
     for nc in nc_list:
         dt = t_end/nt
-        CL, CD, L = run_htail(nt=nt, dt = dt, ns = 10, nc = nc, alpha=5, plot=False, return_L = True)
+        CL, CD, L = run_htail(nt=nt, dt = dt, ns = ns0, nc = nc, alpha=5, plot=False, return_L = True)
         CL_list.append(CL)
         CD_list.append(CD)
         L_list.append(L)
+    save_data(CL_list, CD_list, 'nc_sweep_vc.pickle')
 
-    dt_sweep_list = [CL_list,CD_list]
-    open_file = open('nc_sweep.pickle', "wb")
-    pickle.dump(dt_sweep_list, open_file)
-    open_file.close()
-
-    CL_tf = [cl[-1] for cl in CL_list]
-    CD_tf = [cd[-1] for cd in CD_list]
-
-    L_tf = [l[-1] for l in L_list]
-
-
-    import matplotlib.pyplot as plt
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(nc_list, CL_tf, color='tab:blue')
-    plt.xlabel('nc')
-    plt.ylabel('C_L')
-    ax.set_xlim([0, 64])
-    ax.set_ylim([0, .4])
-    plt.show()
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(nc_list, CD_tf, color='tab:orange')
-    plt.xlabel('nc')
-    plt.ylabel('C_D_i')
-    ax.set_xlim([0, 64])
-    ax.set_ylim([0, .01])
-    plt.show()
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(nc_list, L_tf, color='tab:orange')
-    plt.xlabel('nc')
-    plt.ylabel('lift')
-    ax.set_xlim([0, 64])
-    # ax.set_ylim([0, .01])
-    plt.show()
-
+if sweep_nc_coarse:
+    # sweep of nc:
+    t_end = 1.
+    nt = 10
+    CL_list = []
+    CD_list = []
+    L_list = []
+    for nc in nc_coarse_list:
+        dt = t_end/nt
+        CL, CD, L = run_htail(nt=nt, dt = dt, ns = 5, nc = nc, alpha=5, plot=False, return_L = True)
+        CL_list.append(CL)
+        CD_list.append(CD)
+        L_list.append(L)
+    save_data(CL_list, CD_list, 'nc_coarse_sweep2.pickle')
 
 if sweep_ns:
     # sweep of ns:
     t_end = 1.
-    nt = 50
-    ns_list = [2,4,8,16,32,64]
-    nc = 10
+    nt = nt0
+    nc = nc0
     CL_list = []
     CD_list = []
     for ns in ns_list:
@@ -309,41 +312,14 @@ if sweep_ns:
         CL_list.append(CL)
         CD_list.append(CD)
 
-    dt_sweep_list = [CL_list,CD_list]
-    open_file = open('ns_sweep.pickle', "wb")
-    pickle.dump(dt_sweep_list, open_file)
-    open_file.close()
-
-    CL_tf = [cl[-1] for cl in CL_list]
-    CD_tf = [cd[-1] for cd in CD_list]
-
-
-    import matplotlib.pyplot as plt
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(ns_list, CL_tf, color='tab:blue')
-    plt.xlabel('ns')
-    plt.ylabel('C_L')
-    ax.set_xlim([0, 64])
-    ax.set_ylim([0, .4])
-    plt.show()
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(ns_list, CD_tf, color='tab:orange')
-    plt.xlabel('ns')
-    plt.ylabel('C_D_i')
-    ax.set_xlim([0, 64])
-    ax.set_ylim([0, .01])
-    plt.show()
+    save_data(CL_list, CD_list, 'ns_sweep.pickle')
 
 if sweep_aoa:
     # sweep of aoa:
     t_end = 1.
-    nt = 50
-    aoa_list = np.linspace(-15,15,31)
-    nc = 10
-    ns = 20
+    nt = nt0
+    nc = nc0
+    ns = ns0
     CL_list = []
     CD_list = []
     for alpha in aoa_list:
@@ -352,58 +328,84 @@ if sweep_aoa:
         CL_list.append(CL)
         CD_list.append(CD)
 
-    dt_sweep_list = [CL_list,CD_list]
-    open_file = open('aoa_sweep.pickle', "wb")
-    pickle.dump(dt_sweep_list, open_file)
-    open_file.close()
+    save_data(CL_list, CD_list, 'aoa_sweep.pickle')
+
+def plot(fname, dname, x, log):
+    file = open(fname, 'rb')
+    data = pickle.load(file)
+    file.close()
+
+    CL_list = data[0]
+    CD_list = data[1]
 
     CL_tf = [cl[-1] for cl in CL_list]
     CD_tf = [cd[-1] for cd in CD_list]
 
-
     import matplotlib.pyplot as plt
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(aoa_list, CL_tf, color='tab:blue')
-    plt.xlabel('aoa')
-    plt.ylabel('C_L')
-    ax.set_xlim([-15, 15])
-    # ax.set_ylim([0, .4])
-    plt.show()
+    fig, ax = plt.subplots(2, sharex=True)
+    ax[0].plot(x, CL_tf, 'o-', color='black')
+    ax[0].set_ylabel('C_L')
+    ax[0].grid()
 
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(aoa_list, CD_tf, color='tab:orange')
-    plt.xlabel('aoa')
-    plt.ylabel('C_D_i')
-    ax.set_xlim([-15, 15])
+    ax[1].plot(x, CD_tf, 'o-', color='black')
+    plt.xlabel(dname)
+    ax[1].set_ylabel('C_D_i')
+    ax[1].grid()
+    if log:
+        ax[0].set_xscale('log')
+        ax[1].set_xscale('log')
+    # ax.set_xlim([0, 100])
     # ax.set_ylim([0, .01])
     plt.show()
 
+    return CL_tf, CD_tf
+
+if plot_nt:
+    plot('dt_sweep.pickle', 'nt', nt_list, False)
+
+if plot_time:
+    file = open('dt_sweep.pickle', 'rb')
+    data = pickle.load(file)
+    file.close()
+
+    CL_history = data[0][-1]
+    CD_history = data[1][-1]
+    times = np.linspace(0,1,nt_list[-1])
+
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(2, sharex=True)
+    ax[0].plot(times, CL_history, '-', color='black')
+    ax[0].set_ylabel('C_L')
+    ax[0].grid()
+    ax[0].set_ylim([0.2, 0.4])
+
+    ax[1].plot(times, CD_history, '-', color='black')
+    plt.xlabel('time (s)')
+    ax[1].set_ylabel('C_D_i')
+    ax[1].grid()
+    ax[1].set_ylim([0.0, 0.04])
+    # ax.set_xlim([0, 100])
+    # ax.set_ylim([0, .01])
+    plt.show()
+
+
+if plot_nc:
+    plot('nc_sweep_vc.pickle', 'nc', nc_list, False)
+
+if plot_nc_coarse:
+    plot('nc_coarse_sweep2.pickle', 'nc', nc_coarse_list, False)
+
+if plot_ns:
+    plot('ns_sweep.pickle', 'ns', ns_list, False)
+
+if plot_aoa:
+    CL_tf, CD_tf = plot('aoa_sweep.pickle', 'aoa', aoa_list, False)
+
     cl_coeffs = np.polyfit(aoa_list, CL_tf, 1)
+    print(cl_coeffs)
     # 0.05251592, 0.00018381
 
     cd_coeffs = np.polyfit(aoa_list, CD_tf, 2)
+    print(cd_coeffs)
     # 0.00021278, 0.00000117, 0.00015929
 
-if False:
-    sim = Simulator(caddee_csdl_model, analytics=True)
-
-    # set displacement inputs
-    if iter_idx > 0:
-        for i, key in enumerate(wing_displacement_output.coefficients):
-            sim['system_model.structural_sizing.cruise_3.cruise_3.wing_displacement_input_function_evaluation.{}_wing_displacement_input_coefficients'.format(key)] = disp_output_list[i]
-
-    sim.run()
-
-    disp_output_list = []
-    for i, key in enumerate(wing_displacement_output.coefficients):
-        # query corresponding object in sim dict
-        displacement_array_input = sim['system_model.structural_sizing.cruise_3.cruise_3.wing_displacement_input_function_evaluation.{}_wing_displacement_input_coefficients'.format(key)]
-        displacement_array_output = sim['system_model.structural_sizing.cruise_3.cruise_3.wing_displacement_output_function_inverse_evaluation.{}_wing_displacement_output_coefficients'.format(key)]
-        array_update_norms[i] = np.linalg.norm(np.subtract(displacement_array_input, displacement_array_output))#/np.linalg.norm(displacement_array_output)
-
-        print("Surface {} displacement input array 2-norm: {}".format(key, np.linalg.norm(displacement_array_input)))
-        print("Surface {} displacement output array 2-norm: {}".format(key, np.linalg.norm(displacement_array_output)))
-
-        disp_output_list += [displacement_array_output]
