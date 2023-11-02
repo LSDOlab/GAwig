@@ -12,11 +12,11 @@ from generate_ground_effect_mesh import generate_ground_effect_mesh
 # define mesh here
 ########################################
 nx = 5
-ny = 9
+ny = 7
 AR = 8
 span = 8
 chord = span/AR
-num_nodes = 3
+num_nodes = 5
 h = 2
 
 nt = num_nodes+1
@@ -156,8 +156,8 @@ uvlm_parameters = [('u',True,ac_states_expanded['u']),
 uvlm_parameters.append(('neg_panel', True, neg_panel_val))
 uvlm_parameters.append(('pos_panel', True, pos_panel_val))
 # uvlm_parameters.append(('wing_mirror', True, image_mesh_val))
-# uvlm_parameters.append(('neg_panel_mirror', True, image_neg_panel_val))
-# uvlm_parameters.append(('pos_panel_mirror', True, image_pos_panel_val))
+uvlm_parameters.append(('neg_panel_mirror', True, image_neg_panel_val))
+uvlm_parameters.append(('pos_panel_mirror', True, image_pos_panel_val))
 # uvlm_parameters.append(('neg_panel_2', True, neg_panel_2_val))
 # uvlm_parameters.append(('pos_panel_2', True, pos_panel_2_val))
 # uvlm_parameters.append(('neg_panel_2_mirror', True, image_neg_panel_2_val))
@@ -167,8 +167,8 @@ surface_names = [
     'neg_panel',
     'pos_panel',
     # 'wing_mirror',
-    # 'neg_panel_mirror',
-    # 'pos_panel_mirror',
+    'neg_panel_mirror',
+    'pos_panel_mirror',
     # 'neg_panel_2',
     # 'pos_panel_2',
     # 'neg_panel_2_mirror',
@@ -179,8 +179,8 @@ surface_shapes = [
     (nx, int((ny+1)/2), 3),
     (nx, int((ny+1)/2), 3),
     # (nx,ny,3),
-    # (nx, int((ny+1)/2), 3),
-    # (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
     # (nx, int((ny+1)/2), 3),
     # (nx, int((ny+1)/2), 3),
     # (nx, int((ny+1)/2), 3),
@@ -190,6 +190,8 @@ surface_shapes = [
 system_size = 0
 for i in range(len(surface_shapes)):
     system_size += surface_shapes[i][0] * surface_shapes[i][1]
+
+surface_vals = [neg_panel_val, pos_panel_val]
 
 initial_conditions = []
 for i in range(len(surface_names)):
@@ -202,6 +204,7 @@ for i in range(len(surface_names)):
     initial_conditions.append((gamma_w_0_name, np.zeros((num_nodes-1, ny_temp - 1))))
 
     initial_conditions.append((wake_coords_0_name, np.zeros((num_nodes-1, ny_temp, 3))))
+    # initial_conditions.append((wake_coords_0_name, surface_vals[i][:-1, -1, :,:]))
 
 # profile_outputs = []
 
@@ -241,9 +244,10 @@ INTERACTIONS:
 - pos_panel on wing
 '''
 profile_outputs = gen_profile_output_list(surface_names, surface_shapes)
-profile_outputs.append(('b',(32,)))
-profile_outputs.append(('aic_bd_proj', (32,32)))
-profile_outputs.append(('M_mat', (32,16)))
+# profile_outputs.append(('b',(6,)))
+# profile_outputs.append(('aic_bd_proj', (6,6)))
+# profile_outputs.append(('M_mat', (6,12)))
+# profile_outputs.append(('gamma_w', (2,6)))
 ode_surface_shapes = [(num_nodes, ) + item for item in surface_shapes]
 post_processor = PPSubmodel(
     surface_names = surface_names,
@@ -262,7 +266,8 @@ pp_vars = []
 pp_vars.append('panel_forces_x')
 pp_vars.append('panel_forces_y')
 pp_vars.append('panel_forces_z')
-
+# surface_names.reverse()
+# surface_shapes.reverse()
 model = m3l.DynamicModel()
 uvlm = VASTSolverUnsteady(
     num_nodes=num_nodes, 
@@ -271,7 +276,7 @@ uvlm = VASTSolverUnsteady(
     delta_t=delta_t, 
     nt=num_nodes+1,
     # free_wake=True,
-    # frame='inertial',
+    frame='inertial',
     # sub=sub,
     # sub_eval_list=sub_eval_list,
     # sub_induced_list=sub_induced_list,
@@ -343,24 +348,28 @@ print('simulator 1 run time:', run_time_1 - sim_start_1)
 #     print(name, sim[f'operation.post_processor.ThrustDrag.{name}_panel_forces_x'][-1].reshape(nx-1,(ny-1)/2,1))
 
 # saving AIC matrices to CSV files
-import csv
-with open('M_mat_time_history.csv', 'w') as f:
-    # create the csv writer
-    data = sim['operation.prob.M_mat']
-    writer = csv.writer(f)
-    for i in range(num_nodes):
-        for j in range(int((nx-1)*((ny-1)/2)*2)):
-            writer.writerow(data[i,j,:])
+if False:
+    import csv
+    with open('M_mat_time_history.csv', 'w') as f:
+        # create the csv writer
+        data = sim['operation.prob.M_mat']
+        writer = csv.writer(f)
+        for i in range(num_nodes):
+            for j in range(int((nx-1)*((ny-1)/2)*2)):
+                writer.writerow(data[i,j,:])
 
-with open('aic_bd_time_history.csv', 'w') as f:
-    # create the csv writer
-    data = sim['operation.prob.aic_bd_proj']
-    writer = csv.writer(f)
-    for i in range(num_nodes):
-        for j in range(int((nx-1)*((ny-1)/2)*2)):
-            writer.writerow(data[i,j,:])
-    
+    with open('aic_bd_time_history.csv', 'w') as f:
+        # create the csv writer
+        data = sim['operation.prob.aic_bd_proj']
+        writer = csv.writer(f)
+        for i in range(num_nodes):
+            for j in range(int((nx-1)*((ny-1)/2)*2)):
+                writer.writerow(data[i,j,:])
 
+for name in surface_names:
+    print(name + ' CL', sim[f'operation.post_processor.ThrustDrag.{name}_C_L'][-1])
+# print('right surface:', sim['operation.post_processor.ThrustDrag.pos_panel_C_L'][-1])
+exit()
 if True:
     names = ['neg_panel', 'pos_panel']
     mesh_vals = [neg_panel_val, pos_panel_val]
