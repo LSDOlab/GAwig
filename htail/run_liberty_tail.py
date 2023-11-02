@@ -180,6 +180,9 @@ def run_htail(nt, dt, ns, nc, alpha, mach=0.2, plot=True, return_L = False):
 
     L_integrated = sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.htail_mesh_out_L']
 
+    print(np.sum(sim['system_model.wig.wig.wig.operation.prob.htail_mesh_out_s_panel'][0,:,:]))
+    exit()
+
 
     if plot:
         plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True)

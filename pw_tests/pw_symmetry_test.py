@@ -11,12 +11,12 @@ from generate_ground_effect_mesh import generate_ground_effect_mesh
 ########################################
 # define mesh here
 ########################################
-nx = 7
-ny = 21
+nx = 5
+ny = 9
 AR = 8
 span = 8
 chord = span/AR
-num_nodes = 10
+num_nodes = 3
 h = 2
 
 nt = num_nodes+1
@@ -38,32 +38,32 @@ mesh_temp = generate_mesh(mesh_dict)
 mesh, image_mesh = generate_ground_effect_mesh(mesh_temp, alpha, h, test_plot=False)
 
 panel_neg_y = mesh.copy()[:,:int((ny+1)/2),:]
-panel_neg_y[:,:,1] -= 1
+panel_neg_y[:,:,1] -= 4
 panel_neg_y[:,:,2] += h
 panel_pos_y = mesh.copy()[:,int((ny-1)/2):,:]
-panel_pos_y[:,:,1] += 1
+panel_pos_y[:,:,1] += 4
 panel_pos_y[:,:,2] += h
 
 panel_2_neg_y = mesh.copy()[:,:int((ny+1)/2),:]
-panel_2_neg_y[:,:,1] -= 2
+panel_2_neg_y[:,:,1] -= 8
 panel_2_neg_y[:,:,2] += 2*h
 panel_2_pos_y = mesh.copy()[:,int((ny-1)/2):,:]
-panel_2_pos_y[:,:,1] += 2
+panel_2_pos_y[:,:,1] += 8
 panel_2_pos_y[:,:,2] += 2*h
 
 
 panel_neg_y_image = image_mesh.copy()[:,:int((ny+1)/2),:]
-panel_neg_y_image[:,:,1] -= 1
+panel_neg_y_image[:,:,1] -= 4
 panel_neg_y_image[:,:,2] -= h
 panel_pos_y_image = image_mesh.copy()[:,int((ny-1)/2):,:]
-panel_pos_y_image[:,:,1] += 1
+panel_pos_y_image[:,:,1] += 4
 panel_pos_y_image[:,:,2] -= h
 
 panel_2_neg_y_image = image_mesh.copy()[:,:int((ny+1)/2),:]
-panel_2_neg_y_image[:,:,1] -= 2
+panel_2_neg_y_image[:,:,1] -= 8
 panel_2_neg_y_image[:,:,2] -= 2*h
 panel_2_pos_y_image = image_mesh.copy()[:,int((ny-1)/2):,:]
-panel_2_pos_y_image[:,:,1] += 2
+panel_2_pos_y_image[:,:,1] += 8
 panel_2_pos_y_image[:,:,2] -= 2*h
 
 mesh_val = np.zeros((num_nodes, nx, ny, 3))
@@ -152,39 +152,39 @@ uvlm_parameters = [('u',True,ac_states_expanded['u']),
                     ('gamma',True,ac_states_expanded['gamma']),
                     ('psiw',True,np.zeros((num_nodes, 1)))]
 
-uvlm_parameters.append(('wing', True, mesh_val))
+# uvlm_parameters.append(('wing', True, mesh_val))
 uvlm_parameters.append(('neg_panel', True, neg_panel_val))
 uvlm_parameters.append(('pos_panel', True, pos_panel_val))
-uvlm_parameters.append(('wing_image', True, image_mesh_val))
-uvlm_parameters.append(('neg_panel_image', True, image_neg_panel_val))
-uvlm_parameters.append(('pos_panel_image', True, image_pos_panel_val))
-uvlm_parameters.append(('neg_panel_2', True, neg_panel_2_val))
-uvlm_parameters.append(('pos_panel_2', True, pos_panel_2_val))
-uvlm_parameters.append(('neg_panel_2_image', True, image_neg_panel_2_val))
-uvlm_parameters.append(('pos_panel_2_image', True, image_pos_panel_2_val))
+# uvlm_parameters.append(('wing_mirror', True, image_mesh_val))
+# uvlm_parameters.append(('neg_panel_mirror', True, image_neg_panel_val))
+# uvlm_parameters.append(('pos_panel_mirror', True, image_pos_panel_val))
+# uvlm_parameters.append(('neg_panel_2', True, neg_panel_2_val))
+# uvlm_parameters.append(('pos_panel_2', True, pos_panel_2_val))
+# uvlm_parameters.append(('neg_panel_2_mirror', True, image_neg_panel_2_val))
+# uvlm_parameters.append(('pos_panel_2_mirror', True, image_pos_panel_2_val))
 surface_names = [
-    'wing',
+    # 'wing',
     'neg_panel',
     'pos_panel',
-    'wing_image',
-    'neg_panel_image',
-    'pos_panel_image',
-    'neg_panel_2',
-    'pos_panel_2',
-    'neg_panel_2_image',
-    'pos_panel_2_image',
+    # 'wing_mirror',
+    # 'neg_panel_mirror',
+    # 'pos_panel_mirror',
+    # 'neg_panel_2',
+    # 'pos_panel_2',
+    # 'neg_panel_2_mirror',
+    # 'pos_panel_2_mirror',
 ]
 surface_shapes = [
-    (nx,ny,3),
+    # (nx,ny,3),
     (nx, int((ny+1)/2), 3),
     (nx, int((ny+1)/2), 3),
-    (nx,ny,3),
-    (nx, int((ny+1)/2), 3),
-    (nx, int((ny+1)/2), 3),
-    (nx, int((ny+1)/2), 3),
-    (nx, int((ny+1)/2), 3),
-    (nx, int((ny+1)/2), 3),
-    (nx, int((ny+1)/2), 3),
+    # (nx,ny,3),
+    # (nx, int((ny+1)/2), 3),
+    # (nx, int((ny+1)/2), 3),
+    # (nx, int((ny+1)/2), 3),
+    # (nx, int((ny+1)/2), 3),
+    # (nx, int((ny+1)/2), 3),
+    # (nx, int((ny+1)/2), 3),
 ]
 
 system_size = 0
@@ -197,11 +197,11 @@ for i in range(len(surface_names)):
     gamma_w_0_name = surface_name + '_gamma_w_0'
     wake_coords_0_name = surface_name + '_wake_coords_0'
     surface_shape = surface_shapes[i]
-    nx = surface_shape[0]
-    ny = surface_shape[1]
-    initial_conditions.append((gamma_w_0_name, np.zeros((num_nodes-1, ny - 1))))
+    nx_temp = surface_shape[0]
+    ny_temp = surface_shape[1]
+    initial_conditions.append((gamma_w_0_name, np.zeros((num_nodes-1, ny_temp - 1))))
 
-    initial_conditions.append((wake_coords_0_name, np.zeros((num_nodes-1, ny, 3))))
+    initial_conditions.append((wake_coords_0_name, np.zeros((num_nodes-1, ny_temp, 3))))
 
 # profile_outputs = []
 
@@ -218,17 +218,19 @@ for i in range(len(surface_names)):
 # sub_eval_list = [0, 0, 0, 1, 1, 1, 2, 2, 2]
 # sub_induced_list = [0, 1, 2, 0, 1, 2, 0, 1, 2]
 sub_eval_list = []
-for i in range(len(surface_names)):
-    sub_eval_list.extend([i]*10)
+# for i in range(len(surface_names)):
+    # sub_eval_list.extend([i]*10)
     # sub_eval_list.extend([i]*4)
-sub_induced_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] * 10
+# sub_induced_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] * 10
+sub_eval_list = [0, 2, 1, 3, 0, 2, 1, 3]
 # sub_induced_list = [0, 1, 2, 3] * 4
+sub_induced_list = [0, 0, 1, 1, 2, 2, 3, 3]
 sub = True
 
-sym_struct_list = [[0,3], [1,2,4,5], [6,7,8,9]]
+# sym_struct_list = [[0,3], [1,2,4,5], [6,7,8,9]]
 # sym_struct_list = [[0,3], [1,2,4,5]]
 # sym_struct_list = [[0,1, 2, 3], [4,5,6,7]]
-# sym_struct_list = [[0,1, 2, 3]]
+sym_struct_list = [[0, 1, 2, 3]]
 
 
 
@@ -239,6 +241,9 @@ INTERACTIONS:
 - pos_panel on wing
 '''
 profile_outputs = gen_profile_output_list(surface_names, surface_shapes)
+profile_outputs.append(('b',(32,)))
+profile_outputs.append(('aic_bd_proj', (32,32)))
+profile_outputs.append(('M_mat', (32,16)))
 ode_surface_shapes = [(num_nodes, ) + item for item in surface_shapes]
 post_processor = PPSubmodel(
     surface_names = surface_names,
@@ -267,11 +272,11 @@ uvlm = VASTSolverUnsteady(
     nt=num_nodes+1,
     # free_wake=True,
     # frame='inertial',
-    sub=sub,
-    sub_eval_list=sub_eval_list,
-    sub_induced_list=sub_induced_list,
-    symmetry=True,
-    sym_struct_list=sym_struct_list
+    # sub=sub,
+    # sub_eval_list=sub_eval_list,
+    # sub_induced_list=sub_induced_list,
+    # symmetry=True,
+    # sym_struct_list=sym_struct_list
 )
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
@@ -313,25 +318,82 @@ sim_start_1 = time.time()
 sim.run()
 run_time_1 = time.time()
 print('simulator 1 run time:', run_time_1 - sim_start_1)
-exit()
-sim_start_2 = time.time()
-sim.run()
-run_time_2 = time.time()
+# exit()
+# sim_start_2 = time.time()
+# sim.run()
+# run_time_2 = time.time()
 
-print('simulator 2 run time:', run_time_2 - sim_start_2)
-1
+# print('simulator 2 run time:', run_time_2 - sim_start_2)
+# 1
 
-wing_CL = sim['operation.post_processor.ThrustDrag.wing_C_L']
-wing_CDi = sim['operation.post_processor.ThrustDrag.wing_C_D_i']
+# wing_CL = sim['operation.post_processor.ThrustDrag.wing_C_L']
+# wing_CDi = sim['operation.post_processor.ThrustDrag.wing_C_D_i']
 
-print('===============')
-print('wing CL: ')
-print(wing_CL)
-print('===============')
-print('wing CDi: ')
-print(wing_CDi)
+# print('===============')
+# print('wing CL: ')
+# print(wing_CL)
+# print('===============')
+# print('wing CDi: ')
+# print(wing_CDi)
 
 # print(sim['operation.post_processor.LiftDrag.panel_forces'])
+# reshape panel_forces[-1] to (nx-1) * ((ny-1)/2) 
+
+# for name in surface_names:
+#     print(name, sim[f'operation.post_processor.ThrustDrag.{name}_panel_forces_x'][-1].reshape(nx-1,(ny-1)/2,1))
+
+# saving AIC matrices to CSV files
+import csv
+with open('M_mat_time_history.csv', 'w') as f:
+    # create the csv writer
+    data = sim['operation.prob.M_mat']
+    writer = csv.writer(f)
+    for i in range(num_nodes):
+        for j in range(int((nx-1)*((ny-1)/2)*2)):
+            writer.writerow(data[i,j,:])
+
+with open('aic_bd_time_history.csv', 'w') as f:
+    # create the csv writer
+    data = sim['operation.prob.aic_bd_proj']
+    writer = csv.writer(f)
+    for i in range(num_nodes):
+        for j in range(int((nx-1)*((ny-1)/2)*2)):
+            writer.writerow(data[i,j,:])
+    
+
+if True:
+    names = ['neg_panel', 'pos_panel']
+    mesh_vals = [neg_panel_val, pos_panel_val]
+    mode = 'lift'
+    # mode = 'horseshoe circulations'
+    # mode = 'gamma_b'
+
+    import matplotlib.pyplot as plt
+    color = plt.cm.rainbow(np.linspace(0, 1, nx-1))
+
+    for i in range(2):
+        if mode == 'lift':
+            data = sim[f'operation.post_processor.ThrustDrag.{names[i]}_L_panel'][-1].reshape(int(nx-1), int((ny-1)/2))
+        elif mode == 'horseshoe circulations':
+            data = sim[f'operation.post_processor.ThrustDrag.{names[i]}_circulations'][-1].reshape(int(nx-1), int((ny-1)/2))
+        elif mode == 'gamma_b':
+            data = sim[f'operation.post_processor.ThrustDrag.{names[i]}_gamma_b'][-1].reshape(int(nx-1), int((ny-1)/2))
+        y_val = (mesh_vals[i][0][1,:-1,1] + mesh_vals[i][0][1,1:,1])/2
+        for j in range(nx-1):
+            if i == 0:
+                plt.plot(y_val, data[j,:], c=color[j], label = f'chord station {j}')
+            else:
+                plt.plot(y_val, data[j,:], c=color[j])
+    plt.legend(fontsize=15, loc='upper center')
+    plt.xlabel('spanwise location', fontsize=15)
+    if mode == 'lift':
+        plt.ylabel('sectional lift', fontsize=15)
+    elif mode == 'horseshoe circulations':
+        plt.ylabel('horeshoe circulation', fontsize=15)
+    elif mode == 'gamma_b':
+        plt.ylabel('bound circulations', fontsize=15)
+    plt.grid()
+    plt.show()
 
 if False:
     from vedo import dataurl, Plotter, Mesh, Video, Points, Axes, show
@@ -366,7 +428,7 @@ if False:
         # cam1 = dict(focalPoint=(3.133, 1.506, -3.132))
         # video.action(cameras=[cam1, cam1])
         vp.show(axs, elevation=-90, azimuth=-0,
-                axes=False, interactive=False)  # render the scene
+                axes=False, interactive=True)  # render the scene
         video.add_frame()  # add individual frame
         # time.sleep(0.1)
         # vp.interactive().close()

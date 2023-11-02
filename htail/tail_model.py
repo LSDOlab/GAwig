@@ -12,7 +12,7 @@ class AirfoilLinearModel(m3l.ExplicitOperation):
         self.parameters.declare('cd_c1', types=float, default=0.00000117)
         self.parameters.declare('cd_c0', types=float, default=0.00015929)
         self.parameters.declare('density', types=float, default=1.1)
-        self.parameters.declare('area', types=float)
+        self.parameters.declare('area', types=float, default=70.23059100198903)
 
     def evaluate(self, deflection : m3l.Variable, v_inf : m3l.Variable, theta : m3l.Variable) -> tuple:
         airfoil_name = self.parameters['airfoil_name']
