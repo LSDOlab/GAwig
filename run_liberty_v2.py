@@ -27,8 +27,8 @@ from torque_model import TorqueModel
 num_props = 2
 num_blades = 2
 rpm = 1090.
-nt = 10
-dt = 0.016 * 1
+nt = 30
+dt = 0.006 * 1
 h = 30                       # m
 pitch = np.deg2rad(0)        # rad
 blade_angle = np.deg2rad(0)  # rad
@@ -37,8 +37,8 @@ rotation_point = np.array([0,0,0])
 do_wing = True
 do_flaps = False
 do_fuselage = True
-mirror = True
-sub = False
+mirror = False
+sub = True
 free_wake = True
 symmetry = False # only works with mirror = True
 log_space = False # log spacing spanwise for wing mesh
@@ -262,6 +262,7 @@ if do_fuselage:
 
 
 prop_meshes = []
+prop_meshes_vel = []
 for i in range(num_props):
     blade_angle_value = np.array([blade_angle])
     rotor_delta_value = np.reshape(np.array([rotor_delta]), (3,))
@@ -284,11 +285,12 @@ for i in range(num_props):
                         mesh = prop_meshes_np[i],
                         rpm = rpm,
                         point = prop_points[i])
-    prop_mesh_out, mirror_prop_meshes = prop_model.evaluate(h_m3l, pitch_m3l, blade_angle_m3l, delta_m3l)
+    prop_mesh_out, mirror_prop_meshes, prop_mesh_vel = prop_model.evaluate(h_m3l, pitch_m3l, blade_angle_m3l, delta_m3l)
     if mirror:
         prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
     else:
         prop_meshes.append(prop_mesh_out)
+        prop_meshes_vel.append(prop_mesh_vel)
 
 if mirror:
     num_blades = num_blades*2
@@ -342,6 +344,14 @@ for prop_mesh in prop_meshes:
         initial_conditions.append((name+'_gamma_w_0', np.zeros((nt-1, ny-1))))
         initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
     i += 1
+
+for prop_mesh_vel in prop_meshes_vel:
+    for vel in prop_mesh_vel:
+        shape = vel.shape
+        nx = shape[1]
+        ny = shape[2]
+        name = vel.name
+        uvlm_parameters.append((f'{name}', True, vel))
 
 # interactions for props
 sub_eval_list, sub_induced_list = generate_sub_lists(interaction_groups)
