@@ -61,12 +61,13 @@ class EngineCSDL(ModuleCSDL):
 
 
         rpm = self.declare_variable('rpm', shape=(1,))
-        torque = self.declare_variable('torque', shape=(1,)) # (N-m)
+        torque = (self.declare_variable('torque', shape=(1,))**2 + 1E-12)**0.5 # (N-m)
 
         omega = (rpm/60)*2*np.pi # (rad/sec)
 
         pwr = torque*omega # (W)
         hp = pwr/745.699872 # (hp)
+        self.print_var(hp)
         self.register_output(engine_name + '_pwr', hp)
 
         fuel_consumption = sfc*hp # (lb/hr)

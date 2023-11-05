@@ -24,11 +24,11 @@ from torque_model import TorqueModel
 # endregion
 
 # region hyperparameters
-num_props = 2
-num_blades = 2
+num_props = 8
+num_blades = 3
 rpm = 1090.
-nt = 30
-dt = 0.006 * 1
+nt = 20
+dt = 0.003
 h = 30                       # m
 pitch = np.deg2rad(0)        # rad
 blade_angle = np.deg2rad(0)  # rad
@@ -42,6 +42,9 @@ sub = True
 free_wake = True
 symmetry = False # only works with mirror = True
 log_space = False # log spacing spanwise for wing mesh
+max_pwr = 4600. # hp
+m = 340000. # kg
+g = 9.81 # m/s^2
 # endregion
 
 # region caddee setup
@@ -78,7 +81,7 @@ for i in range(num_props):
 
 # region meshes
 # wing mesh:
-num_spanwise_vlm = 12
+num_spanwise_vlm = 30
 num_chordwise_vlm = 8
 
 if log_space:
@@ -470,7 +473,7 @@ outputs = uvlm_op.evaluate()[0:len(pp_vars)]
 # endregion
 
 # region post-processing
-average_op = LastNAverage(n=5)
+average_op = LastNAverage(n=10,end_offset=1)
 ave_outputs = average_op.evaluate(outputs) # time averaged qts
 
 fx = ave_outputs[0]
@@ -539,8 +542,38 @@ for i in range(len(prop_meshes)):
 #                           'system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.wing_vlm_mesh')
 # endregion
 
+
+# blade angle design variables:
+#for i in range(num_props):
+#    model_csdl.add_design_variable('system_model.wig.wig.wig.operation.input_model.blade_angle'+str(i)+'_input')
+
+# engine power constraints:
+for i in range(len(prop_fx_list)):
+    model_csdl.add_constraint('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr', upper=max_pwr, scaler=1E-4)
+
+# lift equals weight constraint:
+model_csdl.add_constraint('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave', equals=m*g, scaler=1E-6)
+
+# thrust equals drag constraint:
+
+
+
+# objective:
+model_csdl.add_objective('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.wig_mach_number', scaler=1)
+
+
+
 sim = Simulator(model_csdl, analytics=True, lazy=1)
 sim.run()
+
+
+
+#prob = CSDLProblem(problem_name='gawig', simulator=sim)
+#optimizer = SLSQP(prob, maxiter=10, ftol=1E-5)
+#optimizer.solve()
+#optimizer.print_results()
+
+
 
 # import time
 # start = time.time()
@@ -585,7 +618,7 @@ print(sim['system_model.wig.wig.wig.torque_operation_rotor_1.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_7.total_thrust'])
 
 if True:
-    plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True)
+    plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False)
 
 
 
