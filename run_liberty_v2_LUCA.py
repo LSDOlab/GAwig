@@ -27,20 +27,20 @@ from torque_model import TorqueModel
 num_props = 8
 num_blades = 6
 rpm = 1090.
-nt = 30
-dt = 0.006 * 1
-h = 0                        # m
+nt = 20
+dt = 0.002 * 1
+h = 20                        # m
 pitch = np.deg2rad(0)        # rad
 blade_angle = np.deg2rad(0)  # rad
 rotor_delta = [0,0,0]        # m
 rotation_point = np.array([0,0,0])
-do_wing = True
+do_wing = False
 do_flaps = False
-do_fuselage = True
-mirror = False
+do_fuselage = False
+mirror = True
 sub = True
 free_wake = True
-symmetry = False # only works with mirror = True
+symmetry = True # only works with mirror = True
 log_space = False # log spacing spanwise for wing mesh
 # endregion
 
@@ -435,7 +435,7 @@ for i in range(num_props):
     for j in range(int(num_blades/2)):
         pp_vars.append((f'p{i}b1_mesh_rotor{j}_out_panel_forces_x', (nt, num_spanwise_prop-1)))
 
-if True:
+if False:
     pp_vars.append(('wing_vlm_mesh_out_L_panel', (nt, 29, 1)))
 
 
@@ -495,7 +495,8 @@ for i in range(num_props):
         blade_forces.append(ave_outputs[i*int(num_blades/2)+offset+j])
     prop_fx_list.append(tuple(blade_forces))
 
-wing_L_panel = ave_outputs[-1]
+if False:
+    wing_L_panel = ave_outputs[-1]
 
 for var in ave_outputs:
     overmodel.register_output(var)
@@ -549,15 +550,7 @@ for i in range(len(prop_meshes)):
 sim = Simulator(model_csdl, analytics=True, lazy=1)
 sim.run()
 
-
-# for i in range(num_props):
-#     for j in range(int(num_blades/2)):
-#         pp_vars.append((f'p{i}b1_mesh_rotor{j}_out_panel_forces_x', (nt, num_spanwise_prop-1)))
-
-# if True:
-#     pp_vars.append(('wing_vlm_mesh_out_L_panel', (nt, 77, 1)))
-
-if True:
+if False:
     import pickle
     L_panel_forces = sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.wing_vlm_mesh_out_L_panel']
     prop_forces = {}
@@ -622,7 +615,7 @@ print(sim['system_model.wig.wig.wig.torque_operation_rotor_1.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_7.total_thrust'])
 
 if True:
-    plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False)
+    plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='8_rotors', backend='ffmpeg')
     # plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, side_view=True)
 
 

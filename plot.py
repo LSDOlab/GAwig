@@ -2,14 +2,14 @@ import vedo
 from vedo import dataurl, Plotter, Mesh, Video, Points, Axes, show, Mesh
 import numpy as np
 
-def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = True, wake_color='cyan', rotor_wake_color='red', surface_color='gray', cmap='jet', absolute=True, side_view=False):
+def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = True, wake_color='cyan', rotor_wake_color='red', surface_color='gray', cmap='jet', absolute=True, side_view=False, name='sample_gif', backend='imageio'):
     vedo.settings.default_backend = 'vtk'
     axs = Axes(
         xrange=(0,25),
         yrange=(-30, 30),
         zrange=(0, 10),
     )
-    video = Video("rotor_test.gif", fps=10, backend='imageio')
+    video = Video(name+".gif", fps=10, backend=backend)
     # first get min and max gamma value:
     min_gamma = 1e100
     max_gamma = -1e100
