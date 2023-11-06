@@ -21,6 +21,7 @@ from last_n_average import LastNAverage
 from plot import plot_wireframe
 from engine import Engine
 from torque_model import TorqueModel
+from breguet_range_eqn import BreguetRange
 # endregion
 
 # region hyperparameters
@@ -506,6 +507,12 @@ for i in range(len(prop_fx_list)):
         overmodel.register_output(pwr)
 # endregion
 
+
+
+
+
+
+
 # region assembly
 # add the cruise m3l model to the cruise condition
 wig_condition.add_m3l_model('wig_model', overmodel)
@@ -549,17 +556,19 @@ for i in range(len(prop_meshes)):
 
 # engine power constraints:
 for i in range(len(prop_fx_list)):
-    model_csdl.add_constraint('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr', upper=max_pwr, scaler=1E-4)
+    model_csdl.add_constraint('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr', upper=max_pwr, scaler=1/max_pwr)
 
 # lift equals weight constraint:
-model_csdl.add_constraint('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave', equals=m*g, scaler=1E-6)
+model_csdl.add_constraint('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave', equals=m*g, scaler=1/(m*g))
 
 # thrust equals drag constraint:
 
 
 
 # objective:
-model_csdl.add_objective('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.wig_mach_number', scaler=1)
+mach = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.wig_mach_number')
+obj = model_csdl.register_output('obj', 1*mach)
+model_csdl.add_objective('obj', scaler=1)
 
 
 
