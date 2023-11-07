@@ -37,50 +37,62 @@ mesh_dict = {
 mesh_temp = generate_mesh(mesh_dict)
 mesh, image_mesh = generate_ground_effect_mesh(mesh_temp, alpha, h, test_plot=False)
 
-panel_neg_y = mesh.copy()[:,:int((ny+1)/2),:]
+wing_neg_y = mesh.copy()[:,:int((ny+1)/2),:].copy() # negative side of wing
+wing_pos_y = np.flip(mesh.copy()[:,int((ny-1)/2):,:], 1) # positive side of wing
+wing_image_neg_y = image_mesh.copy()[:,:int((ny+1)/2),:].copy() # negative side of wing
+wing_image_pos_y = np.flip(image_mesh.copy()[:,int((ny-1)/2):,:], 1) # positive side of wing
+
+panel_neg_y = wing_neg_y.copy()
+panel_pos_y = wing_pos_y.copy()
 panel_neg_y[:,:,1] -= 4
 panel_neg_y[:,:,2] += h
-panel_pos_y = mesh.copy()[:,int((ny-1)/2):,:]
 panel_pos_y[:,:,1] += 4
 panel_pos_y[:,:,2] += h
 
-panel_2_neg_y = mesh.copy()[:,:int((ny+1)/2),:]
+panel_2_neg_y = wing_neg_y.copy()
 panel_2_neg_y[:,:,1] -= 8
 panel_2_neg_y[:,:,2] += 2*h
-panel_2_pos_y = mesh.copy()[:,int((ny-1)/2):,:]
+panel_2_pos_y = wing_pos_y.copy()
 panel_2_pos_y[:,:,1] += 8
 panel_2_pos_y[:,:,2] += 2*h
 
-
-panel_neg_y_image = image_mesh.copy()[:,:int((ny+1)/2),:]
+panel_neg_y_image = wing_image_neg_y.copy()
 panel_neg_y_image[:,:,1] -= 4
 panel_neg_y_image[:,:,2] -= h
-panel_pos_y_image = image_mesh.copy()[:,int((ny-1)/2):,:]
+panel_pos_y_image = wing_image_pos_y.copy()
 panel_pos_y_image[:,:,1] += 4
 panel_pos_y_image[:,:,2] -= h
 
-panel_2_neg_y_image = image_mesh.copy()[:,:int((ny+1)/2),:]
+panel_2_neg_y_image = wing_image_neg_y.copy()
 panel_2_neg_y_image[:,:,1] -= 8
 panel_2_neg_y_image[:,:,2] -= 2*h
-panel_2_pos_y_image = image_mesh.copy()[:,int((ny-1)/2):,:]
+panel_2_pos_y_image = wing_image_pos_y.copy()
 panel_2_pos_y_image[:,:,1] += 8
 panel_2_pos_y_image[:,:,2] -= 2*h
 
-mesh_val = np.zeros((num_nodes, nx, ny, 3))
+neg_mesh_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
+pos_mesh_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
+neg_image_mesh_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
+pos_image_mesh_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 neg_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 pos_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 neg_panel_2_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 pos_panel_2_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
-image_mesh_val = np.zeros((num_nodes, nx, ny, 3))
+image_neg_mesh_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
+image_pos_mesh_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 image_neg_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 image_pos_panel_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 image_neg_panel_2_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 image_pos_panel_2_val = np.zeros((num_nodes, nx, int((ny+1)/2), 3))
 
 for j in range(num_nodes):
-    mesh_val[j, :, :, 0] = mesh.copy()[:, :, 0]
-    mesh_val[j, :, :, 1] = mesh.copy()[:, :, 1]
-    mesh_val[j, :, :, 2] = mesh.copy()[:, :, 2]
+    neg_mesh_val[j, :, :, 0] = wing_neg_y.copy()[:, :, 0]
+    neg_mesh_val[j, :, :, 1] = wing_neg_y.copy()[:, :, 1]
+    neg_mesh_val[j, :, :, 2] = wing_neg_y.copy()[:, :, 2]
+
+    pos_mesh_val[j, :, :, 0] = wing_pos_y.copy()[:, :, 0]
+    pos_mesh_val[j, :, :, 1] = wing_pos_y.copy()[:, :, 1]
+    pos_mesh_val[j, :, :, 2] = wing_pos_y.copy()[:, :, 2]
 
     neg_panel_val[j, :, :, 0] = panel_neg_y.copy()[:, :, 0]
     neg_panel_val[j, :, :, 1] = panel_neg_y.copy()[:, :, 1]
@@ -98,9 +110,13 @@ for j in range(num_nodes):
     pos_panel_2_val[j, :, :, 1] = panel_2_pos_y.copy()[:, :, 1]
     pos_panel_2_val[j, :, :, 2] = panel_2_pos_y.copy()[:, :, 2]
 
-    image_mesh_val[j, :, :, 0] = image_mesh.copy()[:, :, 0]
-    image_mesh_val[j, :, :, 1] = image_mesh.copy()[:, :, 1]
-    image_mesh_val[j, :, :, 2] = image_mesh.copy()[:, :, 2]
+    neg_image_mesh_val[j, :, :, 0] = wing_image_neg_y.copy()[:, :, 0]
+    neg_image_mesh_val[j, :, :, 1] = wing_image_neg_y.copy()[:, :, 1]
+    neg_image_mesh_val[j, :, :, 2] = wing_image_neg_y.copy()[:, :, 2]
+
+    pos_image_mesh_val[j, :, :, 0] = wing_image_pos_y.copy()[:, :, 0]
+    pos_image_mesh_val[j, :, :, 1] = wing_image_pos_y.copy()[:, :, 1]
+    pos_image_mesh_val[j, :, :, 2] = wing_image_pos_y.copy()[:, :, 2]
 
     image_neg_panel_val[j, :, :, 0] = panel_neg_y_image.copy()[:, :, 0]
     image_neg_panel_val[j, :, :, 1] = panel_neg_y_image.copy()[:, :, 1]
@@ -152,39 +168,45 @@ uvlm_parameters = [('u',True,ac_states_expanded['u']),
                     ('gamma',True,ac_states_expanded['gamma']),
                     ('psiw',True,np.zeros((num_nodes, 1)))]
 
-# uvlm_parameters.append(('wing', True, mesh_val))
+uvlm_parameters.append(('wing_neg', True, neg_mesh_val))
+uvlm_parameters.append(('wing_pos', True, pos_mesh_val))
+uvlm_parameters.append(('wing_neg_mirror', True, neg_image_mesh_val))
+uvlm_parameters.append(('wing_pos_mirror', True, pos_image_mesh_val))
 uvlm_parameters.append(('neg_panel', True, neg_panel_val))
 uvlm_parameters.append(('pos_panel', True, pos_panel_val))
-# uvlm_parameters.append(('wing_mirror', True, image_mesh_val))
 uvlm_parameters.append(('neg_panel_mirror', True, image_neg_panel_val))
 uvlm_parameters.append(('pos_panel_mirror', True, image_pos_panel_val))
-# uvlm_parameters.append(('neg_panel_2', True, neg_panel_2_val))
-# uvlm_parameters.append(('pos_panel_2', True, pos_panel_2_val))
-# uvlm_parameters.append(('neg_panel_2_mirror', True, image_neg_panel_2_val))
-# uvlm_parameters.append(('pos_panel_2_mirror', True, image_pos_panel_2_val))
+uvlm_parameters.append(('neg_panel_2', True, neg_panel_2_val))
+uvlm_parameters.append(('pos_panel_2', True, pos_panel_2_val))
+uvlm_parameters.append(('neg_panel_2_mirror', True, image_neg_panel_2_val))
+uvlm_parameters.append(('pos_panel_2_mirror', True, image_pos_panel_2_val))
 surface_names = [
-    # 'wing',
+    'wing_neg',
+    'wing_pos',
+    'wing_neg_mirror',
+    'wing_pos_mirror',
     'neg_panel',
     'pos_panel',
-    # 'wing_mirror',
     'neg_panel_mirror',
     'pos_panel_mirror',
-    # 'neg_panel_2',
-    # 'pos_panel_2',
-    # 'neg_panel_2_mirror',
-    # 'pos_panel_2_mirror',
+    'neg_panel_2',
+    'pos_panel_2',
+    'neg_panel_2_mirror',
+    'pos_panel_2_mirror',
 ]
 surface_shapes = [
-    # (nx,ny,3),
     (nx, int((ny+1)/2), 3),
     (nx, int((ny+1)/2), 3),
-    # (nx,ny,3),
     (nx, int((ny+1)/2), 3),
     (nx, int((ny+1)/2), 3),
-    # (nx, int((ny+1)/2), 3),
-    # (nx, int((ny+1)/2), 3),
-    # (nx, int((ny+1)/2), 3),
-    # (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
+    (nx, int((ny+1)/2), 3),
 ]
 
 system_size = 0
@@ -221,19 +243,19 @@ for i in range(len(surface_names)):
 # sub_eval_list = [0, 0, 0, 1, 1, 1, 2, 2, 2]
 # sub_induced_list = [0, 1, 2, 0, 1, 2, 0, 1, 2]
 sub_eval_list = []
-# for i in range(len(surface_names)):
-    # sub_eval_list.extend([i]*10)
+for i in range(len(surface_names)):
+    sub_eval_list.extend([i]*len(surface_names))
     # sub_eval_list.extend([i]*4)
-# sub_induced_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] * 10
-sub_eval_list = [0, 2, 1, 3, 0, 2, 1, 3]
+sub_induced_list = list(np.arange(len(surface_names))) * len(surface_names)
+# sub_eval_list = [0, 2, 1, 3, 0, 2, 1, 3]
 # sub_induced_list = [0, 1, 2, 3] * 4
-sub_induced_list = [0, 0, 1, 1, 2, 2, 3, 3]
+# sub_induced_list = [0, 0, 1, 1, 2, 2, 3, 3]
 sub = True
 
-# sym_struct_list = [[0,3], [1,2,4,5], [6,7,8,9]]
+sym_struct_list = [[0,1,2,3], [4,5,6,7], [8,9,10,11]]
 # sym_struct_list = [[0,3], [1,2,4,5]]
 # sym_struct_list = [[0,1, 2, 3], [4,5,6,7]]
-sym_struct_list = [[0, 1, 2, 3]]
+# sym_struct_list = [[0, 1, 2, 3]]
 
 
 
@@ -275,13 +297,13 @@ uvlm = VASTSolverUnsteady(
     surface_shapes=surface_shapes, 
     delta_t=delta_t, 
     nt=num_nodes+1,
-    # free_wake=True,
+    free_wake=True,
     frame='inertial',
-    # sub=sub,
-    # sub_eval_list=sub_eval_list,
-    # sub_induced_list=sub_induced_list,
-    # symmetry=True,
-    # sym_struct_list=sym_struct_list
+    sub=sub,
+    sub_eval_list=sub_eval_list,
+    sub_induced_list=sub_induced_list,
+    symmetry=True,
+    sym_struct_list=sym_struct_list
 )
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
