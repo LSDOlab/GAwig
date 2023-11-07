@@ -4,7 +4,7 @@ from lsdo_modules.module_csdl.module_csdl import ModuleCSDL
 from lsdo_modules.module.module import Module
 import m3l
 
-
+"""
 class Rotor(m3l.ExplicitOperation):
     def initialize(self, kwargs):
         self.parameters.declare('component', default=None)
@@ -138,9 +138,9 @@ class RotorCSDL(ModuleCSDL):
 
         rotor = rot_mesh + csdl.expand(point, (num_blades,nt,nc,ns,3), 'm->ijklm')
         self.register_output('rotor', rotor)
+"""
 
-
-
+"""
 class Rotor2(m3l.ExplicitOperation):
     def initialize(self, kwargs):
         self.parameters.declare('component', default=None)
@@ -363,7 +363,7 @@ class RotorCSDL2(ModuleCSDL):
         self.register_output('rotor', debug_rotor)
 
 
-
+"""
 
 
 
@@ -403,7 +403,7 @@ class Rotor3(m3l.ExplicitOperation):
         nc = self.parameters['nc']
         nt = self.parameters['nt']
         dt = self.parameters['dt']
-        dir = self.parameters['dir']
+        direction = self.parameters['dir']
         r_point = self.parameters['r_point']
         csdl_model = RotorCSDL3(module=self,
                                 mesh=self.mesh,
@@ -413,13 +413,14 @@ class Rotor3(m3l.ExplicitOperation):
                                 nc=nc,
                                 nt=nt,
                                 dt=dt,
-                                dir=dir,
+                                dir=direction,
                                 r_point=r_point,
                                 rpm=self.rpm,
                                 point=self.point)
         return csdl_model
 
-    def evaluate(self, h : m3l.Variable, theta : m3l.Variable, blade_angle: m3l.Variable, delta : m3l.Variable):
+    # def evaluate(self, h : m3l.Variable, theta : m3l.Variable, blade_angle: m3l.Variable, delta : m3l.Variable):
+    def evaluate(self, h : m3l.Variable, theta : m3l.Variable, blade_angle: m3l.Variable):
         mesh_name = self.parameters['mesh_name']
         num_blades = self.parameters['num_blades']
         ns = self.parameters['ns']
@@ -431,7 +432,7 @@ class Rotor3(m3l.ExplicitOperation):
             'theta' : theta,
             'h' : h,
             'blade_angle' : blade_angle,
-            'delta' : delta
+            #'delta' : delta
         }
 
         mesh_out_vars = []
@@ -485,7 +486,14 @@ class RotorCSDL3(ModuleCSDL):
         # the center of the rotor disk:
         point = self.create_input('point', shape=(3,), val=np.reshape(point, (3,)))*0.3048
 
-        # pitch control
+        
+        delta = self.declare_variable('delta', shape=(3,), val=0)
+        self.print_var(delta)
+        delta_expanded = csdl.expand(delta, (nt,nc,ns,3), 'i->abci')
+
+
+
+        # blade pitch control
         blade_angle = self.declare_variable('blade_angle', shape=(1,), val=0)
         # blade_axis = self.declare_variable('blade_axis', shape=(3,))*0.3048
         blade_axis = point + np.array([0,1,0])
@@ -515,8 +523,7 @@ class RotorCSDL3(ModuleCSDL):
         alpha = self.declare_variable('theta', shape=(1,))
         h = self.declare_variable('h', shape=(1,))
 
-        delta = self.declare_variable('delta', shape=(3,))
-        delta_expanded = csdl.expand(delta, (nt,nc,ns,3), 'i->abci')
+        
 
         # the rotation matrix for ground effect stuff:
         rotation_matrix_y = self.create_output('rotation_matrix_y',shape=(3,3),val=0)

@@ -26,7 +26,7 @@ from breguet_range_eqn import BreguetRange
 
 # region hyperparameters
 num_props = 8
-num_blades = 3
+num_blades = 4
 rpm = 1090.
 nt = 20
 dt = 0.003
@@ -269,13 +269,15 @@ prop_meshes = []
 prop_meshes_vel = []
 for i in range(num_props):
     blade_angle_value = np.array([blade_angle])
-    rotor_delta_value = np.reshape(np.array([rotor_delta]), (3,))
+    #rotor_delta_value = np.reshape(np.array([rotor_delta]), (3,))
     if i >= num_props/2:
         blade_angle_value = -1*blade_angle_value
-        rotor_delta_value[1] = -1*rotor_delta_value[1]
+        #rotor_delta_value[1] = -1*rotor_delta_value[1]
+    
     blade_angle_m3l = m3l.Variable('blade_angle' + str(i), shape=(1,), value=blade_angle_value)
-    delta_m3l = m3l.Variable('delta' + str(i), shape=(3,), value=rotor_delta_value)
+    #delta_m3l = m3l.Variable('delta' + str(i), shape=(3,), value=rotor_delta_value)
     dir = -1
+
     if i >= num_props/2:
         dir = 1
     prop_model = Rotor3(mesh_name = propb1_mesh_names[i], 
@@ -289,7 +291,8 @@ for i in range(num_props):
                         mesh = prop_meshes_np[i],
                         rpm = rpm,
                         point = prop_points[i])
-    prop_mesh_out, mirror_prop_meshes, prop_mesh_vel = prop_model.evaluate(h_m3l, pitch_m3l, blade_angle_m3l, delta_m3l)
+    # prop_mesh_out, mirror_prop_meshes, prop_mesh_vel = prop_model.evaluate(h_m3l, pitch_m3l, blade_angle_m3l, delta_m3l)
+    prop_mesh_out, mirror_prop_meshes, prop_mesh_vel = prop_model.evaluate(h_m3l, pitch_m3l, blade_angle_m3l)
     if mirror:
         prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
     else:
@@ -543,7 +546,7 @@ for i in range(len(prop_meshes)):
     
     model_csdl.connect('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u',
                         f'system_model.wig.wig.wig.torque_operation_rotor_{i}.velocity')
-    
+
 # wing mirror model connections:
 # caddee_csdl_model.connect('wing_vlm_mesh', 
 #                           'system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.wing_vlm_mesh')
@@ -553,6 +556,18 @@ for i in range(len(prop_meshes)):
 # blade angle design variables:
 #for i in range(num_props):
 #    model_csdl.add_design_variable('system_model.wig.wig.wig.operation.input_model.blade_angle'+str(i)+'_input')
+
+# rotor delta design variables:
+for i in range(int(num_props/2)):
+    delta = model_csdl.create_input('delta_'+str(i), val=np.array([0,5,0]))
+    model_csdl.add_design_variable('delta_'+str(i), scaler=1)
+    model_csdl.connect('delta_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.delta')
+
+    # symmetric delta connections:
+    other_delta = model_csdl.create_output('other_delta_'+str(i), shape=(3,), val=0)
+    other_delta[0], other_delta[1], other_delta[2] = delta[0], -1*delta[1], delta[2]
+    model_csdl.connect('other_delta_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.delta')
+
 
 # engine power constraints:
 for i in range(len(prop_fx_list)):
@@ -566,8 +581,8 @@ model_csdl.add_constraint('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out
 
 
 # objective:
-mach = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.wig_mach_number')
-obj = model_csdl.register_output('obj', 1*mach)
+velocity = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u')
+obj = model_csdl.register_output('obj', 1*velocity)
 model_csdl.add_objective('obj', scaler=1)
 
 
