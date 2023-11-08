@@ -420,7 +420,8 @@ class Rotor3(m3l.ExplicitOperation):
         return csdl_model
 
     # def evaluate(self, h : m3l.Variable, theta : m3l.Variable, blade_angle: m3l.Variable, delta : m3l.Variable):
-    def evaluate(self, h : m3l.Variable, theta : m3l.Variable, blade_angle: m3l.Variable):
+    # def evaluate(self, h : m3l.Variable, theta : m3l.Variable, blade_angle: m3l.Variable):
+    def evaluate(self, h : m3l.Variable, theta : m3l.Variable):
         mesh_name = self.parameters['mesh_name']
         num_blades = self.parameters['num_blades']
         ns = self.parameters['ns']
@@ -431,7 +432,7 @@ class Rotor3(m3l.ExplicitOperation):
         self.arguments = {
             'theta' : theta,
             'h' : h,
-            'blade_angle' : blade_angle,
+            #'blade_angle' : blade_angle,
             #'delta' : delta
         }
 
@@ -488,7 +489,7 @@ class RotorCSDL3(ModuleCSDL):
 
         
         delta = self.declare_variable('delta', shape=(3,), val=0)
-        self.print_var(delta)
+        # self.print_var(delta)
         delta_expanded = csdl.expand(delta, (nt,nc,ns,3), 'i->abci')
 
 
