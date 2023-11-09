@@ -18,7 +18,8 @@ from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, PostProcessor
 from deflect_flap import deflect_flap
 from VAST.core.profile_model import gen_profile_output_list, PPSubmodel
 from last_n_average import LastNAverage
-from plot import plot_wireframe
+# from plot import plot_wireframe
+from plot_wing_symmetry import plot_wireframe
 from engine import Engine
 from torque_model import TorqueModel
 # from breguet_range_eqn import BreguetRange
@@ -26,11 +27,11 @@ import time
 # endregion
 
 # region hyperparameters
-num_props = 8
-num_blades = 6
+num_props = 4
+num_blades = 4
 rpm = 1090.
-nt = 20
-dt = 0.003 # sec
+nt = 30
+dt = 0.005 # sec
 h = 10 # m
 pitch = np.deg2rad(0) # rad
 rotor_blade_angle = np.deg2rad(0) # rad
@@ -43,10 +44,9 @@ mirror = True
 sub = True
 free_wake = True
 symmetry = True # only works with mirror = True
-log_space = False # log spacing spanwise for wing mesh
+log_space = True # log spacing spanwise for wing mesh
 max_pwr = 4600. # hp
 m = 230000 # kg
-g = 9.81 # m/s^2
 # endregion
 
 # region caddee setup
@@ -485,8 +485,10 @@ pp_vars.append(('panel_forces_y',(nt,num_panels,1)))
 pp_vars.append(('panel_forces_z',(nt,num_panels,1)))
 
 if do_wing:
-    pp_vars.append(('wing_vlm_mesh_out_L', (nt, 1)))
-    pp_vars.append(('wing_vlm_mesh_out_D', (nt, 1)))
+    pp_vars.append(('wing_vlm_mesh_neg_y_out_L', (nt, 1)))
+    pp_vars.append(('wing_vlm_mesh_neg_y_out_D', (nt, 1)))
+    pp_vars.append(('wing_vlm_mesh_pos_y_out_L', (nt, 1)))
+    pp_vars.append(('wing_vlm_mesh_pos_y_out_D', (nt, 1)))
 
 for i in range(num_props):
     for j in range(int(num_blades/2)):
@@ -538,9 +540,17 @@ fz = ave_outputs[2]
 
 offset = 3
 if do_wing:
-    wing_lift = ave_outputs[3]
-    wing_drag = ave_outputs[4]
-    offset = 5
+    if symmetry:
+        wing_lift_neg_y = ave_outputs[3]
+        wing_drag_neg_y = ave_outputs[4]
+        wing_lift_pos_y = ave_outputs[5]
+        wing_drag_pos_y = ave_outputs[6]
+        offset = 7
+    else:
+        wing_lift = ave_outputs[3]
+        wing_drag = ave_outputs[4]
+        offset = 5
+
 
 prop_fx_list = []
 for i in range(num_props):
@@ -643,36 +653,36 @@ power_vector = model_csdl.create_output('power_vector', shape=(len(prop_fx_list)
 for i in range(len(prop_fx_list)):
     eng_pwr = model_csdl.declare_variable('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr')
     power_vector[i] = eng_pwr
-    # model_csdl.add_constraint('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr', upper=max_pwr, scaler=1E-3)
     
 max_eng_pwr = model_csdl.register_output('max_eng_pwr', csdl.max(1E-2*power_vector)/1E-2)
 # model_csdl.add_constraint('max_eng_pwr', upper=max_pwr, scaler=1E-3)
 model_csdl.print_var(max_eng_pwr)
 
-# lift equals weight constraint:
-L_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave')
-L_res = (L_ave - m*g)*1E-3
+# # lift equals weight constraint:
+L_neg_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_neg_y_out_L_ave')
+L_pos_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_pos_y_out_L_ave')
+L_tot_ave = model_csdl.register_output('L_tot_ave', L_neg_y_ave + L_pos_y_ave)
+L_res = (L_tot_ave - m*9.81)*1E-3
 model_csdl.print_var(1*L_res)
-# model_csdl.add_constraint('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave', equals=m*g, scaler=1E-6)
 
 
-# thrust equals drag constraint:
-D_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D_ave')
-model_csdl.print_var(1*D_ave)
-# model_csdl.register_output('total_drag_ave', 1*D_ave)
-# model_csdl.add_constraint('total_drag_ave', equals=0, scaler=1E-3)
 
-trim_res = model_csdl.register_output('trim_res', L_res + D_ave)
+# # get the total thrust:
+# thrust_index = model_csdl.create_output('thrust_index', shape=(num_props), val=0)
+# for i in range(num_props):
+#     thrust_index[i] = 1*model_csdl.declare_variable('system_model.wig.wig.wig.torque_operation_rotor_'+str(i)+'.total_thrust')
+# thrust_sum = model_csdl.register_output('thrust_sum', csdl.sum(thrust_index))
+
+
+panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
+D_res = model_csdl.register_output('D_res', csdl.pnorm(panel_fx*1.))
+
+trim_res = model_csdl.register_output('trim_res', L_res**2 + D_res**2)
 model_csdl.print_var(1*trim_res)
-model_csdl.add_constraint('trim_res', equals=0, scaler=1E-4)
+model_csdl.add_constraint('trim_res', equals=0, scaler=1E-6)
 
 
-# get the total thrust:
-thrust_index = model_csdl.create_output('thrust_index', shape=(num_props), val=0)
-for i in range(num_props):
-    thrust_index[i] = 1*model_csdl.declare_variable('system_model.wig.wig.wig.torque_operation_rotor_'+str(i)+'.total_thrust')
 
-thrust_sum = model_csdl.register_output('thrust_sum', csdl.sum(thrust_index))
 
 
 
@@ -719,12 +729,12 @@ print('Total run time: ', end - start)
 # print(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.wing_vlm_mesh_out_panel_forces_y'])
 # print(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.wing_vlm_mesh_out_panel_forces_z'])
 # print('\n')
-L = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L']
+# L = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L']
 # D = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D']
 
 
-print('L ave: ', sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave'])
-print('D ave: ', sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D_ave'])
+#print('L ave: ', sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave'])
+#print('D ave: ', sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D_ave'])
 
 # print(L/D)
 
@@ -733,12 +743,10 @@ print(sim['system_model.wig.wig.wig.torque_operation_rotor_0.total_thrust'])
 print(sim['system_model.wig.wig.wig.torque_operation_rotor_1.total_thrust'])
 print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
 print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_4.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_5.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_6.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_7.total_thrust'])
-
-print('total thrust: ', sim['thrust_sum'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_4.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_5.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_6.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_7.total_thrust'])
 
 
 # print some of the design variables:
@@ -751,7 +759,7 @@ for i in range(int(num_props/2)):
 print('velocity: ', sim['system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u'])
 
 
-if True: plot_wireframe(sim, surface_names, nt, plot_mirror=False, interactive=False, name='sample_gif')
+if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='sample_gif')
 
 # if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='mirror.gif')
 
