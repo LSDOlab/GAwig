@@ -27,7 +27,7 @@ import time
 # endregion
 
 # region hyperparameters
-num_props = 4
+num_props = 2
 num_blades = 4
 rpm = 1090.
 nt = 30

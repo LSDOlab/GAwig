@@ -1,0 +1,382 @@
+(id:23850)            source     in     rpm_rotor_0
+ <=c=(id:51296)       connection dec    system_model.wig.wig.wig.torque_operation_rotor_0.rpm
+ <=c=(id:51311)       connection dec    system_model.wig.wig.wig.engine_0_engine.rpm
+
+(id:23851)            source     in     rpm_rotor_1
+ <=c=(id:51324)       connection dec    system_model.wig.wig.wig.torque_operation_rotor_1.rpm
+ <=c=(id:51339)       connection dec    system_model.wig.wig.wig.engine_1_engine.rpm
+
+(id:51338)            source     out    system_model.wig.wig.wig.torque_operation_rotor_1.torque
+ <=c=(id:51340)       connection dec    system_model.wig.wig.wig.engine_1_engine.torque
+
+(id:51310)            source     out    system_model.wig.wig.wig.torque_operation_rotor_0.torque
+ <=c=(id:51312)       connection dec    system_model.wig.wig.wig.engine_0_engine.torque
+
+(id:0)                source     in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor0_out_gamma_w_0
+ <---(id:50763)       promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor0_out_gamma_w_0
+
+(id:1)                source     in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor0_out_wake_coords_0
+ <---(id:50764)       promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor0_out_wake_coords_0
+
+(id:2)                source     in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor1_out_gamma_w_0
+ <---(id:50765)       promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor1_out_gamma_w_0
+
+(id:3)                source     in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor1_out_wake_coords_0
+ <---(id:50766)       promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor1_out_wake_coords_0
+
+(id:4)                source     in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor2_out_gamma_w_0
+ <---(id:50767)       promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor2_out_gamma_w_0
+
+(id:5)                source     in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor2_out_wake_coords_0
+ <---(id:50768)       promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor2_out_wake_coords_0
+
+(id:6)                source     in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor3_out_gamma_w_0
+ <---(id:50769)       promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor3_out_gamma_w_0
+
+(id:7)                source     in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor3_out_wake_coords_0
+ <---(id:50770)       promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor3_out_wake_coords_0
+
+(id:8)                source     in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor0_out_gamma_w_0
+ <---(id:50771)       promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor0_out_gamma_w_0
+
+(id:9)                source     in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor0_out_wake_coords_0
+ <---(id:50772)       promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor0_out_wake_coords_0
+
+(id:10)               source     in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor1_out_gamma_w_0
+ <---(id:50773)       promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor1_out_gamma_w_0
+
+(id:11)               source     in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor1_out_wake_coords_0
+ <---(id:50774)       promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor1_out_wake_coords_0
+
+(id:12)               source     in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor2_out_gamma_w_0
+ <---(id:50775)       promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor2_out_gamma_w_0
+
+(id:13)               source     in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor2_out_wake_coords_0
+ <---(id:50776)       promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor2_out_wake_coords_0
+
+(id:14)               source     in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor3_out_gamma_w_0
+ <---(id:50777)       promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor3_out_gamma_w_0
+
+(id:15)               source     in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor3_out_wake_coords_0
+ <---(id:50778)       promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor3_out_wake_coords_0
+
+(id:53)               source     in     system_model.wig.wig.wig.operation.psiw
+ <---(id:50746)       promotion  dec    system_model.wig.wig.wig.operation.prob.psiw
+
+(id:70)               source     in     system_model.wig.wig.wig.operation.h
+ <---(id:50779)       promotion  dec    system_model.wig.wig.wig.operation.prob.h
+
+(id:42)               source     in     system_model.wig.wig.wig.operation.input_model.pitch_input
+ <=c=(id:37463)       connection dec    system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.theta
+ <=c=(id:24077)       connection dec    system_model.wig.wig.wig.operation.input_model.p0b1_mesh_rotor.theta
+
+(id:43)               source     in     system_model.wig.wig.wig.operation.input_model.h_input
+ <=c=(id:24078)       connection dec    system_model.wig.wig.wig.operation.input_model.p0b1_mesh_rotor.h
+ <=c=(id:37464)       connection dec    system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.h
+
+(id:41)               source     out    system_model.wig.wig.wig.operation.input_model.ac_expand.gamma_expanded
+ <=c=(id:52)          connection in     system_model.wig.wig.wig.operation.gamma
+     <---(id:50745)   promotion  dec    system_model.wig.wig.wig.operation.prob.gamma
+
+(id:36)               source     out    system_model.wig.wig.wig.operation.input_model.ac_expand.psi_expanded
+ <=c=(id:51)          connection in     system_model.wig.wig.wig.operation.psi
+     <---(id:50744)   promotion  dec    system_model.wig.wig.wig.operation.prob.psi
+
+(id:35)               source     out    system_model.wig.wig.wig.operation.input_model.ac_expand.theta_expanded
+ <=c=(id:50)          connection in     system_model.wig.wig.wig.operation.theta
+     <---(id:50743)   promotion  dec    system_model.wig.wig.wig.operation.prob.theta
+
+(id:34)               source     out    system_model.wig.wig.wig.operation.input_model.ac_expand.r_expanded
+ <=c=(id:49)          connection in     system_model.wig.wig.wig.operation.r
+     <---(id:50742)   promotion  dec    system_model.wig.wig.wig.operation.prob.r
+
+(id:33)               source     out    system_model.wig.wig.wig.operation.input_model.ac_expand.q_expanded
+ <=c=(id:48)          connection in     system_model.wig.wig.wig.operation.q
+     <---(id:50741)   promotion  dec    system_model.wig.wig.wig.operation.prob.q
+
+(id:32)               source     out    system_model.wig.wig.wig.operation.input_model.ac_expand.p_expanded
+ <=c=(id:47)          connection in     system_model.wig.wig.wig.operation.p
+     <---(id:50740)   promotion  dec    system_model.wig.wig.wig.operation.prob.p
+
+(id:31)               source     out    system_model.wig.wig.wig.operation.input_model.ac_expand.w_expanded
+ <=c=(id:46)          connection in     system_model.wig.wig.wig.operation.w
+     <---(id:50739)   promotion  dec    system_model.wig.wig.wig.operation.prob.w
+
+(id:30)               source     out    system_model.wig.wig.wig.operation.input_model.ac_expand.v_expanded
+ <=c=(id:45)          connection in     system_model.wig.wig.wig.operation.v
+     <---(id:50738)   promotion  dec    system_model.wig.wig.wig.operation.prob.v
+
+(id:29)               source     out    system_model.wig.wig.wig.operation.input_model.ac_expand.u_expanded
+ <=c=(id:44)          connection in     system_model.wig.wig.wig.operation.u
+     <---(id:50737)   promotion  dec    system_model.wig.wig.wig.operation.prob.u
+
+(id:50577)            source     out    system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.p1b1_mesh_rotor3_out
+ <=c=(id:61)          connection in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor3_out
+     <---(id:50754)   promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor3_out
+
+(id:50587)            source     out    system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.p1b1_mesh_rotor3_out_velocity
+ <=c=(id:69)          connection in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor3_out_velocity
+     <---(id:50762)   promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor3_out_velocity
+
+(id:47269)            source     out    system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.p1b1_mesh_rotor2_out
+ <=c=(id:60)          connection in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor2_out
+     <---(id:50753)   promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor2_out
+
+(id:47279)            source     out    system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.p1b1_mesh_rotor2_out_velocity
+ <=c=(id:68)          connection in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor2_out_velocity
+     <---(id:50761)   promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor2_out_velocity
+
+(id:43961)            source     out    system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.p1b1_mesh_rotor1_out
+ <=c=(id:59)          connection in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor1_out
+     <---(id:50752)   promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor1_out
+
+(id:43971)            source     out    system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.p1b1_mesh_rotor1_out_velocity
+ <=c=(id:67)          connection in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor1_out_velocity
+     <---(id:50760)   promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor1_out_velocity
+
+(id:40653)            source     out    system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.p1b1_mesh_rotor0_out
+ <=c=(id:58)          connection in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor0_out
+     <---(id:50751)   promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor0_out
+
+(id:40663)            source     out    system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.p1b1_mesh_rotor0_out_velocity
+ <=c=(id:66)          connection in     system_model.wig.wig.wig.operation.p1b1_mesh_rotor0_out_velocity
+     <---(id:50759)   promotion  dec    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor0_out_velocity
+
+(id:23964)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.z
+ <=c=(id:26)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.z
+
+(id:23963)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.y
+ <=c=(id:25)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.y
+
+(id:23962)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.x
+ <=c=(id:24)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.x
+
+(id:23961)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.theta
+ <=c=(id:22)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.theta
+
+(id:23960)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.psi
+ <=c=(id:23)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.psi
+
+(id:23959)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.gamma
+ <=c=(id:28)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.gamma
+
+(id:23958)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.phi
+ <=c=(id:27)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.phi
+
+(id:23955)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.r
+ <=c=(id:21)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.r
+
+(id:23946)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u
+ <=c=(id:51328)       connection dec    system_model.wig.wig.wig.torque_operation_rotor_1.velocity
+ <=c=(id:16)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.u
+ <=c=(id:51300)       connection dec    system_model.wig.wig.wig.torque_operation_rotor_0.velocity
+
+(id:23954)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.q
+ <=c=(id:20)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.q
+
+(id:23953)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.p
+ <=c=(id:19)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.p
+
+(id:23952)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.w
+ <=c=(id:18)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.w
+
+(id:23948)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.v
+ <=c=(id:17)          connection dec    system_model.wig.wig.wig.operation.input_model.ac_expand.v
+
+(id:23872)            source     in     system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.wig_altitude
+ <---(id:23874)       promotion  dec    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.atmosphere_model.wig_altitude
+
+(id:23930)            source     out    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.atmosphere_model.wig_speed_of_sound
+ <---(id:23931)       promotion  dec    system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.wig_speed_of_sound
+
+(id:37191)            source     out    system_model.wig.wig.wig.operation.input_model.p0b1_mesh_rotor.p0b1_mesh_rotor3_out
+ <=c=(id:57)          connection in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor3_out
+     <---(id:50750)   promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor3_out
+
+(id:37201)            source     out    system_model.wig.wig.wig.operation.input_model.p0b1_mesh_rotor.p0b1_mesh_rotor3_out_velocity
+ <=c=(id:65)          connection in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor3_out_velocity
+     <---(id:50758)   promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor3_out_velocity
+
+(id:33883)            source     out    system_model.wig.wig.wig.operation.input_model.p0b1_mesh_rotor.p0b1_mesh_rotor2_out
+ <=c=(id:56)          connection in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor2_out
+     <---(id:50749)   promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor2_out
+
+(id:33893)            source     out    system_model.wig.wig.wig.operation.input_model.p0b1_mesh_rotor.p0b1_mesh_rotor2_out_velocity
+ <=c=(id:64)          connection in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor2_out_velocity
+     <---(id:50757)   promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor2_out_velocity
+
+(id:30575)            source     out    system_model.wig.wig.wig.operation.input_model.p0b1_mesh_rotor.p0b1_mesh_rotor1_out
+ <=c=(id:55)          connection in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor1_out
+     <---(id:50748)   promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor1_out
+
+(id:30585)            source     out    system_model.wig.wig.wig.operation.input_model.p0b1_mesh_rotor.p0b1_mesh_rotor1_out_velocity
+ <=c=(id:63)          connection in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor1_out_velocity
+     <---(id:50756)   promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor1_out_velocity
+
+(id:27267)            source     out    system_model.wig.wig.wig.operation.input_model.p0b1_mesh_rotor.p0b1_mesh_rotor0_out
+ <=c=(id:54)          connection in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor0_out
+     <---(id:50747)   promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor0_out
+
+(id:27277)            source     out    system_model.wig.wig.wig.operation.input_model.p0b1_mesh_rotor.p0b1_mesh_rotor0_out_velocity
+ <=c=(id:62)          connection in     system_model.wig.wig.wig.operation.p0b1_mesh_rotor0_out_velocity
+     <---(id:50755)   promotion  dec    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor0_out_velocity
+
+(id:50974)            source     out    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.panel_forces_y
+ <=c=(id:51265)       connection dec    system_model.wig.wig.wig.average_op.panel_forces_y
+
+(id:50977)            source     out    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.panel_forces_z
+ <=c=(id:51270)       connection dec    system_model.wig.wig.wig.average_op.panel_forces_z
+
+(id:50971)            source     out    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.panel_forces_x
+ <=c=(id:51260)       connection dec    system_model.wig.wig.wig.average_op.panel_forces_x
+
+(id:51007)            source     out    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor0_out_panel_forces_x
+ <=c=(id:51275)       connection dec    system_model.wig.wig.wig.average_op.p0b1_mesh_rotor0_out_panel_forces_x
+
+(id:51033)            source     out    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor1_out_panel_forces_x
+ <=c=(id:51280)       connection dec    system_model.wig.wig.wig.average_op.p0b1_mesh_rotor1_out_panel_forces_x
+
+(id:51111)            source     out    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor0_out_panel_forces_x
+ <=c=(id:51285)       connection dec    system_model.wig.wig.wig.average_op.p1b1_mesh_rotor0_out_panel_forces_x
+
+(id:51137)            source     out    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor1_out_panel_forces_x
+ <=c=(id:51290)       connection dec    system_model.wig.wig.wig.average_op.p1b1_mesh_rotor1_out_panel_forces_x
+
+(id:50780)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor0_out_bd_vtx_normals
+ <---(id:50929)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor0_out_bd_vtx_normals
+
+(id:50781)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor0_out_s_panel
+ <---(id:51002)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor0_out_s_panel
+
+(id:50782)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor0_out_eval_pts_coords
+ <---(id:50851)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor0_out_eval_pts_coords
+
+(id:50783)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor0_out_eval_total_vel
+ <---(id:50847)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor0_out_eval_total_vel
+
+(id:50784)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor1_out_bd_vtx_normals
+ <---(id:50934)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor1_out_bd_vtx_normals
+
+(id:50785)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor1_out_s_panel
+ <---(id:51028)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor1_out_s_panel
+
+(id:50786)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor1_out_eval_pts_coords
+ <---(id:50858)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor1_out_eval_pts_coords
+
+(id:50787)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor1_out_eval_total_vel
+ <---(id:50854)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor1_out_eval_total_vel
+
+(id:50788)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor2_out_bd_vtx_normals
+ <---(id:50939)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor2_out_bd_vtx_normals
+
+(id:50789)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor2_out_s_panel
+ <---(id:51054)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor2_out_s_panel
+
+(id:50790)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor2_out_eval_pts_coords
+ <---(id:50865)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor2_out_eval_pts_coords
+
+(id:50791)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor2_out_eval_total_vel
+ <---(id:50861)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor2_out_eval_total_vel
+
+(id:50792)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor3_out_bd_vtx_normals
+ <---(id:50944)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor3_out_bd_vtx_normals
+
+(id:50793)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor3_out_s_panel
+ <---(id:51080)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor3_out_s_panel
+
+(id:50794)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor3_out_eval_pts_coords
+ <---(id:50872)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor3_out_eval_pts_coords
+
+(id:50795)            source     out    system_model.wig.wig.wig.operation.prob.p0b1_mesh_rotor3_out_eval_total_vel
+ <---(id:50868)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p0b1_mesh_rotor3_out_eval_total_vel
+
+(id:50796)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor0_out_bd_vtx_normals
+ <---(id:50949)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor0_out_bd_vtx_normals
+
+(id:50797)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor0_out_s_panel
+ <---(id:51106)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor0_out_s_panel
+
+(id:50798)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor0_out_eval_pts_coords
+ <---(id:50879)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor0_out_eval_pts_coords
+
+(id:50799)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor0_out_eval_total_vel
+ <---(id:50875)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor0_out_eval_total_vel
+
+(id:50800)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor1_out_bd_vtx_normals
+ <---(id:50954)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor1_out_bd_vtx_normals
+
+(id:50801)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor1_out_s_panel
+ <---(id:51132)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor1_out_s_panel
+
+(id:50802)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor1_out_eval_pts_coords
+ <---(id:50886)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor1_out_eval_pts_coords
+
+(id:50803)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor1_out_eval_total_vel
+ <---(id:50882)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor1_out_eval_total_vel
+
+(id:50804)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor2_out_bd_vtx_normals
+ <---(id:50959)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor2_out_bd_vtx_normals
+
+(id:50805)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor2_out_s_panel
+ <---(id:51158)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor2_out_s_panel
+
+(id:50806)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor2_out_eval_pts_coords
+ <---(id:50893)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor2_out_eval_pts_coords
+
+(id:50807)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor2_out_eval_total_vel
+ <---(id:50889)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor2_out_eval_total_vel
+
+(id:50808)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor3_out_bd_vtx_normals
+ <---(id:50964)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor3_out_bd_vtx_normals
+
+(id:50809)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor3_out_s_panel
+ <---(id:51184)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor3_out_s_panel
+
+(id:50810)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor3_out_eval_pts_coords
+ <---(id:50900)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor3_out_eval_pts_coords
+
+(id:50811)            source     out    system_model.wig.wig.wig.operation.prob.p1b1_mesh_rotor3_out_eval_total_vel
+ <---(id:50896)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.p1b1_mesh_rotor3_out_eval_total_vel
+
+(id:50812)            source     out    system_model.wig.wig.wig.operation.prob.horseshoe_circulation
+ <---(id:50842)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.horseshoe_circulation
+
+(id:50813)            source     out    system_model.wig.wig.wig.operation.prob.gamma_b
+ <---(id:50914)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.gamma_b
+
+(id:50814)            source     out    system_model.wig.wig.wig.operation.prob.frame_vel
+ <---(id:50835)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.frame_vel
+
+(id:50815)            source     out    system_model.wig.wig.wig.operation.prob.density
+ <---(id:50836)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.density
+
+(id:50816)            source     out    system_model.wig.wig.wig.operation.prob.bd_vec
+ <---(id:50841)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.bd_vec
+
+(id:50817)            source     out    system_model.wig.wig.wig.operation.prob.beta
+ <---(id:50840)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.beta
+
+(id:50818)            source     out    system_model.wig.wig.wig.operation.prob.alpha
+ <---(id:50839)       promotion  dec    system_model.wig.wig.wig.operation.post_processor.ThrustDrag.alpha
+
+(id:51294)            source     out    system_model.wig.wig.wig.average_op.p1b1_mesh_rotor1_out_panel_forces_x_ave
+ <=c=(id:51332)       connection dec    system_model.wig.wig.wig.torque_operation_rotor_1.fx_spanwise_blade_1
+
+(id:51289)            source     out    system_model.wig.wig.wig.average_op.p1b1_mesh_rotor0_out_panel_forces_x_ave
+ <=c=(id:51329)       connection dec    system_model.wig.wig.wig.torque_operation_rotor_1.fx_spanwise_blade_0
+
+(id:51284)            source     out    system_model.wig.wig.wig.average_op.p0b1_mesh_rotor1_out_panel_forces_x_ave
+ <=c=(id:51304)       connection dec    system_model.wig.wig.wig.torque_operation_rotor_0.fx_spanwise_blade_1
+
+(id:51279)            source     out    system_model.wig.wig.wig.average_op.p0b1_mesh_rotor0_out_panel_forces_x_ave
+ <=c=(id:51301)       connection dec    system_model.wig.wig.wig.torque_operation_rotor_0.fx_spanwise_blade_0
+
+(id:23854)            source     out    system_representation.system_configurations_model.design_geometry
+ <---(id:23855)       promotion  dec    system_representation.outputs_model.design_outputs_model.design_geometry
+
+(id:23868)            source     out    system_representation.outputs_model.design_outputs_model.p1_vector
+ <=c=(id:37481)       connection dec    system_model.wig.wig.wig.operation.input_model.p1b1_mesh_rotor.vector
+
+(id:23864)            source     out    system_representation.outputs_model.design_outputs_model.p0_vector
+ <=c=(id:24095)       connection dec    system_model.wig.wig.wig.operation.input_model.p0b1_mesh_rotor.vector
+

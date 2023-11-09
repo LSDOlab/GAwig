@@ -573,7 +573,7 @@ class RotorCSDL3(ModuleCSDL):
             set_angle = rad_per_blade*i
 
             for j in range(nt):
-                angle = set_angle + rad_per_dt*j*dir
+                angle = (set_angle + rad_per_dt*j)*dir
 
                 rot_mat = self.create_output('rot_mat_' + str(i) + str(j), shape=(3,3), val=0)
                 cos_theta, sin_theta = csdl.cos(angle), csdl.sin(angle)
