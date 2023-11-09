@@ -26,14 +26,20 @@ from torque_model import TorqueModel
 import time
 # endregion
 
+
+import sys  
+sys.setrecursionlimit(1000) 
+
+
+
 # region hyperparameters
-num_props = 2
-num_blades = 4
+num_props = 8
+num_blades = 6
 rpm = 1090.
 nt = 30
-dt = 0.005 # sec
-h = 10 # m
-pitch = np.deg2rad(0) # rad
+dt = 0.003 # sec
+h = 3 # m
+pitch = np.deg2rad(3) # rad
 rotor_blade_angle = np.deg2rad(0) # rad
 rotor_delta = np.array([0,0,0]) # m
 rotation_point = np.array([0,0,0])
@@ -85,7 +91,7 @@ for i in range(num_props):
 # region meshes
 # wing mesh:
 num_spanwise_vlm = 21
-num_chordwise_vlm = 8
+num_chordwise_vlm = 6
 
 if log_space:
     start = 0.001
@@ -137,7 +143,7 @@ if symmetry:
 
 
 # right fuselage mesh:
-num_long_vlm = 18
+num_long_vlm = 8
 num_vert_vlm = 4
 
 rtop = fuse.project(np.linspace(np.array([0, 27, -0.25]), np.array([120, 27, 9]), num_long_vlm+2)[1:-1], direction=np.array([0., 0., -1.]), plot=False)
@@ -160,26 +166,26 @@ sys_rep.add_output(left_fuse_mesh_name, left_fuse_surface)
 
 
 
-# htail mesh:
-num_spanwise_vlm_htail = 12
-num_chordwise_vlm_htail = 6
+# # htail mesh:
+# num_spanwise_vlm_htail = 12
+# num_chordwise_vlm_htail = 6
 
-htail_leading_edge = htail.project(np.linspace(np.array([112, -27, 32]), np.array([112, 27, 32]), num_spanwise_vlm_htail), direction=np.array([0., 0., -1.]), plot=False)
-htail_trailing_edge = htail.project(np.linspace(np.array([126, -27, 32]), np.array([126, 27, 32]), num_spanwise_vlm_htail), direction=np.array([0., 0., -1.]), plot=False)
-htail_chord_surface = am.linspace(htail_leading_edge, htail_trailing_edge, num_chordwise_vlm_htail)
-# spatial_rep.plot_meshes([htail_chord_surface])
-htail_upper_surface_wireframe = htail.project(htail_chord_surface.value + np.array([0., 0., 2.]), direction=np.array([0., 0., -2.]), grid_search_n=30, plot=False)
-htail_lower_surface_wireframe = htail.project(htail_chord_surface.value - np.array([0., 0., 2.]), direction=np.array([0., 0., 2.]), grid_search_n=30, plot=False)
-htail_camber_surface = am.linspace(htail_upper_surface_wireframe, htail_lower_surface_wireframe, 1)
-# spatial_rep.plot_meshes([htail_camber_surface])
-htail_vlm_mesh_name = 'htail_vlm_mesh'
-sys_rep.add_output(htail_vlm_mesh_name, htail_camber_surface)
+# htail_leading_edge = htail.project(np.linspace(np.array([112, -27, 32]), np.array([112, 27, 32]), num_spanwise_vlm_htail), direction=np.array([0., 0., -1.]), plot=False)
+# htail_trailing_edge = htail.project(np.linspace(np.array([126, -27, 32]), np.array([126, 27, 32]), num_spanwise_vlm_htail), direction=np.array([0., 0., -1.]), plot=False)
+# htail_chord_surface = am.linspace(htail_leading_edge, htail_trailing_edge, num_chordwise_vlm_htail)
+# # spatial_rep.plot_meshes([htail_chord_surface])
+# htail_upper_surface_wireframe = htail.project(htail_chord_surface.value + np.array([0., 0., 2.]), direction=np.array([0., 0., -2.]), grid_search_n=30, plot=False)
+# htail_lower_surface_wireframe = htail.project(htail_chord_surface.value - np.array([0., 0., 2.]), direction=np.array([0., 0., 2.]), grid_search_n=30, plot=False)
+# htail_camber_surface = am.linspace(htail_upper_surface_wireframe, htail_lower_surface_wireframe, 1)
+# # spatial_rep.plot_meshes([htail_camber_surface])
+# htail_vlm_mesh_name = 'htail_vlm_mesh'
+# sys_rep.add_output(htail_vlm_mesh_name, htail_camber_surface)
 
 
 
 
 # prop meshes
-num_spanwise_prop= 6
+num_spanwise_prop= 5
 num_chordwise_prop = 2
 
 offsets = [0,20,20,38,18,38,20,20] # gaps between rotors, left to right
@@ -304,14 +310,7 @@ if do_fuselage:
 prop_meshes = []
 prop_meshes_vel = []
 for i in range(num_props):
-    #blade_angle_value = np.array([blade_angle])
-    #rotor_delta_value = np.reshape(np.array([rotor_delta]), (3,))
-    #if i >= num_props/2:
-        # blade_angle_value = -1*blade_angle_value
-        # rotor_delta_value[1] = -1*rotor_delta_value[1]
-    
-    #blade_angle_m3l = m3l.Variable('blade_angle' + str(i), shape=(1,), value=blade_angle_value)
-    #delta_m3l = m3l.Variable('delta' + str(i), shape=(3,), value=rotor_delta_value)
+
     direction = -1
 
     if i >= num_props/2:
@@ -327,13 +326,8 @@ for i in range(num_props):
                         mesh = prop_meshes_np[i],
                         rpm = rpm,
                         point = prop_points[i])
-    # prop_mesh_out, mirror_prop_meshes, prop_mesh_vel = prop_model.evaluate(h_m3l, pitch_m3l, blade_angle_m3l, delta_m3l)
     prop_mesh_out, mirror_prop_meshes, prop_mesh_out_vel, prop_mesh_mirror_vel = prop_model.evaluate(h_m3l, pitch_m3l)
-    #if mirror:
-    #    prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
-    #else:
-    #    prop_meshes.append(prop_mesh_out)
-    #    prop_meshes_vel.append(prop_mesh_out_vel)
+
     if mirror:
         prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
         prop_meshes_vel.append(prop_mesh_out_vel + prop_mesh_mirror_vel)
@@ -667,7 +661,7 @@ model_csdl.print_var(max_eng_pwr)
 
 
 panel_fz = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_z_ave', shape=(num_panels, 1))
-fz_res = model_csdl.register_output('fz_res', panel_fz + m*9.81)
+fz_res = model_csdl.register_output('fz_res', csdl.pnorm(1*panel_fz) - m*9.81)
 model_csdl.print_var(fz_res)
 
 
@@ -679,10 +673,10 @@ model_csdl.print_var(fz_res)
 
 
 panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
-fx_res = model_csdl.register_output('fx_res', csdl.pnorm(panel_fx*1.))
+fx_res = model_csdl.register_output('fx_res', csdl.pnorm(1*panel_fx))
 
 
-trim_res = model_csdl.register_output('trim_res', fz_res**2 + fx_res**2)
+trim_res = model_csdl.register_output('trim_res', fz_res + fx_res)
 model_csdl.print_var(1*trim_res)
 model_csdl.add_constraint('trim_res', equals=0, scaler=1E-6)
 
@@ -737,17 +731,14 @@ print('Total run time: ', end - start)
 # L = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L']
 # D = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D']
 
-
-#print('L ave: ', sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave'])
-#print('D ave: ', sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D_ave'])
-
-# print(L/D)
+print('fz res: ', sim['fz_res'])
+print('fx res: ', sim['fx_res'])
 
 
 print(sim['system_model.wig.wig.wig.torque_operation_rotor_0.total_thrust'])
 print(sim['system_model.wig.wig.wig.torque_operation_rotor_1.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_4.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_5.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_6.total_thrust'])
@@ -765,9 +756,6 @@ print('velocity: ', sim['system_model.wig.wig.wig.operation.input_model.wig_ac_s
 
 
 if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='sample_gif')
-
-# if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='mirror.gif')
-
 
 
 
