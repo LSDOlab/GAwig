@@ -39,10 +39,10 @@ rotation_point = np.array([0,0,0])
 do_wing = True
 do_flaps = False
 do_fuselage = True
-mirror = False
+mirror = True
 sub = True
 free_wake = True
-symmetry = False # only works with mirror = True
+symmetry = True # only works with mirror = True
 log_space = False # log spacing spanwise for wing mesh
 max_pwr = 4600. # hp
 m = 230000 # kg
@@ -124,6 +124,14 @@ if do_flaps:
     flap_mesh = deflect_flap(wing_camber_surface_np, 30, 1)
     # spatial_rep.plot_meshes([flap_mesh])
     wing_camber_surface_np = flap_mesh
+
+
+
+
+if symmetry:
+    wing_camber_surface_np_neg_y = np.flip(wing_camber_surface_np[:,:int((num_spanwise_vlm+1)/2),:].copy(),1)
+    wing_camber_surface_np_pos_y = wing_camber_surface_np[:,int((num_spanwise_vlm-1)/2):,:].copy()
+
 
 
 
@@ -259,12 +267,23 @@ pitch_m3l = m3l.Variable('pitch', shape=(1,), value=np.array([np.deg2rad(pitch)]
 
 non_rotor_surfaces = []
 # wing mirroring
-wing_mirror_model = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,nt=nt,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np*0.3048)
-wing_mesh_out, wing_mirror_mesh = wing_mirror_model.evaluate(pitch_m3l, h_m3l)
-if do_wing:
-    non_rotor_surfaces.append(wing_mesh_out)
-    if mirror:
-        non_rotor_surfaces.append(wing_mirror_mesh)
+if symmetry:
+    wing_mirror_model_neg_y = Mirror(component=wing,mesh_name=wing_vlm_mesh_name + '_neg_y',nt=nt,ns=int((num_spanwise_vlm+1)/2),nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np_neg_y*0.3048)
+    wing_mesh_neg_y_out, wing_mirror_neg_y_mesh = wing_mirror_model_neg_y.evaluate(pitch_m3l, h_m3l)
+
+    wing_mirror_model_pos_y = Mirror(component=wing,mesh_name=wing_vlm_mesh_name + '_pos_y',nt=nt,ns=int((num_spanwise_vlm+1)/2),nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np_pos_y*0.3048)
+    wing_mesh_pos_y_out, wing_mirror_pos_y_mesh = wing_mirror_model_pos_y.evaluate(pitch_m3l, h_m3l)
+    if do_wing:
+        non_rotor_surfaces.extend([wing_mesh_neg_y_out, wing_mesh_pos_y_out])
+        if mirror:
+            non_rotor_surfaces.extend([wing_mirror_neg_y_mesh, wing_mirror_pos_y_mesh])
+else:
+    wing_mirror_model = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,nt=nt,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np*0.3048)
+    wing_mesh_out, wing_mirror_mesh = wing_mirror_model.evaluate(pitch_m3l, h_m3l)
+    if do_wing:
+        non_rotor_surfaces.append(wing_mesh_out)
+        if mirror:
+            non_rotor_surfaces.append(wing_mirror_mesh)
 
 # right fuselage mirroring
 right_fuse_mirror_model = Mirror(component=fuse,mesh_name=right_fuse_mesh_name,nt=nt,ns=num_vert_vlm,nc=num_long_vlm,point=rotation_point, mesh=right_fuse_surface_reordered*0.3048)
@@ -424,10 +443,16 @@ if symmetry:
                                 int((num_props-1-i)*num_blades + j + num_blades/2)])       # right mirror blade
 
     # symmetry for wing
-    if wing_mesh_out.name in surface_names:
-        wing_index = surface_names.index(wing_mesh_out.name)
-        wing_mirror_index = surface_names.index(wing_mirror_mesh.name)
-        symmetry_list.append([wing_index, wing_mirror_index])
+    if do_wing:
+        if mirror:
+            wing_list = [wing_mesh_neg_y_out, wing_mesh_pos_y_out, wing_mirror_neg_y_mesh, wing_mirror_pos_y_mesh]
+        else:
+            wing_list = [wing_mesh_neg_y_out, wing_mesh_pos_y_out]
+        wing_indices = []
+        for val in wing_list:
+            wing_index = surface_names.index(val.name)
+            wing_indices.append(wing_index)
+        symmetry_list.append(wing_indices)
 
     # symmetry for fuselages
     if right_fuse_mesh_out.name in surface_names:
