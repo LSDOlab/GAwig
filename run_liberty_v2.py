@@ -47,6 +47,7 @@ symmetry = True # only works with mirror = True
 log_space = True # log spacing spanwise for wing mesh
 max_pwr = 4600. # hp
 m = 230000 # kg
+n_avg = 10
 # endregion
 
 # region caddee setup
@@ -327,7 +328,6 @@ for i in range(num_props):
                         rpm = rpm,
                         point = prop_points[i])
     # prop_mesh_out, mirror_prop_meshes, prop_mesh_vel = prop_model.evaluate(h_m3l, pitch_m3l, blade_angle_m3l, delta_m3l)
-    # prop_mesh_out, mirror_prop_meshes, prop_mesh_vel = prop_model.evaluate(h_m3l, pitch_m3l, blade_angle_m3l)
     prop_mesh_out, mirror_prop_meshes, prop_mesh_out_vel, prop_mesh_mirror_vel = prop_model.evaluate(h_m3l, pitch_m3l)
     #if mirror:
     #    prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
@@ -531,7 +531,7 @@ outputs = uvlm_op.evaluate()[0:len(pp_vars)]
 # endregion
 
 # region post-processing
-average_op = LastNAverage(n=10,end_offset=1)
+average_op = LastNAverage(n=n_avg,end_offset=1)
 ave_outputs = average_op.evaluate(outputs) # time averaged qts
 
 fx = ave_outputs[0]
@@ -659,12 +659,16 @@ max_eng_pwr = model_csdl.register_output('max_eng_pwr', csdl.max(1E-2*power_vect
 model_csdl.print_var(max_eng_pwr)
 
 # # lift equals weight constraint:
-L_neg_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_neg_y_out_L_ave')
-L_pos_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_pos_y_out_L_ave')
-L_tot_ave = model_csdl.register_output('L_tot_ave', L_neg_y_ave + L_pos_y_ave)
-L_res = (L_tot_ave - m*9.81)*1E-3
-model_csdl.print_var(1*L_res)
+# L_neg_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_neg_y_out_L_ave')
+# L_pos_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_pos_y_out_L_ave')
+# L_tot_ave = model_csdl.register_output('L_tot_ave', L_neg_y_ave + L_pos_y_ave)
+# L_res = (L_tot_ave - m*9.81)*1E-3
+# model_csdl.print_var(1*L_res)
 
+
+panel_fz = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_z_ave', shape=(num_panels, 1))
+fz_res = model_csdl.register_output('fz_res', panel_fz + m*9.81)
+model_csdl.print_var(fz_res)
 
 
 # # get the total thrust:
@@ -675,9 +679,10 @@ model_csdl.print_var(1*L_res)
 
 
 panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
-D_res = model_csdl.register_output('D_res', csdl.pnorm(panel_fx*1.))
+fx_res = model_csdl.register_output('fx_res', csdl.pnorm(panel_fx*1.))
 
-trim_res = model_csdl.register_output('trim_res', L_res**2 + D_res**2)
+
+trim_res = model_csdl.register_output('trim_res', fz_res**2 + fx_res**2)
 model_csdl.print_var(1*trim_res)
 model_csdl.add_constraint('trim_res', equals=0, scaler=1E-6)
 
