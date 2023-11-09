@@ -21,12 +21,13 @@ from last_n_average import LastNAverage
 from plot import plot_wireframe
 from engine import Engine
 from torque_model import TorqueModel
-from breguet_range_eqn import BreguetRange
+# from breguet_range_eqn import BreguetRange
+import time
 # endregion
 
 # region hyperparameters
 num_props = 8
-num_blades = 4
+num_blades = 6
 rpm = 1090.
 nt = 20
 dt = 0.003 # sec
@@ -44,7 +45,7 @@ free_wake = True
 symmetry = False # only works with mirror = True
 log_space = False # log spacing spanwise for wing mesh
 max_pwr = 4600. # hp
-m = 340000. # kg
+m = 230000 # kg
 g = 9.81 # m/s^2
 # endregion
 
@@ -82,7 +83,7 @@ for i in range(num_props):
 
 # region meshes
 # wing mesh:
-num_spanwise_vlm = 31
+num_spanwise_vlm = 21
 num_chordwise_vlm = 8
 
 if log_space:
@@ -124,9 +125,12 @@ if do_flaps:
     # spatial_rep.plot_meshes([flap_mesh])
     wing_camber_surface_np = flap_mesh
 
+
+
 # right fuselage mesh:
-num_long_vlm = 22
-num_vert_vlm = 6
+num_long_vlm = 18
+num_vert_vlm = 4
+
 rtop = fuse.project(np.linspace(np.array([0, 27, -0.25]), np.array([120, 27, 9]), num_long_vlm+2)[1:-1], direction=np.array([0., 0., -1.]), plot=False)
 rbot = fuse.project(np.linspace(np.array([0, 27, -10]), np.array([120, 27, -2]), num_long_vlm+2)[1:-1], direction=np.array([0., 0., -1.]), plot=False)
 right_fuse_surface = am.linspace(rtop, rbot, num_vert_vlm)
@@ -144,9 +148,13 @@ left_fuse_surface_reordered = np.swapaxes(left_fuse_surface.value, 0, 1)
 left_fuse_mesh_name = 'left_fuselage_mesh'
 sys_rep.add_output(left_fuse_mesh_name, left_fuse_surface)
 
+
+
+
 # htail mesh:
 num_spanwise_vlm_htail = 12
 num_chordwise_vlm_htail = 6
+
 htail_leading_edge = htail.project(np.linspace(np.array([112, -27, 32]), np.array([112, 27, 32]), num_spanwise_vlm_htail), direction=np.array([0., 0., -1.]), plot=False)
 htail_trailing_edge = htail.project(np.linspace(np.array([126, -27, 32]), np.array([126, 27, 32]), num_spanwise_vlm_htail), direction=np.array([0., 0., -1.]), plot=False)
 htail_chord_surface = am.linspace(htail_leading_edge, htail_trailing_edge, num_chordwise_vlm_htail)
@@ -158,9 +166,13 @@ htail_camber_surface = am.linspace(htail_upper_surface_wireframe, htail_lower_su
 htail_vlm_mesh_name = 'htail_vlm_mesh'
 sys_rep.add_output(htail_vlm_mesh_name, htail_camber_surface)
 
+
+
+
 # prop meshes
 num_spanwise_prop= 6
 num_chordwise_prop = 2
+
 offsets = [0,20,20,38,18,38,20,20] # gaps between rotors, left to right
 p1 = [39.754, -88.35, 4.769]
 p2 = [39.848-0.3, -93.75, 4.342-0.5]
@@ -224,7 +236,7 @@ design_scenario = cd.DesignScenario(name='wig')
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.2, dv_flag=True, lower=0.1, upper=0.3)
+wig_condition.set_module_input(name='mach_number', val=0.2, dv_flag=True, lower=0.05, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
 # ptich angle is always zero, mirroring functions apply pitch by offsetting meshes
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0))
@@ -297,12 +309,22 @@ for i in range(num_props):
                         point = prop_points[i])
     # prop_mesh_out, mirror_prop_meshes, prop_mesh_vel = prop_model.evaluate(h_m3l, pitch_m3l, blade_angle_m3l, delta_m3l)
     # prop_mesh_out, mirror_prop_meshes, prop_mesh_vel = prop_model.evaluate(h_m3l, pitch_m3l, blade_angle_m3l)
-    prop_mesh_out, mirror_prop_meshes, prop_mesh_vel = prop_model.evaluate(h_m3l, pitch_m3l)
+    prop_mesh_out, mirror_prop_meshes, prop_mesh_out_vel, prop_mesh_mirror_vel = prop_model.evaluate(h_m3l, pitch_m3l)
+    #if mirror:
+    #    prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
+    #else:
+    #    prop_meshes.append(prop_mesh_out)
+    #    prop_meshes_vel.append(prop_mesh_out_vel)
     if mirror:
         prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
+        prop_meshes_vel.append(prop_mesh_out_vel + prop_mesh_mirror_vel)
     else:
         prop_meshes.append(prop_mesh_out)
-        prop_meshes_vel.append(prop_mesh_vel)
+        prop_meshes_vel.append(prop_mesh_out_vel)
+
+
+
+
 
 if mirror:
     num_blades = num_blades*2
@@ -569,7 +591,7 @@ for i in range(len(prop_meshes)):
 # blade angle design variables:
 for i in range(int(num_props/2)):
     blade_angle = model_csdl.create_input('blade_angle_'+str(i), val=rotor_blade_angle)
-    model_csdl.add_design_variable('blade_angle_'+str(i), scaler=1)
+    model_csdl.add_design_variable('blade_angle_'+str(i), upper=np.deg2rad(20), lower=np.deg2rad(-20), scaler=1E2)
     model_csdl.connect('blade_angle_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.blade_angle')
 
     # symmetric blade-angle connections:
@@ -581,7 +603,7 @@ for i in range(int(num_props/2)):
 # rotor delta design variables:
 for i in range(int(num_props/2)):
     delta = model_csdl.create_input('delta_'+str(i), val=rotor_delta)
-    model_csdl.add_design_variable('delta_'+str(i), scaler=1)
+    model_csdl.add_design_variable('delta_'+str(i), upper=3, lower=-3, scaler=1)
     model_csdl.connect('delta_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.delta')
 
     # symmetric delta connections:
@@ -590,22 +612,37 @@ for i in range(int(num_props/2)):
     model_csdl.connect('other_delta_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.delta')
 
 
+
 # engine power constraints:
+power_vector = model_csdl.create_output('power_vector', shape=(len(prop_fx_list)), val=0)
 for i in range(len(prop_fx_list)):
-    model_csdl.add_constraint('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr', upper=max_pwr, scaler=1/max_pwr)
+    eng_pwr = model_csdl.declare_variable('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr')
+    power_vector[i] = eng_pwr
+    # model_csdl.add_constraint('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr', upper=max_pwr, scaler=1E-3)
+    
+max_eng_pwr = model_csdl.register_output('max_eng_pwr', csdl.max(1E-2*power_vector)/1E-2)
+# model_csdl.add_constraint('max_eng_pwr', upper=max_pwr, scaler=1E-3)
+model_csdl.print_var(max_eng_pwr)
 
 # lift equals weight constraint:
-model_csdl.add_constraint('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave', equals=m*g, scaler=1/(m*g))
+L_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave')
+L_res = (L_ave - m*g)*1E-3
+model_csdl.print_var(1*L_res)
+# model_csdl.add_constraint('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave', equals=m*g, scaler=1E-6)
+
 
 # thrust equals drag constraint:
-# other_drag_coef = 0.006
-# v = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u')
-# rho = model_csdl.declare_variable('system_model.wig.wig.wig.operation.density')
-# other_drag = model_csdl.register_output('other_drag', 0.5*rho*(v**2)*6000*other_drag_coef)
-# drag = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D_ave')
-# total_drag = other_drag + drag
-# model_csdl.register_output('thrust_drag_residual', total_thrust - total_drag)
+D_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D_ave')
+model_csdl.print_var(1*D_ave)
+# model_csdl.register_output('total_drag_ave', 1*D_ave)
+# model_csdl.add_constraint('total_drag_ave', equals=0, scaler=1E-3)
 
+trim_res = model_csdl.register_output('trim_res', L_res + D_ave)
+model_csdl.print_var(1*trim_res)
+model_csdl.add_constraint('trim_res', equals=0, scaler=1E-4)
+
+
+# get the total thrust:
 thrust_index = model_csdl.create_output('thrust_index', shape=(num_props), val=0)
 for i in range(num_props):
     thrust_index[i] = 1*model_csdl.declare_variable('system_model.wig.wig.wig.torque_operation_rotor_'+str(i)+'.total_thrust')
@@ -616,29 +653,29 @@ thrust_sum = model_csdl.register_output('thrust_sum', csdl.sum(thrust_index))
 
 # objective:
 velocity = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u')
+model_csdl.print_var(1*velocity)
 obj = model_csdl.register_output('obj', 1*velocity)
-model_csdl.add_objective('obj', scaler=1)
+model_csdl.add_objective('obj', scaler=1E-2)
 
 
+start = time.time()
 
 sim = Simulator(model_csdl, analytics=True, lazy=1)
 sim.run()
+#sim.check_partials(compact_print=True)
+#sim.check_totals()
 
 
 
 #prob = CSDLProblem(problem_name='gawig', simulator=sim)
-#optimizer = SLSQP(prob, maxiter=10, ftol=1E-5)
+#optimizer = SLSQP(prob, maxiter=4, ftol=1E-3)
 #optimizer.solve()
 #optimizer.print_results()
 
 
+end = time.time()
+print('Total run time: ', end - start)
 
-# import time
-# start = time.time()
-# sim.run()
-# end = time.time()
-# print('Total run time:')
-# print(end-start)
 # print('Fx Prop 1')
 # print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor0_out_panel_forces_x_ave'])
 # print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor1_out_panel_forces_x_ave'])
@@ -659,12 +696,11 @@ sim.run()
 # print('\n')
 L = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L']
 # D = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D']
-# print('\n')
-#L_ave = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave']
-#D_ave = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D_ave']
-print(L)
+
+
 print('L ave: ', sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L_ave'])
-# print(D)
+print('D ave: ', sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D_ave'])
+
 # print(L/D)
 
 
@@ -679,8 +715,20 @@ print(sim['system_model.wig.wig.wig.torque_operation_rotor_7.total_thrust'])
 
 print('total thrust: ', sim['thrust_sum'])
 
-if True:
-    plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False)
+
+# print some of the design variables:
+for i in range(int(num_props/2)):
+    print('blade angle '+str(i)+': ', sim['blade_angle_'+str(i)])
+
+for i in range(int(num_props/2)):
+    print('delta '+str(i)+': ', sim['delta_'+str(i)])
+
+print('velocity: ', sim['system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u'])
+
+
+if True: plot_wireframe(sim, surface_names, nt, plot_mirror=False, interactive=False, name='sample_gif')
+
+# if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='mirror.gif')
 
 
 
