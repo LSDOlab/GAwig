@@ -500,7 +500,7 @@ class RotorCSDL3(ModuleCSDL):
 
         # blade pitch control
         blade_angle = self.declare_variable('blade_angle', shape=(1,), val=0)
-        self.print_var(blade_angle)
+        # self.print_var(blade_angle)
         # blade_axis = self.declare_variable('blade_axis', shape=(3,))*0.3048
         blade_axis = point + np.array([0,1,0])
         normalized_blade_axis = blade_axis/csdl.expand(csdl.pnorm(blade_axis, 2), (3,))

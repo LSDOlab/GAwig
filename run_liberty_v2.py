@@ -36,7 +36,7 @@ sys.setrecursionlimit(1000)
 num_props = 8
 num_blades = 4
 rpm = 1090.
-nt = 32
+nt = 30
 dt = 0.003 # sec
 h = 3 # m
 pitch = np.deg2rad(5) # rad
@@ -603,9 +603,7 @@ for i in range(len(prop_meshes)):
     model_csdl.connect('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u',
                         f'system_model.wig.wig.wig.torque_operation_rotor_{i}.velocity')
 
-# wing mirror model connections:
-# caddee_csdl_model.connect('wing_vlm_mesh', 
-#                           'system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.wing_vlm_mesh')
+
 # endregion
 
 
@@ -627,18 +625,34 @@ for i in range(int(num_props/2)):
     model_csdl.register_output('other_blade_angle_'+str(i), -1*blade_angle)
     model_csdl.connect('other_blade_angle_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.blade_angle')
 
+    model_csdl.print_var(blade_angle)
+
 
 
 # rotor delta design variables:
 for i in range(int(num_props/2)):
-    delta = model_csdl.create_input('delta_'+str(i), val=rotor_delta)
-    model_csdl.add_design_variable('delta_'+str(i), upper=2, lower=-2, scaler=1)
+    delta_x = model_csdl.create_input('delta_x_'+str(i), val=rotor_delta[0])
+    delta_y = model_csdl.create_input('delta_y_'+str(i), val=rotor_delta[1])
+    delta_z = model_csdl.create_input('delta_z_'+str(i), val=rotor_delta[2])
+
+    # model_csdl.add_design_variable('delta_x_'+str(i), upper=2, lower=-2, scaler=1)
+    model_csdl.add_design_variable('delta_y_'+str(i), upper=2, lower=-2, scaler=1)
+    model_csdl.add_design_variable('delta_z_'+str(i), upper=2, lower=-2, scaler=1)
+
+
+    delta = model_csdl.create_output('delta_'+str(i), shape=(3), val=0)
+    delta[0], delta[1], delta[2] = delta_x, delta_y, delta_z
+
+    # delta = model_csdl.create_input('delta_'+str(i), val=rotor_delta)
+    # model_csdl.add_design_variable('delta_'+str(i), upper=2, lower=-2, scaler=1)
     model_csdl.connect('delta_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.delta')
 
     # symmetric delta connections:
     other_delta = model_csdl.create_output('other_delta_'+str(i), shape=(3,), val=0)
     other_delta[0], other_delta[1], other_delta[2] = delta[0], -1*delta[1], delta[2]
     model_csdl.connect('other_delta_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.delta')
+
+    model_csdl.print_var(delta)
 
 
 
@@ -660,10 +674,10 @@ fz_res = model_csdl.register_output('fz_res', (L_tot_ave - m*9.81)*1E-3)
 model_csdl.print_var(fz_res)
 
 
-# panel_fz = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_z_ave', shape=(num_panels, 1))
-# model_csdl.print_var(panel_fz)
-# fz_res = model_csdl.register_output('fz_res', csdl.sum(1*panel_fz) + m*9.81)
-# model_csdl.print_var(fz_res)
+
+vel = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u')
+other_drag_coef = 0.0
+other_drag = model_csdl.register_output('other_drag', 0.5*1.225*vel**2*6000*other_drag_coef)
 
 
 # # get the total thrust:
@@ -674,12 +688,13 @@ model_csdl.print_var(fz_res)
 
 
 panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
-fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx))
+fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx) + other_drag)
+model_csdl.print_var(fx_res)
 
 
 trim_res = model_csdl.register_output('trim_res', (fz_res**2 + fx_res**2)/1E6)
-model_csdl.print_var(1*trim_res)
-model_csdl.add_constraint('trim_res', equals=0, scaler=1E-5)
+model_csdl.print_var(trim_res)
+model_csdl.add_constraint('trim_res', equals=0, scaler=1E-4)
 
 
 
@@ -738,12 +753,12 @@ print('fx res: ', sim['fx_res'])
 
 print(sim['system_model.wig.wig.wig.torque_operation_rotor_0.total_thrust'])
 print(sim['system_model.wig.wig.wig.torque_operation_rotor_1.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_4.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_5.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_6.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_7.total_thrust'])
+print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
+print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
+print(sim['system_model.wig.wig.wig.torque_operation_rotor_4.total_thrust'])
+print(sim['system_model.wig.wig.wig.torque_operation_rotor_5.total_thrust'])
+print(sim['system_model.wig.wig.wig.torque_operation_rotor_6.total_thrust'])
+print(sim['system_model.wig.wig.wig.torque_operation_rotor_7.total_thrust'])
 
 
 # print some of the design variables:
