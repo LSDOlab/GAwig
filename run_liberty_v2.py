@@ -34,18 +34,18 @@ sys.setrecursionlimit(1000)
 
 # region hyperparameters
 num_props = 8
-num_blades = 6
+num_blades = 4
 rpm = 1090.
-nt = 30
+nt = 34
 dt = 0.003 # sec
 h = 3 # m
-pitch = np.deg2rad(3) # rad
+pitch = np.deg2rad(5) # rad
 rotor_blade_angle = np.deg2rad(0) # rad
 rotor_delta = np.array([0,0,0]) # m
-rotation_point = np.array([0,0,0])
+rotation_point = np.array([37,0,0])
 do_wing = True
 do_flaps = False
-do_fuselage = True
+do_fuselage = False
 mirror = True
 sub = True
 free_wake = True
@@ -91,7 +91,7 @@ for i in range(num_props):
 # region meshes
 # wing mesh:
 num_spanwise_vlm = 21
-num_chordwise_vlm = 6
+num_chordwise_vlm = 4
 
 if log_space:
     start = 0.001
@@ -251,7 +251,7 @@ design_scenario = cd.DesignScenario(name='wig')
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.2, dv_flag=True, lower=0.05, upper=0.3)
+wig_condition.set_module_input(name='mach_number', val=0.2, dv_flag=True, lower=0.01, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
 # ptich angle is always zero, mirroring functions apply pitch by offsetting meshes
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0))
@@ -270,23 +270,23 @@ ac_states_expanded = ac_expander.evaluate(ac_states)
 # region mirroring
 
 h_m3l = m3l.Variable('h', shape=(1,), value=np.array([h]))
-pitch_m3l = m3l.Variable('pitch', shape=(1,), value=np.array([np.deg2rad(pitch)]))
+theta_m3l = m3l.Variable('theta', shape=(1,), value=np.array([pitch]))
 
 non_rotor_surfaces = []
 # wing mirroring
 if symmetry:
     wing_mirror_model_neg_y = Mirror(component=wing,mesh_name=wing_vlm_mesh_name + '_neg_y',nt=nt,ns=int((num_spanwise_vlm+1)/2),nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np_neg_y*0.3048)
-    wing_mesh_neg_y_out, wing_mirror_neg_y_mesh = wing_mirror_model_neg_y.evaluate(pitch_m3l, h_m3l)
+    wing_mesh_neg_y_out, wing_mirror_neg_y_mesh = wing_mirror_model_neg_y.evaluate(theta_m3l, h_m3l)
 
     wing_mirror_model_pos_y = Mirror(component=wing,mesh_name=wing_vlm_mesh_name + '_pos_y',nt=nt,ns=int((num_spanwise_vlm+1)/2),nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np_pos_y*0.3048)
-    wing_mesh_pos_y_out, wing_mirror_pos_y_mesh = wing_mirror_model_pos_y.evaluate(pitch_m3l, h_m3l)
+    wing_mesh_pos_y_out, wing_mirror_pos_y_mesh = wing_mirror_model_pos_y.evaluate(theta_m3l, h_m3l)
     if do_wing:
         non_rotor_surfaces.extend([wing_mesh_neg_y_out, wing_mesh_pos_y_out])
         if mirror:
             non_rotor_surfaces.extend([wing_mirror_neg_y_mesh, wing_mirror_pos_y_mesh])
 else:
     wing_mirror_model = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,nt=nt,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np*0.3048)
-    wing_mesh_out, wing_mirror_mesh = wing_mirror_model.evaluate(pitch_m3l, h_m3l)
+    wing_mesh_out, wing_mirror_mesh = wing_mirror_model.evaluate(theta_m3l, h_m3l)
     if do_wing:
         non_rotor_surfaces.append(wing_mesh_out)
         if mirror:
@@ -294,11 +294,11 @@ else:
 
 # right fuselage mirroring
 right_fuse_mirror_model = Mirror(component=fuse,mesh_name=right_fuse_mesh_name,nt=nt,ns=num_vert_vlm,nc=num_long_vlm,point=rotation_point, mesh=right_fuse_surface_reordered*0.3048)
-right_fuse_mesh_out, right_fuse_mirror_mesh = right_fuse_mirror_model.evaluate(pitch_m3l, h_m3l)
+right_fuse_mesh_out, right_fuse_mirror_mesh = right_fuse_mirror_model.evaluate(theta_m3l, h_m3l)
 
 # left fuselage mirroring
 left_fuse_mirror_model = Mirror(component=fuse,mesh_name=left_fuse_mesh_name,nt=nt,ns=num_vert_vlm,nc=num_long_vlm,point=rotation_point, mesh=left_fuse_surface_reordered*0.3048)
-left_fuse_mesh_out, left_fuse_mirror_mesh = left_fuse_mirror_model.evaluate(pitch_m3l, h_m3l)
+left_fuse_mesh_out, left_fuse_mirror_mesh = left_fuse_mirror_model.evaluate(theta_m3l, h_m3l)
 if do_fuselage:
     non_rotor_surfaces.append(left_fuse_mesh_out)
     non_rotor_surfaces.append(right_fuse_mesh_out)
@@ -326,7 +326,7 @@ for i in range(num_props):
                         mesh = prop_meshes_np[i],
                         rpm = rpm,
                         point = prop_points[i])
-    prop_mesh_out, mirror_prop_meshes, prop_mesh_out_vel, prop_mesh_mirror_vel = prop_model.evaluate(h_m3l, pitch_m3l)
+    prop_mesh_out, mirror_prop_meshes, prop_mesh_out_vel, prop_mesh_mirror_vel = prop_model.evaluate(h_m3l, theta_m3l)
 
     if mirror:
         prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
@@ -649,20 +649,21 @@ for i in range(len(prop_fx_list)):
     power_vector[i] = eng_pwr
     
 max_eng_pwr = model_csdl.register_output('max_eng_pwr', csdl.max(1E-2*power_vector)/1E-2)
-# model_csdl.add_constraint('max_eng_pwr', upper=max_pwr, scaler=1E-3)
+model_csdl.add_constraint('max_eng_pwr', upper=max_pwr, scaler=1E-3)
 model_csdl.print_var(max_eng_pwr)
 
-# # lift equals weight constraint:
-# L_neg_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_neg_y_out_L_ave')
-# L_pos_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_pos_y_out_L_ave')
-# L_tot_ave = model_csdl.register_output('L_tot_ave', L_neg_y_ave + L_pos_y_ave)
-# L_res = (L_tot_ave - m*9.81)*1E-3
-# model_csdl.print_var(1*L_res)
-
-
-panel_fz = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_z_ave', shape=(num_panels, 1))
-fz_res = model_csdl.register_output('fz_res', csdl.pnorm(1*panel_fz) - m*9.81)
+# lift equals weight constraint:
+L_neg_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_neg_y_out_L_ave')
+L_pos_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_pos_y_out_L_ave')
+L_tot_ave = model_csdl.register_output('L_tot_ave', L_neg_y_ave + L_pos_y_ave)
+fz_res = model_csdl.register_output('fz_res', (L_tot_ave - m*9.81)*1E-3)
 model_csdl.print_var(fz_res)
+
+
+# panel_fz = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_z_ave', shape=(num_panels, 1))
+# model_csdl.print_var(panel_fz)
+# fz_res = model_csdl.register_output('fz_res', csdl.sum(1*panel_fz) + m*9.81)
+# model_csdl.print_var(fz_res)
 
 
 # # get the total thrust:
@@ -673,12 +674,12 @@ model_csdl.print_var(fz_res)
 
 
 panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
-fx_res = model_csdl.register_output('fx_res', csdl.pnorm(1*panel_fx))
+fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx))
 
 
-trim_res = model_csdl.register_output('trim_res', fz_res + fx_res)
+trim_res = model_csdl.register_output('trim_res', (fz_res**2 + fx_res**2)/1E6)
 model_csdl.print_var(1*trim_res)
-model_csdl.add_constraint('trim_res', equals=0, scaler=1E-6)
+model_csdl.add_constraint('trim_res', equals=0, scaler=1E-5)
 
 
 
