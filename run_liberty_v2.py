@@ -36,7 +36,7 @@ sys.setrecursionlimit(1000)
 num_props = 8
 num_blades = 4
 rpm = 1090.
-nt = 34
+nt = 32
 dt = 0.003 # sec
 h = 3 # m
 pitch = np.deg2rad(5) # rad
@@ -632,7 +632,7 @@ for i in range(int(num_props/2)):
 # rotor delta design variables:
 for i in range(int(num_props/2)):
     delta = model_csdl.create_input('delta_'+str(i), val=rotor_delta)
-    model_csdl.add_design_variable('delta_'+str(i), upper=3, lower=-3, scaler=1)
+    model_csdl.add_design_variable('delta_'+str(i), upper=2, lower=-2, scaler=1)
     model_csdl.connect('delta_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.delta')
 
     # symmetric delta connections:
@@ -696,16 +696,16 @@ model_csdl.add_objective('obj', scaler=1E-2)
 start = time.time()
 
 sim = Simulator(model_csdl, analytics=True, lazy=1)
-sim.run()
+#sim.run()
 #sim.check_partials(compact_print=True)
 #sim.check_totals()
 
 
 
-#prob = CSDLProblem(problem_name='gawig', simulator=sim)
-#optimizer = SLSQP(prob, maxiter=4, ftol=1E-3)
-#optimizer.solve()
-#optimizer.print_results()
+prob = CSDLProblem(problem_name='gawig', simulator=sim)
+optimizer = SLSQP(prob, maxiter=100, ftol=1E-3)
+optimizer.solve()
+optimizer.print_results()
 
 
 end = time.time()
@@ -756,7 +756,7 @@ for i in range(int(num_props/2)):
 print('velocity: ', sim['system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u'])
 
 
-if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='sample_gif')
+if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='sample_gif')
 
 
 
