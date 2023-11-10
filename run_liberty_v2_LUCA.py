@@ -24,17 +24,17 @@ from torque_model import TorqueModel
 # endregion
 
 # region hyperparameters
-num_props = 4
-num_blades = 2
+num_props = 2
+num_blades = 4
 rpm = 1090.
-nt = 45
+nt = 10
 dt = 0.003 * 1
-h = 20                        # m
-pitch = np.deg2rad(0)        # rad
-blade_angle = np.deg2rad(0)  # rad
-rotor_delta = [0,0,0]        # m
+h = 20 # m
+pitch = np.deg2rad(0) # rad
+rotor_blade_angle = np.deg2rad(0) # rad
+rotor_delta = np.array([0,0,0]) # m
 rotation_point = np.array([0,0,0])
-do_wing = True
+do_wing = False
 do_flaps = False
 do_fuselage = False
 mirror = True
@@ -227,7 +227,7 @@ design_scenario = cd.DesignScenario(name='wig')
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.2, dv_flag=True, lower=0.1, upper=0.3)
+wig_condition.set_module_input(name='mach_number', val=0.2, dv_flag=True, lower=0.05, upper=0.3)
 wig_condition.set_module_input(name='range', val=1000)
 # ptich angle is always zero, mirroring functions apply pitch by offsetting meshes
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0))
@@ -286,33 +286,37 @@ if do_fuselage:
 prop_meshes = []
 prop_meshes_vel = []
 for i in range(num_props):
-    blade_angle_value = np.array([blade_angle])
-    rotor_delta_value = np.reshape(np.array([rotor_delta]), (3,))
+    # blade_angle_value = np.array([blade_angle])
+    # rotor_delta_value = np.reshape(np.array([rotor_delta]), (3,))
+    # if i >= num_props/2:
+    #     blade_angle_value = -1*blade_angle_value
+    #     rotor_delta_value[1] = -1*rotor_delta_value[1]
+    # blade_angle_m3l = m3l.Variable('blade_angle' + str(i), shape=(1,), value=blade_angle_value)
+    # delta_m3l = m3l.Variable('delta' + str(i), shape=(3,), value=rotor_delta_value)
+    # dir = -1
+    direction = -1
+
     if i >= num_props/2:
-        blade_angle_value = -1*blade_angle_value
-        rotor_delta_value[1] = -1*rotor_delta_value[1]
-    blade_angle_m3l = m3l.Variable('blade_angle' + str(i), shape=(1,), value=blade_angle_value)
-    delta_m3l = m3l.Variable('delta' + str(i), shape=(3,), value=rotor_delta_value)
-    dir = -1
-    if i >= num_props/2:
-        dir = 1
+        # dir = 1
+        direction = 1
     prop_model = Rotor3(mesh_name = propb1_mesh_names[i], 
                         num_blades = num_blades, 
                         ns = num_spanwise_prop, 
                         nc = num_chordwise_prop, 
                         nt = nt, 
                         dt = dt, 
-                        dir = dir, 
-                        r_point = rotation_point, 
+                        dir = direction, 
+                        r_point = rotation_point,
                         mesh = prop_meshes_np[i],
                         rpm = rpm,
                         point = prop_points[i])
-    prop_mesh_out, mirror_prop_meshes, prop_mesh_vel = prop_model.evaluate(h_m3l, pitch_m3l, blade_angle_m3l, delta_m3l)
+    prop_mesh_out, mirror_prop_meshes, prop_mesh_out_vel, prop_mesh_mirror_vel = prop_model.evaluate(h_m3l, pitch_m3l)
     if mirror:
         prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
+        prop_meshes_vel.append(prop_mesh_out_vel + prop_mesh_mirror_vel)
     else:
         prop_meshes.append(prop_mesh_out)
-        prop_meshes_vel.append(prop_mesh_vel)
+        prop_meshes_vel.append(prop_mesh_out_vel)
 
 if mirror:
     num_blades = num_blades*2
@@ -389,7 +393,6 @@ for surface in non_rotor_surfaces:
     # uvlm_parameters.append((surface.name+'_coll_vel', True, np.zeros((nt, num_chordwise-1, num_spanwise-1, 3))))
     initial_conditions.append((surface.name+'_gamma_w_0', np.zeros((nt-1, num_spanwise-1))))
     initial_conditions.append((surface.name+'_wake_coords_0', np.zeros((nt-1, num_spanwise, 3))))
-    wing_camber_surface_np[-1,:,:]
 
     # interactions - fully interactive
     index = len(surface_names)-1
@@ -413,10 +416,6 @@ if symmetry:
                                 int((num_props-1-i)*num_blades + j + num_blades/2)])       # right mirror blade
 
     # symmetry for wing
-    # if wing_mesh_out.name in surface_names:
-    #     wing_index = surface_names.index(wing_mesh_out.name)
-    #     wing_mirror_index = surface_names.index(wing_mirror_mesh.name)
-    #     symmetry_list.append([wing_index, wing_mirror_index])
     if do_wing:
         if mirror:
             wing_list = [wing_mesh_neg_y_out, wing_mesh_pos_y_out, wing_mirror_neg_y_mesh, wing_mirror_pos_y_mesh]
@@ -458,11 +457,11 @@ pp_vars.append(('panel_forces_x',(nt,num_panels,1)))
 pp_vars.append(('panel_forces_y',(nt,num_panels,1)))
 pp_vars.append(('panel_forces_z',(nt,num_panels,1)))
 
-# if do_wing:
-#     pp_vars.append(('wing_vlm_mesh_out_L', (nt, 1)))
-#     pp_vars.append(('wing_vlm_mesh_out_D', (nt, 1)))
-
-    
+if do_wing:
+    pp_vars.append(('wing_vlm_mesh_neg_y_out_L', (nt, 1)))
+    pp_vars.append(('wing_vlm_mesh_neg_y_out_D', (nt, 1)))
+    pp_vars.append(('wing_vlm_mesh_pos_y_out_L', (nt, 1)))
+    pp_vars.append(('wing_vlm_mesh_pos_y_out_D', (nt, 1)))
 
 for i in range(num_props):
     for j in range(int(num_blades/2)):
@@ -508,7 +507,7 @@ outputs = uvlm_op.evaluate()[0:len(pp_vars)]
 # endregion
 
 # region post-processing
-average_op = LastNAverage(n=3)
+average_op = LastNAverage(n=5,end_offset=1)
 ave_outputs = average_op.evaluate(outputs) # time averaged qts
 
 fx = ave_outputs[0]
@@ -516,10 +515,18 @@ fy = ave_outputs[1]
 fz = ave_outputs[2]
 
 offset = 3
-# if do_wing:
-#     wing_lift = ave_outputs[3]
-#     wing_drag = ave_outputs[4]
-#     offset = 5
+if do_wing:
+    if symmetry:
+        wing_lift_neg_y = ave_outputs[3]
+        wing_drag_neg_y = ave_outputs[4]
+        wing_lift_pos_y = ave_outputs[5]
+        wing_drag_pos_y = ave_outputs[6]
+        offset = 7
+    else:
+        wing_lift = ave_outputs[3]
+        wing_drag = ave_outputs[4]
+        offset = 5
+
 
 prop_fx_list = []
 for i in range(num_props):
@@ -527,9 +534,6 @@ for i in range(num_props):
     for j in range(int(num_blades/2)):
         blade_forces.append(ave_outputs[i*int(num_blades/2)+offset+j])
     prop_fx_list.append(tuple(blade_forces))
-
-if False:
-    wing_L_panel = ave_outputs[-1]
 
 for var in ave_outputs:
     overmodel.register_output(var)
@@ -574,7 +578,7 @@ for i in range(len(prop_meshes)):
     
     model_csdl.connect('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u',
                         f'system_model.wig.wig.wig.torque_operation_rotor_{i}.velocity')
-    
+
 # wing mirror model connections:
 # caddee_csdl_model.connect('wing_vlm_mesh', 
 #                           'system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.wing_vlm_mesh')
@@ -640,8 +644,8 @@ if False:
 
 print(sim['system_model.wig.wig.wig.torque_operation_rotor_0.total_thrust'])
 print(sim['system_model.wig.wig.wig.torque_operation_rotor_1.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
-print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
+# print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_4.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_5.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_6.total_thrust'])
