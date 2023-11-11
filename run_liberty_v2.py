@@ -24,6 +24,8 @@ from engine import Engine
 from torque_model import TorqueModel
 # from breguet_range_eqn import BreguetRange
 import time
+# from modopt.snopt_library import SNOPT
+from mpi4py import MPI
 # endregion
 
 
@@ -748,9 +750,17 @@ obj = model_csdl.register_output('obj', 1*velocity)
 model_csdl.add_objective('obj', scaler=1E-1)
 
 
+
+
+
 start = time.time()
 
-sim = Simulator(model_csdl, analytics=True, lazy=1)
+# run command: mpirun -n 2 python run_liberty_v2.py
+comm = MPI.COMM_WORLD
+sim = Simulator(model_csdl, analytics=True, display_scripts=True, comm=comm,)
+
+
+#sim = Simulator(model_csdl, analytics=True, lazy=1)
 #sim.run()
 #sim.check_partials(compact_print=True)
 #sim.check_totals()
@@ -761,6 +771,19 @@ prob = CSDLProblem(problem_name='gawig', simulator=sim)
 optimizer = SLSQP(prob, maxiter=100, ftol=1E-3)
 optimizer.solve()
 optimizer.print_results()
+
+
+# prob = CSDLProblem(problem_name='darpa_trim', simulator=sim)
+# optimizer = SNOPT(prob, 
+#     Major_iterations=100,
+#     Major_optimality=1e-3,
+#     Major_feasibility=1e-3,
+#     append2file=True,
+#     # Major_step_limit=0.25,
+# )
+# optimizer.solve()
+# optimizer.print_results()
+
 
 
 end = time.time()
