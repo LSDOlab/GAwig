@@ -36,12 +36,11 @@ sys.setrecursionlimit(1000)
 num_props = 8
 num_blades = 3
 rpm = 1090.
-nt = 30
-dt = 0.005 # sec
-h = 2.75 # m
+nt = 36
+dt = 0.003 # sec
+h = 2.375 # m
 pitch = np.deg2rad(3) # rad
-rotor_blade_angle = np.deg2rad(-4) # rad
-rotor_delta = np.array([0,0,0]) # m
+rotor_blade_angle = np.deg2rad(-4) # rad (negative is more thrust)
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
 do_flaps = True
@@ -52,8 +51,9 @@ free_wake = True
 symmetry = True # only works with mirror = True
 log_space = True # log spacing spanwise for wing mesh
 max_pwr = 4500. # hp
-m = 340200 # 340200 kg
-n_avg = 10
+m = 270000. # 340200 kg
+n_avg = int(nt/((rpm/60)*nt*dt)) # 10
+print(n_avg)
 # endregion
 
 # region caddee setup
@@ -91,7 +91,7 @@ for i in range(num_props):
 # region meshes
 # wing mesh:
 num_spanwise_vlm = 21
-num_chordwise_vlm = 4
+num_chordwise_vlm = 6
 
 if log_space:
     start = 0.001
@@ -185,7 +185,7 @@ sys_rep.add_output(left_fuse_mesh_name, left_fuse_surface)
 
 
 # prop meshes
-num_spanwise_prop= 6
+num_spanwise_prop= 5
 num_chordwise_prop = 2
 
 offsets = [0,20,20,38,18,38,20,20] # gaps between rotors, left to right
@@ -251,7 +251,7 @@ design_scenario = cd.DesignScenario(name='wig')
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.1, dv_flag=True, lower=0.)
+wig_condition.set_module_input(name='mach_number', val=0.13, dv_flag=True, lower=0.)
 wig_condition.set_module_input(name='range', val=1000)
 # ptich angle is always zero, mirroring functions apply pitch by offsetting meshes
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0))
@@ -656,7 +656,7 @@ for i in range(num_props):
 
 # blade angle design variables (for all props):
 blade_angle = model_csdl.create_input('blade_angle_', val=rotor_blade_angle)
-model_csdl.add_design_variable('blade_angle_', scaler=1E1)
+model_csdl.add_design_variable('blade_angle_', scaler=1E2)
 model_csdl.print_var(blade_angle)
 
 model_csdl.register_output('other_blade_angle_', -1*blade_angle)
@@ -675,7 +675,7 @@ for i in range(int(num_props/2)):
     delta_z = model_csdl.create_input('delta_z_'+str(i), val=0)
 
     # model_csdl.add_design_variable('delta_x_'+str(i), upper=2, lower=-2, scaler=1)
-    model_csdl.add_design_variable('delta_y_'+str(i), upper=1, lower=-1, scaler=1)
+    # model_csdl.add_design_variable('delta_y_'+str(i), upper=1, lower=-1, scaler=1)
     model_csdl.add_design_variable('delta_z_'+str(i), upper=1, lower=-1, scaler=1)
 
 
@@ -700,20 +700,21 @@ for i in range(len(prop_fx_list)):
     power_vector[i] = eng_pwr
     
 max_eng_pwr = model_csdl.register_output('max_eng_pwr', csdl.max(1E-2*power_vector)/1E-2)
-model_csdl.add_constraint('max_eng_pwr', upper=max_pwr, scaler=1E-3)
+# model_csdl.add_constraint('max_eng_pwr', upper=max_pwr, scaler=1E-3)
 model_csdl.print_var(max_eng_pwr)
 
 # lift equals weight constraint:
 L_neg_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_neg_y_out_L_ave')
 L_pos_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_pos_y_out_L_ave')
 L_tot_ave = model_csdl.register_output('L_tot_ave', L_neg_y_ave + L_pos_y_ave)
-fz_res = model_csdl.register_output('fz_res', (L_tot_ave - m*9.81)*1E-3)
+model_csdl.print_var(L_tot_ave)
+fz_res = model_csdl.register_output('fz_res', (L_tot_ave - m*9.81)*1E-2)
 model_csdl.print_var(fz_res)
 
 
 
 vel = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u')
-other_drag_coef = 0.04 #0.015
+other_drag_coef = 0.03 #0.015
 other_drag = model_csdl.register_output('other_drag', 0.5*1.225*vel**2*6000*other_drag_coef)
 
 
@@ -725,13 +726,15 @@ other_drag = model_csdl.register_output('other_drag', 0.5*1.225*vel**2*6000*othe
 
 
 panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
-fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx) + other_drag) # 2*other_drag???
+fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx) + 0.5*other_drag) # 2*other_drag???
 model_csdl.print_var(fx_res)
 
 
-trim_res = model_csdl.register_output('trim_res', (fz_res**2 + fx_res**2)/1E6)
+trim_res_vec = model_csdl.create_output('trim_res_vec', shape=(2), val=0)
+trim_res_vec[0], trim_res_vec[1] = fz_res, fx_res
+trim_res = model_csdl.register_output('trim_res', csdl.pnorm(trim_res_vec)/10)
 model_csdl.print_var(trim_res)
-model_csdl.add_constraint('trim_res', equals=0, scaler=1E-2)
+model_csdl.add_constraint('trim_res', equals=0, scaler=1E-3)
 
 
 
@@ -808,9 +811,9 @@ for i in range(int(num_props/2)):
 print('velocity: ', sim['system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u'])
 
 
-if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='new_opt')
+if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='tri2')
 
-if True: plot_wireframe(sim, surface_names, nt, plot_mirror=False, interactive=False, name='new_opt_side', side_view=True)
+if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='side2', side_view=True)
 
 
 
