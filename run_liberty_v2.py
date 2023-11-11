@@ -51,7 +51,7 @@ free_wake = True
 symmetry = True # only works with mirror = True
 log_space = True # log spacing spanwise for wing mesh
 max_pwr = 4500. # hp
-m = 270000. # 340200 kg
+m = 150000. # kg
 n_avg = int(nt/((rpm/60)*nt*dt)) # 10
 print(n_avg)
 # endregion
@@ -751,16 +751,16 @@ model_csdl.add_objective('obj', scaler=1E-1)
 start = time.time()
 
 sim = Simulator(model_csdl, analytics=True, lazy=1)
-sim.run()
+#sim.run()
 #sim.check_partials(compact_print=True)
 #sim.check_totals()
 
 
 
-# prob = CSDLProblem(problem_name='gawig', simulator=sim)
-# optimizer = SLSQP(prob, maxiter=30, ftol=1E-3)
-# optimizer.solve()
-# optimizer.print_results()
+prob = CSDLProblem(problem_name='gawig', simulator=sim)
+optimizer = SLSQP(prob, maxiter=100, ftol=1E-3)
+optimizer.solve()
+optimizer.print_results()
 
 
 end = time.time()
@@ -811,9 +811,9 @@ for i in range(int(num_props/2)):
 print('velocity: ', sim['system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u'])
 
 
-if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='tri2')
+if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='iter100')
 
-if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='side2', side_view=True)
+if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='iter100side', side_view=True)
 
 
 
