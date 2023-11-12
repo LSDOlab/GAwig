@@ -421,7 +421,8 @@ class Rotor3(m3l.ExplicitOperation):
 
     # def evaluate(self, h : m3l.Variable, theta : m3l.Variable, blade_angle: m3l.Variable, delta : m3l.Variable):
     # def evaluate(self, h : m3l.Variable, theta : m3l.Variable, blade_angle: m3l.Variable):
-    def evaluate(self, h : m3l.Variable, theta : m3l.Variable):
+    # def evaluate(self, h : m3l.Variable, theta : m3l.Variable):
+    def evaluate(self, h : m3l.Variable):
         mesh_name = self.parameters['mesh_name']
         num_blades = self.parameters['num_blades']
         ns = self.parameters['ns']
@@ -430,7 +431,7 @@ class Rotor3(m3l.ExplicitOperation):
  
         self.name = mesh_name + '_rotor'
         self.arguments = {
-            'theta' : theta,
+            #'theta' : theta,
             'h' : h,
             #'blade_angle' : blade_angle,
             #'delta' : delta
@@ -500,7 +501,7 @@ class RotorCSDL3(ModuleCSDL):
 
         # blade pitch control
         blade_angle = self.declare_variable('blade_angle', shape=(1,), val=0)
-        self.print_var(blade_angle)
+        # self.print_var(blade_angle)
         # blade_axis = self.declare_variable('blade_axis', shape=(3,))*0.3048
         blade_axis = point + np.array([0,1,0])
         normalized_blade_axis = blade_axis/csdl.expand(csdl.pnorm(blade_axis, 2), (3,))
