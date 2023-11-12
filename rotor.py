@@ -489,7 +489,7 @@ class RotorCSDL3(ModuleCSDL):
         # a single blade mesh:
         mesh = self.create_input(mesh_name, shape=(nc,ns,3), val=mesh)*0.3048
         # the center of the rotor disk:
-        point = self.create_input('point', shape=(3,), val=np.reshape(point, (3,)))*0.3048
+        point = self.create_input(mesh_name + '_point', shape=(3,), val=np.reshape(point, (3,)))*0.3048
 
         
         delta = self.declare_variable('delta', shape=(3,), val=0)

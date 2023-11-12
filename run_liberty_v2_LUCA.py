@@ -25,22 +25,22 @@ from torque_model import TorqueModel
 
 # region hyperparameters
 num_props = 2
-num_blades = 4
+num_blades = 2
 rpm = 1090.
-nt = 10
-dt = 0.003 * 1
+nt = 60
+dt = 0.01 * 1
 h = 20 # m
 pitch = np.deg2rad(0) # rad
 rotor_blade_angle = np.deg2rad(0) # rad
 rotor_delta = np.array([0,0,0]) # m
 rotation_point = np.array([0,0,0])
-do_wing = False
+do_wing = True
 do_flaps = False
 do_fuselage = False
-mirror = True
+mirror = False
 sub = True
 free_wake = True
-symmetry = True # only works with mirror = True
+symmetry = False # only works with mirror = True
 log_space = False # log spacing spanwise for wing mesh
 # endregion
 
@@ -78,7 +78,7 @@ for i in range(num_props):
 
 # region meshes
 # wing mesh:
-num_spanwise_vlm = 35
+num_spanwise_vlm = 21
 num_chordwise_vlm = 5
 
 if log_space:
@@ -285,6 +285,7 @@ if do_fuselage:
 
 prop_meshes = []
 prop_meshes_vel = []
+prop_loc_names = []
 for i in range(num_props):
     # blade_angle_value = np.array([blade_angle])
     # rotor_delta_value = np.reshape(np.array([rotor_delta]), (3,))
@@ -310,6 +311,7 @@ for i in range(num_props):
                         mesh = prop_meshes_np[i],
                         rpm = rpm,
                         point = prop_points[i])
+    prop_loc_names.extend([propb1_mesh_names[i] + '_point'] * num_blades)
     prop_mesh_out, mirror_prop_meshes, prop_mesh_out_vel, prop_mesh_mirror_vel = prop_model.evaluate(h_m3l, pitch_m3l)
     if mirror:
         prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
@@ -356,6 +358,41 @@ i = 0
 
 symmetry_list = []
 
+polar_bool_list = []
+
+prop_wake_coord_IC_list = [
+np.array([[ 12.2669808,  -26.92908322,  21.59442859],
+ [ 12.28267797, -27.34055999,  21.66876862],
+ [ 12.29033299, -27.75167039,  21.7278122 ],
+ [ 12.26585929, -28.16024803,  21.74613557],
+ [ 12.23862588, -28.56938872,  21.72504884]]),
+
+np.array([[ 12.2669808,  -26.10611678,  21.45357141],
+ [ 12.28267797, -25.69464001,  21.37923138],
+ [ 12.29033299, -25.28352961,  21.3201878 ],
+ [ 12.26585929, -24.87495197,  21.30186443],
+ [ 12.23862588, -24.46581128,  21.32295116]]),
+
+np.array([[12.2669808,  26.92908322, 21.59442859],
+ [12.28267797, 27.34055999, 21.66876862],
+ [12.29033299, 27.75167039, 21.7278122 ],
+ [12.26585929, 28.16024803, 21.74613557],
+ [12.23862588, 28.56938872, 21.72504884]]),
+
+np.array([[12.2669808,  26.10611678, 21.45357141],
+ [12.28267797, 25.69464001, 21.37923138],
+ [12.29033299, 25.28352961, 21.3201878 ],
+ [12.26585929, 24.87495197, 21.30186443],
+ [12.23862588, 24.46581128, 21.32295116]])
+]
+prop_wake_coord_IC = []
+for n in range(4):
+    prop_wake_coord_IC_mesh = np.zeros((nt-1, 5, 3))
+    for m in range(nt-1):
+        prop_wake_coord_IC_mesh[m,:,:] = prop_wake_coord_IC_list[n].copy()
+    prop_wake_coord_IC.append(prop_wake_coord_IC_mesh)
+
+j = 0
 for prop_mesh in prop_meshes:
     interaction_groups.append(list(range(num_blades*i,num_blades*(i+1))))
     for var in prop_mesh:
@@ -365,10 +402,13 @@ for prop_mesh in prop_meshes:
         name = var.name
         surface_names.append(name)
         surface_shapes.append(shape[1:4])
+        polar_bool_list.append(True)
         uvlm_parameters.append((name, True, var))
         # uvlm_parameters.append((name+'_coll_vel', True, np.zeros((nt, nx-1, ny-1, 3))))
         initial_conditions.append((name+'_gamma_w_0', np.zeros((nt-1, ny-1))))
-        initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
+        # initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
+        initial_conditions.append((name+'_wake_coords_0', prop_wake_coord_IC[j]))
+        j += 1
     i += 1
 
 for prop_mesh_vel in prop_meshes_vel:
@@ -378,7 +418,8 @@ for prop_mesh_vel in prop_meshes_vel:
         ny = shape[2]
         name = vel.name
         uvlm_parameters.append((f'{name}', True, vel))
-
+# for i in range(num_props):
+#     uvlm_parameters.append((propb1_mesh_names[i] + '_point', False, prop_points[i].reshape(3,)))
 # interactions for props
 sub_eval_list, sub_induced_list = generate_sub_lists(interaction_groups)
 
@@ -386,6 +427,7 @@ sub_eval_list, sub_induced_list = generate_sub_lists(interaction_groups)
 for surface in non_rotor_surfaces:
     # ode parameters and ICs
     surface_names.append(surface.name)
+    polar_bool_list.append(False)
     num_chordwise = surface.shape[1]
     num_spanwise = surface.shape[2]
     surface_shapes.append(surface.shape[1:4])
@@ -458,10 +500,14 @@ pp_vars.append(('panel_forces_y',(nt,num_panels,1)))
 pp_vars.append(('panel_forces_z',(nt,num_panels,1)))
 
 if do_wing:
-    pp_vars.append(('wing_vlm_mesh_neg_y_out_L', (nt, 1)))
-    pp_vars.append(('wing_vlm_mesh_neg_y_out_D', (nt, 1)))
-    pp_vars.append(('wing_vlm_mesh_pos_y_out_L', (nt, 1)))
-    pp_vars.append(('wing_vlm_mesh_pos_y_out_D', (nt, 1)))
+    if symmetry:
+        pp_vars.append(('wing_vlm_mesh_neg_y_out_L', (nt, 1)))
+        pp_vars.append(('wing_vlm_mesh_neg_y_out_D', (nt, 1)))
+        pp_vars.append(('wing_vlm_mesh_pos_y_out_L', (nt, 1)))
+        pp_vars.append(('wing_vlm_mesh_pos_y_out_D', (nt, 1)))
+    else:
+        pp_vars.append(('wing_vlm_mesh_out_L', (nt, 1)))
+        pp_vars.append(('wing_vlm_mesh_out_D', (nt, 1)))
 
 for i in range(num_props):
     for j in range(int(num_blades/2)):
@@ -488,7 +534,11 @@ uvlm = VASTSolverUnsteady(num_nodes = nt,
                           sub_induced_list = sub_induced_list,
                           symmetry = symmetry,
                           sym_struct_list = symmetry_list,
-                          free_wake=free_wake,)
+                          free_wake=free_wake,
+                        #   use_polar=True,
+                        #   polar_bool_list=polar_bool_list,
+                        #   prop_center_names=prop_loc_names
+                          )
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
 model.set_dynamic_options(initial_conditions=initial_conditions,
@@ -507,7 +557,7 @@ outputs = uvlm_op.evaluate()[0:len(pp_vars)]
 # endregion
 
 # region post-processing
-average_op = LastNAverage(n=5,end_offset=1)
+average_op = LastNAverage(n=3,end_offset=1)
 ave_outputs = average_op.evaluate(outputs) # time averaged qts
 
 fx = ave_outputs[0]
@@ -652,7 +702,7 @@ print(sim['system_model.wig.wig.wig.torque_operation_rotor_1.total_thrust'])
 # print(sim['system_model.wig.wig.wig.torque_operation_rotor_7.total_thrust'])
 
 if True:
-    plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='2_wing_symmetry_sep_0_ns_35_nc_4_mirror_4_rotors', backend='ffmpeg')
+    plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, side_view=False, name='rotor_polar', backend='ffmpeg')
     # plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, side_view=True)
 
 
