@@ -84,32 +84,15 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
                     for j in range(ny-1):
                         connectivity.append([k*ny+j,(k+1)*ny+j,(k+1)*ny+j+1,k*ny+j+1])
                 
-                #vps = Mesh([np.reshape(wake_points, (-1, 3)), connectivity], c=color, alpha=1)
-                #vps.cmap(cmap, gamma_w, on='cells', vmin=min_gamma, vmax=max_gamma)
-                #if draw_scalarbar:
-                #    vps.add_scalarbar()
-                #    draw_scalarbar = False
-                #vps.linewidth(1)
-                #vp += vps
-                #vp += __doc__
-                
-                # nt x nt x ns x 3
-                print(np.shape(wake_points))
-                print(nx)
-                #for k in range(nx-1):
-                    # for j in range(ny-1):
-                #for i in range(nx - 1):
-                #    vps = Line(np.reshape(wake_points, (-1, 3))).lw(2)
-
-                #for i in range(nx - 1):
-                #    points = np.array([wake_points[i,]])
-                #    vps = Line(np.reshape(points, (-1, 3))).lw(2)
-
-                for i in range(nx - 1):
-                    vps = Line(wake_points[i,:,:])
-
+                vps = Mesh([np.reshape(wake_points, (-1, 3)), connectivity], c=color, alpha=1)
+                vps.cmap(cmap, gamma_w, on='cells', vmin=min_gamma, vmax=max_gamma)
+                if draw_scalarbar:
+                   vps.add_scalarbar()
+                   draw_scalarbar = False
+                vps.linewidth(1)
                 vp += vps
                 vp += __doc__
+                
         """
     
 
