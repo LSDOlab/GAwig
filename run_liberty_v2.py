@@ -35,7 +35,7 @@ num_props = 8
 num_blades = 3
 rpm = 1090.
 nt = 30
-dt = 0.003 # sec
+dt = 0.001 # sec
 h = 2.375 # m
 pitch = 0.039425 # np.deg2rad(3) # rad
 rotor_blade_angle = -0.29411512# -0.30411512 # np.deg2rad(-4) # rad (negative is more thrust)
@@ -668,10 +668,9 @@ for i in range(int(num_props/2)):
 
 
 # rotor delta design variables:
-
-dxlist = [0.00314437,-0.0215043,0.00927372,-0.0220934]
-dylist = [-0.00133753,-0.05269266,0.03858932,-0.04200596]
-dzlist = [-0.34894113,-0.89488068,-0.15210107,-0.43559275]
+dxlist = [-0.02430892,-0.00279362, 0.01992822,-0.07037549]
+dylist = [-0.01070022,-0.04420111,0.02285268,-0.01900518]
+dzlist = [-0.32400794,-0.8670777,-0.16321619,-0.43031041]
 for i in range(int(num_props/2)):
     delta_x = model_csdl.create_input('delta_x_'+str(i), val=dxlist[i])
     delta_y = model_csdl.create_input('delta_y_'+str(i), val=dylist[i])
@@ -751,7 +750,7 @@ velocity = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input
 model_csdl.print_var(1*velocity)
 # obj = model_csdl.register_output('obj', 1*velocity)
 obj = model_csdl.register_output('obj', -1*L_tot_ave)
-model_csdl.add_objective('obj', scaler=1E-5)
+model_csdl.add_objective('obj', scaler=1E-6)
 
 
 
@@ -839,7 +838,7 @@ for i in range(int(num_props/2)):
 print('velocity: ', sim['system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u'])
 
 
-if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='test')
+if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test')
 
 # if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test_side', side_view=True)
 

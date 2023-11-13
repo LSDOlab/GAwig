@@ -135,7 +135,7 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
                 for k in range(nx-1):
                     for j in range(ny-1):
                         connectivity.append([k*ny+j,(k+1)*ny+j,(k+1)*ny+j+1,k*ny+j+1])
-                    vps = Mesh([np.reshape(mesh_points, (-1, 3)), connectivity], c=surface_color, alpha=.5).linecolor('black')
+                    vps = Mesh([np.reshape(mesh_points, (-1, 3)), connectivity], c=surface_color, alpha=.75).linecolor('black')
                 vp += vps
                 vp += __doc__
 
@@ -155,8 +155,6 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
                 gg = np.resize(gamma_w, (wake_points.shape[0],gamma_w.shape[0]))
 
                 for j in range(ns - 1):
-                    print(np.shape(wake_points[:,j,:]))
-                    #print(np.shape(gamma_w[0,:]))
                     vps = Line(wake_points[:,j,:]).lw(7)
                     vps.cmap(cmap, gg[:,j].flatten(), vmin=min_gamma, vmax=max_gamma)
 
