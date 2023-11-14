@@ -31,10 +31,10 @@ import time
 
 
 # region hyperparameters
-num_props = 8
+num_props = 2
 num_blades = 3
 rpm = 1090.
-nt = 30
+nt = 10
 dt = 0.001 # sec
 h = 2.375 # m
 pitch = 0.039425 # np.deg2rad(3) # rad
@@ -50,7 +50,7 @@ symmetry = True # only works with mirror = True
 log_space = True # log spacing spanwise for wing mesh
 max_pwr = 4500. # hp
 m = 150000. # kg
-n_avg = int(nt/((rpm/60)*nt*dt)) # 10
+n_avg = 4#int(nt/((rpm/60)*nt*dt)) # 10
 print(n_avg)
 # endregion
 
