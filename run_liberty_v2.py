@@ -1,6 +1,6 @@
-# region imports
 import caddee.api as cd
 import m3l
+import time
 from python_csdl_backend import Simulator
 from modopt.scipy_library import SLSQP
 from modopt.csdl_library import CSDLProblem
@@ -13,20 +13,16 @@ import csdl
 from mirror import Mirror
 from rotor import Rotor3
 from expansion_op import ac_expand
-from mpl_toolkits.mplot3d import proj3d
 from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, PostProcessor
 from deflect_flap import deflect_flap
 from VAST.core.profile_model import gen_profile_output_list, PPSubmodel
 from last_n_average import LastNAverage
-# from plot import plot_wireframe
-from plot_wing_symmetry import plot_wireframe
+from plot_wing_symmetry import plot_wireframe, plot_wireframe_line
 from engine import Engine
 from torque_model import TorqueModel
 # from breguet_range_eqn import BreguetRange
-import time
 # from modopt.snopt_library import SNOPT
 # from mpi4py import MPI
-# endregion
 
 
 
@@ -34,8 +30,8 @@ import time
 num_props = 2
 num_blades = 3
 rpm = 1090.
-nt = 10
-dt = 0.001 # sec
+nt = 20
+dt = 0.005 # sec
 h = 2.375 # m
 pitch = 0.039425 # np.deg2rad(3) # rad
 rotor_blade_angle = -0.29411512# -0.30411512 # np.deg2rad(-4) # rad (negative is more thrust)
@@ -50,13 +46,29 @@ symmetry = True # only works with mirror = True
 log_space = True # log spacing spanwise for wing mesh
 max_pwr = 4500. # hp
 m = 150000. # kg
-n_avg = 4#int(nt/((rpm/60)*nt*dt)) # 10
-print(n_avg)
 
+# flap params:
+flap_deflection = 27 # deg
+num_flap_panels = 1
+
+# average the uvlm forces:
+num_periods = 1.0
+n_avg = int(num_periods/(rpm*dt/60))
+print('n average: ', n_avg)
+
+# set constraints on rotor delta: (lower, upper) for rotors 0, 1, 2, and 3
 dx_const = [(-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5)]
-dy_const = [(),(),(),()]
-dz_const = [(),(),(),()]
+dy_const = [(-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0)]
+dz_const = [(-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0)]
+
+# set the baseline rotor deltas: rotors 0, 1, 2, 3
+dxlist = [-0.02430892,-0.00279362, 0.01992822,-0.07037549]
+dylist = [-0.01070022,-0.04420111,0.02285268,-0.01900518]
+dzlist = [-0.32400794,-0.8670777,-0.16321619,-0.43031041]
 # endregion
+
+
+
 
 
 # region caddee setup
@@ -71,6 +83,8 @@ spatial_rep.refit_geometry(file_name=file_name)
 # spatial_rep.plot(plot_types=['mesh'])
 # endregion
 
+
+
 # region components
 def build_component(name, search_names):
     # returns component with given name made from surfaces containing search_names
@@ -84,21 +98,23 @@ htail = build_component('htail', ['HTail'])
 fuse = build_component('fuse', ['FuselageGeom'])
 
 # props
-props = [] # we go from 1-indexed to 0-indexed here
+props = []
 prop_indices = list(range(0,int(num_props/2))) + list(range(int(8-num_props/2),8))
 for i in range(num_props):
     prop = build_component('prop_'+str(i), ['Prop'+str(prop_indices[i]+1),'Hub'+str(prop_indices[i]+1)])
     props.append(prop)
 #endregion
 
+
+
 # region meshes
-# wing mesh:
+
+# create the wing mesh:
 num_spanwise_vlm = 31
 num_chordwise_vlm = 8
 
 if log_space:
-    start = 0.001
-    end = 1
+    start, end = 0.001, 1.0
     num_spanwise_temp = num_spanwise_vlm + 1 # used for log spacing
 
     le_half_points = ((((np.logspace(start, end, int(num_spanwise_temp/2), endpoint=True)))-10**start)/(10**end-10**start)-1)*103
@@ -129,15 +145,15 @@ wing_vlm_mesh_name = 'wing_vlm_mesh'
 
 
 
-
+# add flap deflections:
 if do_flaps:
-    flap_mesh = deflect_flap(wing_camber_surface_np, 20, 1)
-    # spatial_rep.plot_meshes([flap_mesh])
+    flap_mesh = deflect_flap(wing_camber_surface_np, flap_deflection, num_flap_panels)
     wing_camber_surface_np = flap_mesh
+    # spatial_rep.plot_meshes([flap_mesh])
 
 
 
-
+# split the wing mesh to exploit symmetry:
 if symmetry:
     wing_camber_surface_np_neg_y = np.flip(wing_camber_surface_np[:,:int((num_spanwise_vlm+1)/2),:].copy(),1)
     wing_camber_surface_np_pos_y = wing_camber_surface_np[:,int((num_spanwise_vlm-1)/2):,:].copy()
@@ -169,23 +185,6 @@ sys_rep.add_output(left_fuse_mesh_name, left_fuse_surface)
 
 
 
-# # htail mesh:
-# num_spanwise_vlm_htail = 12
-# num_chordwise_vlm_htail = 6
-
-# htail_leading_edge = htail.project(np.linspace(np.array([112, -27, 32]), np.array([112, 27, 32]), num_spanwise_vlm_htail), direction=np.array([0., 0., -1.]), plot=False)
-# htail_trailing_edge = htail.project(np.linspace(np.array([126, -27, 32]), np.array([126, 27, 32]), num_spanwise_vlm_htail), direction=np.array([0., 0., -1.]), plot=False)
-# htail_chord_surface = am.linspace(htail_leading_edge, htail_trailing_edge, num_chordwise_vlm_htail)
-# # spatial_rep.plot_meshes([htail_chord_surface])
-# htail_upper_surface_wireframe = htail.project(htail_chord_surface.value + np.array([0., 0., 2.]), direction=np.array([0., 0., -2.]), grid_search_n=30, plot=False)
-# htail_lower_surface_wireframe = htail.project(htail_chord_surface.value - np.array([0., 0., 2.]), direction=np.array([0., 0., 2.]), grid_search_n=30, plot=False)
-# htail_camber_surface = am.linspace(htail_upper_surface_wireframe, htail_lower_surface_wireframe, 1)
-# # spatial_rep.plot_meshes([htail_camber_surface])
-# htail_vlm_mesh_name = 'htail_vlm_mesh'
-# sys_rep.add_output(htail_vlm_mesh_name, htail_camber_surface)
-
-
-
 
 # prop meshes
 num_spanwise_prop= 6
@@ -205,23 +204,20 @@ if num_props > 0:
     trailing_edge = props[0].project(np.linspace(np.array(p3), np.array(p4), num_spanwise_prop), direction=np.array([0., 0., -1.]), grid_search_n=50, plot=False)
     chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_prop)
     prop0b0_mesh = chord_surface.value
-
-    propb1_mesh_names = []
-    prop_vector_names = []
-    prop_point_names = []
+    propb1_mesh_names, prop_vector_names, prop_point_names = [], [], []
     prop_meshes_np = [prop0b0_mesh]
 
+
 # list of hub front/back for different rotors
-p5_list = [p5]
-p6_list = [p6]
+p5_list, p6_list = [p5], [p6]
 for i in range(1,8):
     p5_list.append([p5[0], p5_list[i-1][1]+offsets[i], p5[2]])
     p6_list.append([p6[0], p6_list[i-1][1]+offsets[i], p6[2]])
 
 
+
 prop_points = []
 for i in range(num_props):
-
     propb1_mesh_name = 'p'+str(i)+'b1_mesh'
 
     # prop hub:
@@ -247,6 +243,9 @@ for i in range(1,num_props):
         prop_meshes_np.append(ref_mesh)
 # endregion
 
+
+
+
 # region design scenario
 overmodel = m3l.Model()
 
@@ -256,7 +255,7 @@ wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
 wig_condition.set_module_input(name='mach_number', val=0.14169198, dv_flag=False, lower=0.)
 wig_condition.set_module_input(name='range', val=1000)
-# ptich angle is always zero, mirroring functions apply pitch by offsetting meshes
+# ptich angle is always zero, mirroring functions apply pitch by offsetting meshes:
 wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0))
 wig_condition.set_module_input(name='flight_path_angle', val=0)
 wig_condition.set_module_input(name='roll_angle', val=0)
@@ -273,17 +272,13 @@ ac_states_expanded = ac_expander.evaluate(ac_states)
 # region mirroring
 
 h_m3l = m3l.Variable('h', shape=(1,), value=np.array([h]))
-# theta_m3l = m3l.Variable('theta', shape=(1,), value=np.array([pitch]))
-
 non_rotor_surfaces = []
 # wing mirroring
 if symmetry:
     wing_mirror_model_neg_y = Mirror(component=wing,mesh_name=wing_vlm_mesh_name + '_neg_y',nt=nt,ns=int((num_spanwise_vlm+1)/2),nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np_neg_y*0.3048)
-    # wing_mesh_neg_y_out, wing_mirror_neg_y_mesh = wing_mirror_model_neg_y.evaluate(theta_m3l, h_m3l)
     wing_mesh_neg_y_out, wing_mirror_neg_y_mesh = wing_mirror_model_neg_y.evaluate(h_m3l)
 
     wing_mirror_model_pos_y = Mirror(component=wing,mesh_name=wing_vlm_mesh_name + '_pos_y',nt=nt,ns=int((num_spanwise_vlm+1)/2),nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np_pos_y*0.3048)
-    # wing_mesh_pos_y_out, wing_mirror_pos_y_mesh = wing_mirror_model_pos_y.evaluate(theta_m3l, h_m3l)
     wing_mesh_pos_y_out, wing_mirror_pos_y_mesh = wing_mirror_model_pos_y.evaluate(h_m3l)
 
     if do_wing:
@@ -292,7 +287,6 @@ if symmetry:
             non_rotor_surfaces.extend([wing_mirror_neg_y_mesh, wing_mirror_pos_y_mesh])
 else:
     wing_mirror_model = Mirror(component=wing,mesh_name=wing_vlm_mesh_name,nt=nt,ns=num_spanwise_vlm,nc=num_chordwise_vlm,point=rotation_point, mesh=wing_camber_surface_np*0.3048)
-    # wing_mesh_out, wing_mirror_mesh = wing_mirror_model.evaluate(theta_m3l, h_m3l)
     wing_mesh_out, wing_mirror_mesh = wing_mirror_model.evaluate(h_m3l)
     if do_wing:
         non_rotor_surfaces.append(wing_mesh_out)
@@ -301,12 +295,10 @@ else:
 
 # right fuselage mirroring
 right_fuse_mirror_model = Mirror(component=fuse,mesh_name=right_fuse_mesh_name,nt=nt,ns=num_vert_vlm,nc=num_long_vlm,point=rotation_point, mesh=right_fuse_surface_reordered*0.3048)
-# right_fuse_mesh_out, right_fuse_mirror_mesh = right_fuse_mirror_model.evaluate(theta_m3l, h_m3l)
 right_fuse_mesh_out, right_fuse_mirror_mesh = right_fuse_mirror_model.evaluate(h_m3l)
 
 # left fuselage mirroring
 left_fuse_mirror_model = Mirror(component=fuse,mesh_name=left_fuse_mesh_name,nt=nt,ns=num_vert_vlm,nc=num_long_vlm,point=rotation_point, mesh=left_fuse_surface_reordered*0.3048)
-# left_fuse_mesh_out, left_fuse_mirror_mesh = left_fuse_mirror_model.evaluate(theta_m3l, h_m3l)
 left_fuse_mesh_out, left_fuse_mirror_mesh = left_fuse_mirror_model.evaluate(h_m3l)
 
 if do_fuselage:
@@ -350,8 +342,7 @@ for i in range(num_props):
 
 
 
-if mirror:
-    num_blades = num_blades*2
+if mirror: num_blades = num_blades*2
 # endregion
 
 # region uvlm_parameters, interactions
@@ -369,9 +360,8 @@ uvlm_parameters = [('u',True,ac_states_expanded['u']),
 # TODO: connect rho, maybe other values
 
 def generate_sub_lists(interaction_groups):
-    # generates sub lists for groups of full interaction with no cross-interactoin
-    sub_eval_list = []
-    sub_induced_list = []
+    # generates sub lists for groups of full interaction with no cross-interaction
+    sub_eval_list, sub_induced_list = [], []
     for group in interaction_groups:
         for i in group:
             for j in group:
@@ -380,14 +370,8 @@ def generate_sub_lists(interaction_groups):
     return sub_eval_list, sub_induced_list
 
 # ode stuff for props
-surface_names = []
-surface_shapes = []
-initial_conditions = []
-interaction_groups = []
+surface_names, surface_shapes, initial_conditions, interaction_groups, symmetry_list = [], [], [], [], []
 i = 0
-
-symmetry_list = []
-
 for prop_mesh in prop_meshes:
     interaction_groups.append(list(range(num_blades*i,num_blades*(i+1))))
     for var in prop_mesh:
@@ -468,12 +452,11 @@ if symmetry:
         symmetry_list.append([fuselage0_index, fuselage1_index, fuselage0_mirror_index, fuselage1_mirror_index])
 # endregion
 
-# region post-processor and profile-output
-pp_vars = []
-# for name in surface_names:
-#     pp_vars.append((name+'_L', (nt, 1)))
 
-num_panels = 0
+
+
+# region post-processor and profile-output
+pp_vars, num_panels = [], 0
 if do_wing:
     num_panels += (num_spanwise_vlm-1)*(num_chordwise_vlm-1)
 if do_fuselage:
@@ -535,13 +518,14 @@ uvlm_op = model.assemble(return_operation=True)
 outputs = uvlm_op.evaluate()[0:len(pp_vars)]
 # endregion
 
+
+
+
 # region post-processing
 average_op = LastNAverage(n=n_avg,end_offset=1)
-ave_outputs = average_op.evaluate(outputs) # time averaged qts
-
-fx = ave_outputs[0]
-fy = ave_outputs[1]
-fz = ave_outputs[2]
+# time averaged quantities:
+ave_outputs = average_op.evaluate(outputs)
+fx, fy, fz = ave_outputs[0], ave_outputs[1], ave_outputs[2]
 
 offset = 3
 if do_wing:
@@ -552,8 +536,7 @@ if do_wing:
         wing_drag_pos_y = ave_outputs[6]
         offset = 7
     else:
-        wing_lift = ave_outputs[3]
-        wing_drag = ave_outputs[4]
+        wing_lift, wing_drag = ave_outputs[3], ave_outputs[4]
         offset = 5
 
 
@@ -583,37 +566,28 @@ for i in range(len(prop_fx_list)):
 
 
 
-# region assembly
-# add the cruise m3l model to the cruise condition
+# region model assembly
+# add the wig m3l model to the cruise condition:
 wig_condition.add_m3l_model('wig_model', overmodel)
-# # add the design condition to the design scenario
+# add the design condition to the design scenario:
 design_scenario.add_design_condition(wig_condition)
 system_model.add_design_scenario(design_scenario=design_scenario)
 caddee_csdl_model = caddee.assemble_csdl()
 # caddee_csdl_model = overmodel.assemble_csdl()
-
 model_csdl = caddee_csdl_model
 # endregion
 
-# region connections and DVs
 
+
+# region manual connections
 for i in range(len(prop_meshes)):
     i = str(i)
 
     rpm_csdl = model_csdl.create_input(f'rpm_rotor_{i}', val=rpm)
-
-    model_csdl.connect('p' + i + '_vector', 
-                    'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.vector')
-    
-    model_csdl.connect(f'rpm_rotor_{i}', 
-                    f'system_model.wig.wig.wig.torque_operation_rotor_{i}.rpm')
-    
-    model_csdl.connect(f'rpm_rotor_{i}',
-                    f'system_model.wig.wig.wig.engine_{i}_engine.rpm')
-    
-    model_csdl.connect('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u',
-                        f'system_model.wig.wig.wig.torque_operation_rotor_{i}.velocity')
-
+    model_csdl.connect('p' + i + '_vector', 'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.vector')
+    model_csdl.connect(f'rpm_rotor_{i}', f'system_model.wig.wig.wig.torque_operation_rotor_{i}.rpm')
+    model_csdl.connect(f'rpm_rotor_{i}', f'system_model.wig.wig.wig.engine_{i}_engine.rpm')
+    model_csdl.connect('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u', f'system_model.wig.wig.wig.torque_operation_rotor_{i}.velocity')
 
 # endregion
 
@@ -627,68 +601,63 @@ for i in range(len(prop_meshes)):
 
 # the pitch angle design variable:
 set_pitch = model_csdl.create_input('set_pitch', val=pitch)
-#model_csdl.add_design_variable('set_pitch', lower=np.deg2rad(0), upper=np.deg2rad(10), scaler=1E2)
-#model_csdl.print_var(set_pitch)
-# connect set_pitch to wing mirror:
+# add the pitch angle design variable:
+model_csdl.add_design_variable('set_pitch', lower=np.deg2rad(0), upper=np.deg2rad(10), scaler=1E2)
+# print the pitch angle during optimization:
+model_csdl.print_var(set_pitch)
+# connect set_pitch to the wing mirror:
 if mirror:
     model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_mesh_pos_ymirror.theta')
     model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_mesh_neg_ymirror.theta')
-# connect set_pitch to fuselage mirrors:
+# connect set_pitch to the fuselage mirrors:
 if do_fuselage:
     model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.right_fuselage_meshmirror.theta')
     model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.left_fuselage_meshmirror.theta')
-
-# connect set_pitch to rotors:
-for i in range(num_props):
-    model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.theta')
+# connect set_pitch to the rotors:
+for i in range(num_props): model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.theta')
 
 
 
 
-# # blade angle design variables (for each prop):
-# for i in range(int(num_props/2)):
-#     blade_angle = model_csdl.create_input('blade_angle_'+str(i), val=rotor_blade_angle)
-#     model_csdl.add_design_variable('blade_angle_'+str(i), upper=np.deg2rad(20), lower=np.deg2rad(-20), scaler=1E2)
-#     model_csdl.connect('blade_angle_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.blade_angle')
-
-#     # symmetric blade-angle connections:
-#     model_csdl.register_output('other_blade_angle_'+str(i), -1*blade_angle) # -1 ???????
-#     model_csdl.connect('other_blade_angle_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.blade_angle')
-
-#     model_csdl.print_var(blade_angle)
-
-
-# blade angle design variables (for all props):
-blade_angle = model_csdl.create_input('blade_angle_', val=rotor_blade_angle)
-#model_csdl.add_design_variable('blade_angle_', scaler=1E1)
-model_csdl.print_var(blade_angle)
-
-model_csdl.register_output('other_blade_angle_', -1*blade_angle)
+# blade angle design variables (for each prop):
 for i in range(int(num_props/2)):
-    model_csdl.connect('blade_angle_', 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.blade_angle')
+    blade_angle = model_csdl.create_input('blade_angle_'+str(i), val=rotor_blade_angle)
+    # add the design variable for each prop:
+    model_csdl.add_design_variable('blade_angle_'+str(i), upper=np.deg2rad(20), lower=np.deg2rad(-20), scaler=1E2)
+    model_csdl.connect('blade_angle_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.blade_angle')
     # symmetric blade-angle connections:
-    model_csdl.connect('other_blade_angle_', 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.blade_angle')
+    model_csdl.register_output('other_blade_angle_'+str(i), -1*blade_angle)
+    model_csdl.connect('other_blade_angle_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.blade_angle')
+    # print the blade angle during optimization:
+    model_csdl.print_var(blade_angle)
+
+# # blade angle design variables (for all props):
+# blade_angle = model_csdl.create_input('blade_angle_', val=rotor_blade_angle)
+# model_csdl.add_design_variable('blade_angle_', scaler=1E1)
+# # print the blade angle during optimization:
+# model_csdl.print_var(blade_angle)
+# model_csdl.register_output('other_blade_angle_', -1*blade_angle)
+# for i in range(int(num_props/2)):
+#     model_csdl.connect('blade_angle_', 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.blade_angle')
+#     model_csdl.connect('other_blade_angle_', 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.blade_angle')
 
 
 
 
 # rotor delta design variables:
-dxlist = [-0.02430892,-0.00279362, 0.01992822,-0.07037549]
-dylist = [-0.01070022,-0.04420111,0.02285268,-0.01900518]
-dzlist = [-0.32400794,-0.8670777,-0.16321619,-0.43031041]
+# NOTE: negative delta_z is moving rotors down
+# NOTE: negative delta_y is moving rotors outwards
+# NOTE: negative delta_x is moving rotors forwards
 for i in range(int(num_props/2)):
-    delta_x = model_csdl.create_input('delta_x_'+str(i), val=dxlist[i])
-    delta_y = model_csdl.create_input('delta_y_'+str(i), val=dylist[i])
-    delta_z = model_csdl.create_input('delta_z_'+str(i), val=dzlist[i])
-
+    delta_x, delta_y, delta_z, = model_csdl.create_input('delta_x_'+str(i), val=dxlist[i]), model_csdl.create_input('delta_y_'+str(i), val=dylist[i]), model_csdl.create_input('delta_z_'+str(i), val=dzlist[i])
     model_csdl.add_design_variable('delta_x_'+str(i), upper=0.5, lower=-0.5, scaler=1E2)
     model_csdl.add_design_variable('delta_y_'+str(i), upper=0.5, lower=-0.5, scaler=1E2)
     model_csdl.add_design_variable('delta_z_'+str(i), upper=1, lower=-1, scaler=1E2)
 
-
+    # concatenate delta_x, y, and z:
     delta = model_csdl.create_output('delta_'+str(i), shape=(3), val=0)
     delta[0], delta[1], delta[2] = delta_x, delta_y, delta_z
-
+    # connect the delta variable to the rotor mesh:
     model_csdl.connect('delta_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.delta')
 
     # symmetric delta connections:
@@ -696,11 +665,12 @@ for i in range(int(num_props/2)):
     other_delta[0], other_delta[1], other_delta[2] = delta[0], -1*delta[1], delta[2]
     model_csdl.connect('other_delta_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.delta')
 
+    # print the rotor delta during optimization:
     model_csdl.print_var(delta)
 
 
 
-# engine power constraints:
+# the max engine power constraint:
 power_vector = model_csdl.create_output('power_vector', shape=(len(prop_fx_list)), val=0)
 for i in range(len(prop_fx_list)):
     eng_pwr = model_csdl.declare_variable('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr')
@@ -741,21 +711,31 @@ fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx) + 0.5*other_d
 trim_res_vec = model_csdl.create_output('trim_res_vec', shape=(2), val=0)
 trim_res_vec[0], trim_res_vec[1] = fz_res, fx_res
 trim_res = model_csdl.register_output('trim_res', csdl.pnorm(trim_res_vec)/10)
-#model_csdl.print_var(trim_res)
-#model_csdl.add_constraint('trim_res', equals=0, scaler=1E-2)
+
+# print the trim residual during optimization:
+model_csdl.print_var(trim_res)
+model_csdl.add_constraint('trim_res', equals=0, scaler=1E-2)
 
 
-# NOTE: negative delta_z is moving rotors down
-# NOTE: negative delta_y is moving rotors outwards
-# NOTE: negative delta_x is moving rotors forwards
 
 
-# objective:
+# the optimization objective:
 velocity = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u')
-model_csdl.print_var(1*velocity)
-# obj = model_csdl.register_output('obj', 1*velocity)
-obj = model_csdl.register_output('obj', -1*L_tot_ave)
+
+# print the velocity during optimization:
+vel = model_csdl.register_output('vel', 1*velocity)
+model_csdl.print_var(vel)
+
+# create the objective:
+obj = model_csdl.register_output('obj', 1*velocity)
 model_csdl.add_objective('obj', scaler=1E-6)
+
+
+
+
+
+
+
 
 
 
@@ -763,89 +743,59 @@ model_csdl.add_objective('obj', scaler=1E-6)
 
 start = time.time()
 
-# run command: mpirun -n 2 python run_liberty_v2.py
-# run command: mpirun -np 2 python run_liberty_v2.py
+# for paralellization:
+# mpi run command: mpirun -np 2 python run_liberty_v2.py
 # comm = MPI.COMM_WORLD
 # sim = Simulator(model_csdl, analytics=True, display_scripts=True, comm=comm,)
 
-
+# for single core:
 sim = Simulator(model_csdl, analytics=True, lazy=1)
 sim.run()
 # sim.check_partials(compact_print=True)
 # sim.check_totals()
 
-
-
+# run an optimization with SLSQP:
 # prob = CSDLProblem(problem_name='gawig', simulator=sim)
 # optimizer = SLSQP(prob, maxiter=30, ftol=1E-4)
 # optimizer.solve()
 # optimizer.print_results()
 
-
+# if SNOPT:
 # prob = CSDLProblem(problem_name='darpa_trim', simulator=sim)
 # optimizer = SNOPT(prob, 
 #     Major_iterations=100,
 #     Major_optimality=1e-3,
 #     Major_feasibility=1e-3,
 #     append2file=True,
-#     # Major_step_limit=0.25,
-# )
+#     # Major_step_limit=0.25,)
 # optimizer.solve()
 # optimizer.print_results()
 
 
 
 end = time.time()
-print('Total run time: ', end - start)
-
-# print('Fx Prop 1')
-# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor0_out_panel_forces_x_ave'])
-# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor1_out_panel_forces_x_ave'])
-# print('\n')
-# print('Fy Prop 1')
-# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor0_out_panel_forces_y_ave'])
-# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor1_out_panel_forces_y_ave'])
-# print('\n')
-# print('Fz Prop 1')
-# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor0_out_panel_forces_z_ave'])
-# print(sim['system_model.wig.wig.wig.average_op.p0b1_mesh_rotor1_out_panel_forces_z_ave'])
-
-# print('\n')
-# print('Wing panel forces x, y, z')
-# print(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.wing_vlm_mesh_out_panel_forces_x'])
-# print(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.wing_vlm_mesh_out_panel_forces_y'])
-# print(sim['system_model.wig.wig.wig.operation.post_processor.ThrustDrag.wing_vlm_mesh_out_panel_forces_z'])
-# print('\n')
-# L = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_L']
-# D = sim['system_model.wig.wig.wig.average_op.wing_vlm_mesh_out_D']
+print('total run time (s): ', end - start)
 
 print('fz res: ', sim['fz_res'])
 print('fx res: ', sim['fx_res'])
 
-
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_0.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_1.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_2.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_3.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_4.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_5.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_6.total_thrust'])
-# print(sim['system_model.wig.wig.wig.torque_operation_rotor_7.total_thrust'])
+# print rotor thrust for all the props:
+for i in range(num_props):
+    print('rotor '+str(i)+' thrust (N): ', sim['system_model.wig.wig.wig.torque_operation_rotor_'+str(i)+'.total_thrust'])
 
 
-# print some of the design variables:
-# for i in range(int(num_props/2)):
-#     print('blade angle '+str(i)+': ', sim['blade_angle_'+str(i)])
+# print the blade angle for half the props (symmetric):
+for i in range(int(num_props/2)):
+    print('blade angle '+str(i)+' (rad): ', sim['blade_angle_'+str(i)])
 
+# print the rotor deltas for half the props (symmetric):
 for i in range(int(num_props/2)):
     print('delta '+str(i)+': ', sim['delta_'+str(i)])
 
-print('velocity: ', sim['system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u'])
+# print the velocity:
+print('velocity (m/s): ', sim['system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u'])
 
-
+# plot the uvlm result:
 if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test')
-
 # if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test_side', side_view=True)
-
-
 
