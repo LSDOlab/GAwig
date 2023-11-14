@@ -52,7 +52,12 @@ max_pwr = 4500. # hp
 m = 150000. # kg
 n_avg = 4#int(nt/((rpm/60)*nt*dt)) # 10
 print(n_avg)
+
+dx_const = [(-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5)]
+dy_const = [(),(),(),()]
+dz_const = [(),(),(),()]
 # endregion
+
 
 # region caddee setup
 file_name = 'LibertyLifter3.stp'
@@ -760,8 +765,8 @@ start = time.time()
 
 # run command: mpirun -n 2 python run_liberty_v2.py
 # run command: mpirun -np 2 python run_liberty_v2.py
-#comm = MPI.COMM_WORLD
-#sim = Simulator(model_csdl, analytics=True, display_scripts=True, comm=comm,)
+# comm = MPI.COMM_WORLD
+# sim = Simulator(model_csdl, analytics=True, display_scripts=True, comm=comm,)
 
 
 sim = Simulator(model_csdl, analytics=True, lazy=1)
