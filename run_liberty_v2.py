@@ -27,12 +27,12 @@ from torque_model import TorqueModel
 
 
 # region hyperparameters
-num_props = 2
+num_props = 4 # must be even
 num_blades = 3
-rpm = 1090.
-nt = 20
-dt = 0.005 # sec
-h = 2.375 # m
+rpm = 1090. # fixed rpm
+nt = 40
+dt = 0.003 # sec
+h = 2.375 # the height (m) from the image plane to the rotation_point
 pitch = 0.039425 # np.deg2rad(3) # rad
 rotor_blade_angle = -0.29411512# -0.30411512 # np.deg2rad(-4) # rad (negative is more thrust)
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
@@ -43,13 +43,17 @@ mirror = True
 sub = True
 free_wake = True
 symmetry = True # only works with mirror = True
-log_space = True # log spacing spanwise for wing mesh
+log_space = False # log spacing spanwise for wing mesh
+
+# airplane prams:
 max_pwr = 4500. # hp
 m = 150000. # kg
 
+core_size = 0.5 # set the viscous core size
+
 # flap params:
 flap_deflection = 27 # deg
-num_flap_panels = 1
+flap_frac = 0.25 # percent of the chord deflected by the flap
 
 # average the uvlm forces:
 num_periods = 1.0
@@ -85,21 +89,18 @@ spatial_rep.refit_geometry(file_name=file_name)
 
 
 
-# region components
+# region components: returns component with given name made from surfaces containing search_names
 def build_component(name, search_names):
-    # returns component with given name made from surfaces containing search_names
     primitive_names = list(spatial_rep.get_primitives(search_names=search_names).keys())
     component = LiftingSurface(name=name, spatial_representation=spatial_rep, primitive_names=primitive_names)
     sys_rep.add_component(component)
     return component
 
-wing = build_component('wing', ['WingGeom'])
-htail = build_component('htail', ['HTail'])
-fuse = build_component('fuse', ['FuselageGeom'])
+wing, htail, fuse = build_component('wing', ['WingGeom']), build_component('htail', ['HTail']), build_component('fuse', ['FuselageGeom'])
+
 
 # props
-props = []
-prop_indices = list(range(0,int(num_props/2))) + list(range(int(8-num_props/2),8))
+props, prop_indices = [], list(range(0,int(num_props/2))) + list(range(int(8-num_props/2),8))
 for i in range(num_props):
     prop = build_component('prop_'+str(i), ['Prop'+str(prop_indices[i]+1),'Hub'+str(prop_indices[i]+1)])
     props.append(prop)
@@ -110,8 +111,8 @@ for i in range(num_props):
 # region meshes
 
 # create the wing mesh:
-num_spanwise_vlm = 31
-num_chordwise_vlm = 8
+num_spanwise_vlm = 61
+num_chordwise_vlm = 12
 
 if log_space:
     start, end = 0.001, 1.0
@@ -147,7 +148,7 @@ wing_vlm_mesh_name = 'wing_vlm_mesh'
 
 # add flap deflections:
 if do_flaps:
-    flap_mesh = deflect_flap(wing_camber_surface_np, flap_deflection, num_flap_panels)
+    flap_mesh = deflect_flap(wing_camber_surface_np, flap_deflection, int(num_chordwise_vlm*flap_frac))
     wing_camber_surface_np = flap_mesh
     # spatial_rep.plot_meshes([flap_mesh])
 
@@ -162,8 +163,8 @@ if symmetry:
 
 
 # right fuselage mesh:
-num_long_vlm = 8
-num_vert_vlm = 4
+num_long_vlm = 6
+num_vert_vlm = 3
 
 rtop = fuse.project(np.linspace(np.array([0, 27, -0.25]), np.array([120, 27, 9]), num_long_vlm+2)[1:-1], direction=np.array([0., 0., -1.]), plot=False)
 rbot = fuse.project(np.linspace(np.array([0, 27, -10]), np.array([120, 27, -2]), num_long_vlm+2)[1:-1], direction=np.array([0., 0., -1.]), plot=False)
@@ -187,7 +188,7 @@ sys_rep.add_output(left_fuse_mesh_name, left_fuse_surface)
 
 
 # prop meshes
-num_spanwise_prop= 6
+num_spanwise_prop= 5
 num_chordwise_prop = 2
 
 offsets = [0,20,20,38,18,38,20,20] # gaps between rotors, left to right
@@ -312,11 +313,9 @@ if do_fuselage:
 prop_meshes = []
 prop_meshes_vel = []
 for i in range(num_props):
-
     direction = -1
-
-    if i >= num_props/2:
-        direction = 1
+    if i >= num_props/2: direction = 1
+    
     prop_model = Rotor3(mesh_name = propb1_mesh_names[i], 
                         num_blades = num_blades, 
                         ns = num_spanwise_prop, 
@@ -328,7 +327,6 @@ for i in range(num_props):
                         mesh = prop_meshes_np[i],
                         rpm = rpm,
                         point = prop_points[i])
-    # prop_mesh_out, mirror_prop_meshes, prop_mesh_out_vel, prop_mesh_mirror_vel = prop_model.evaluate(h_m3l, theta_m3l)
     prop_mesh_out, mirror_prop_meshes, prop_mesh_out_vel, prop_mesh_mirror_vel = prop_model.evaluate(h_m3l)
 
     if mirror:
@@ -340,10 +338,11 @@ for i in range(num_props):
 
 
 
-
-
 if mirror: num_blades = num_blades*2
 # endregion
+
+
+
 
 # region uvlm_parameters, interactions
 uvlm_parameters = [('u',True,ac_states_expanded['u']),
@@ -370,8 +369,7 @@ def generate_sub_lists(interaction_groups):
     return sub_eval_list, sub_induced_list
 
 # ode stuff for props
-surface_names, surface_shapes, initial_conditions, interaction_groups, symmetry_list = [], [], [], [], []
-i = 0
+surface_names, surface_shapes, initial_conditions, interaction_groups, symmetry_list, i = [], [], [], [], [], 0
 for prop_mesh in prop_meshes:
     interaction_groups.append(list(range(num_blades*i,num_blades*(i+1))))
     for var in prop_mesh:
@@ -500,7 +498,8 @@ uvlm = VASTSolverUnsteady(num_nodes = nt,
                           sub_induced_list = sub_induced_list,
                           symmetry = symmetry,
                           sym_struct_list = symmetry_list,
-                          free_wake=free_wake,)
+                          free_wake=free_wake,
+                          core_size=core_size,)
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
 model.set_dynamic_options(initial_conditions=initial_conditions,
@@ -675,9 +674,10 @@ power_vector = model_csdl.create_output('power_vector', shape=(len(prop_fx_list)
 for i in range(len(prop_fx_list)):
     eng_pwr = model_csdl.declare_variable('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr')
     power_vector[i] = eng_pwr
-    
+# aggregate the max power with a ks max:
 max_eng_pwr = model_csdl.register_output('max_eng_pwr', csdl.max(1E-2*power_vector)/1E-2)
-# model_csdl.add_constraint('max_eng_pwr', upper=max_pwr, scaler=1E-3)
+# add a single aggregated max power constraint:
+model_csdl.add_constraint('max_eng_pwr', upper=max_pwr, scaler=1E-3)
 model_csdl.print_var(max_eng_pwr)
 
 # lift equals weight constraint:
@@ -690,19 +690,13 @@ fz_res = model_csdl.register_output('fz_res', (L_tot_ave - m*9.81))
 #model_csdl.print_var(fz_res)
 
 
-
-vel = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u')
+# compute a viscous drag estimate:
+velocity = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u')
 other_drag_coef = 0.03 #0.015
-other_drag = model_csdl.register_output('other_drag', 0.5*1.225*vel**2*6000*other_drag_coef) # 600m^2 not 6000ft^2
+other_drag = model_csdl.register_output('other_drag', 0.5*1.225*velocity**2*6000*other_drag_coef) # 600m^2 not 6000ft^2
 
 
-# # get the total thrust:
-# thrust_index = model_csdl.create_output('thrust_index', shape=(num_props), val=0)
-# for i in range(num_props):
-#     thrust_index[i] = 1*model_csdl.declare_variable('system_model.wig.wig.wig.torque_operation_rotor_'+str(i)+'.total_thrust')
-# thrust_sum = model_csdl.register_output('thrust_sum', csdl.sum(thrust_index))
-
-
+# panel_fx gives the total x-axis forces for the entire mirrored system:
 panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
 fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx) + 0.5*other_drag) # 2*other_drag???
 #model_csdl.print_var(fx_res)
@@ -716,11 +710,6 @@ trim_res = model_csdl.register_output('trim_res', csdl.pnorm(trim_res_vec)/10)
 model_csdl.print_var(trim_res)
 model_csdl.add_constraint('trim_res', equals=0, scaler=1E-2)
 
-
-
-
-# the optimization objective:
-velocity = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u')
 
 # print the velocity during optimization:
 vel = model_csdl.register_output('vel', 1*velocity)
@@ -795,7 +784,41 @@ for i in range(int(num_props/2)):
 # print the velocity:
 print('velocity (m/s): ', sim['system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u'])
 
+
+
+
+
+
+
+
+# plot the lift distribution across the half span:
+fig = plt.figure(figsize=(8,3))
+L_negy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_neg_y_out_L_panel']
+L_posy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_pos_y_out_L_panel']
+num_span = int((num_spanwise_vlm - 1)/2)
+xpos = np.linspace(0,num_span,num_span)
+
+rpos = np.array([87,67,47,9])/102
+
+data = np.zeros((num_span))
+for i in range(nt - n_avg - 1, nt - 1):
+    temp = np.zeros(num_span)
+    for j in range(num_chordwise_vlm - 1):
+        temp[:] += L_negy[i,j*num_span:(j+1)*num_span,0].flatten()
+    data[:] += temp
+
+plt.plot(xpos/max(xpos), data/n_avg, label='_nolegend_')
+plt.scatter(xpos/max(xpos), data/n_avg, label='_nolegend_')
+for i in range(int(num_props/2)): plt.axvline(x=rpos[i], color='black', linestyle='dashed', linewidth=2)
+plt.xlim([0,1])
+plt.xlabel('Spanwise location')
+plt.ylabel('Lift (N)')
+plt.legend(['Rotor locations'], frameon=False)
+plt.savefig('lift_distribution.png', transparent=True, bbox_inches="tight", dpi=400)
+plt.show()
+
+
+
+
 # plot the uvlm result:
 if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test')
-# if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test_side', side_view=True)
-

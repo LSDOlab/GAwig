@@ -106,7 +106,8 @@ def plot_wireframe_line(sim, surface_names, nt, interactive = False, plot_mirror
             # axes=0,
             #  pos=(0, 0),
             offscreen=False,
-            interactive=1)
+            interactive=1,
+            size=(500,500))
         
         for surface_name in surface_names:
             if 'mirror' in surface_name and not plot_mirror:
@@ -196,7 +197,7 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
         yrange=(-30, 30),
         zrange=(0, 10),
     )
-    video = Video(name+".gif", fps=10, backend=backend)
+    video = Video(name+".gif", fps=5, backend=backend)
     # first get min and max gamma value:
     min_gamma = 1e100
     max_gamma = -1e100
@@ -212,12 +213,13 @@ def plot_wireframe(sim, surface_names, nt, interactive = False, plot_mirror = Tr
                 max_gamma = np.max([max_gamma, np.max(gamma_w)])
     for i in range(1, nt - 1):
         vp = Plotter(
-            bg='beige',
-            bg2='lb',
+            bg='white',
+            # bg2='white',
             # axes=0,
             #  pos=(0, 0),
             offscreen=False,
-            interactive=1)
+            interactive=1,
+            size=(2500,2500))
 
         # Any rendering loop goes here, e.g.
         draw_scalarbar = True
