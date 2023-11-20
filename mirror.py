@@ -76,7 +76,7 @@ class MirrorCSDL(ModuleCSDL):
         point = self.parameters['point']
         mesh_value = self.parameters['mesh_value']
 
-        alpha = self.declare_variable('theta', shape=(1,))
+        alpha = self.declare_variable('theta', shape=(1,), val=0.)
         h = self.declare_variable('h', shape=(1,))
         #h = self.register_module_input('h', shape=(1), promotes=True)
 

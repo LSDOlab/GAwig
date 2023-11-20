@@ -445,15 +445,15 @@ class Rotor3(m3l.ExplicitOperation):
         for i in range(num_blades):
             mirror_mesh_vars.append(m3l.Variable(self.name+str(i)+'_mirror', shape=(nt,nc,ns,3), operation=self))
 
-        mesh_out_velocities = []
-        for i in range(num_blades):
-            mesh_out_velocities.append(m3l.Variable(self.name+str(i)+'_out_velocity', shape=(nt,nc-1,ns-1,3), operation=self))
+        # mesh_out_velocities = []
+        # for i in range(num_blades):
+        #     mesh_out_velocities.append(m3l.Variable(self.name+str(i)+'_out_velocity', shape=(nt,nc-1,ns-1,3), operation=self))
 
-        mesh_mirror_velocities = []
-        for i in range(num_blades):
-            mesh_mirror_velocities.append(m3l.Variable(self.name+str(i)+'_mirror_velocity', shape=(nt,nc-1,ns-1,3), operation=self))
+        # mesh_mirror_velocities = []
+        # for i in range(num_blades):
+        #     mesh_mirror_velocities.append(m3l.Variable(self.name+str(i)+'_mirror_velocity', shape=(nt,nc-1,ns-1,3), operation=self))
 
-        return tuple(mesh_out_vars), tuple(mirror_mesh_vars), tuple(mesh_out_velocities), tuple(mesh_mirror_velocities)
+        return tuple(mesh_out_vars), tuple(mirror_mesh_vars), # tuple(mesh_out_velocities), tuple(mesh_mirror_velocities)
 
 
 
@@ -527,7 +527,7 @@ class RotorCSDL3(ModuleCSDL):
                 blade_mesh_point = csdl.reshape(blade_shifted_mesh[i,j,:], (3))
                 blade_rot_mesh[i,j,:] = csdl.reshape(csdl.matvec(blade_rot_mat, blade_mesh_point), (1,1,3))
 
-        alpha = self.declare_variable('theta', shape=(1,))
+        alpha = self.declare_variable('theta', shape=(1,), val=0.)
         h = self.declare_variable('h', shape=(1,))
 
         
@@ -627,13 +627,13 @@ class RotorCSDL3(ModuleCSDL):
 
 
             # mesh out velocity
-            coll_pts_coords = 0.25/2 * (mesh_out[:,0:nc-1, 0:ns-1, :] +mesh_out[:,0:nc-1, 1:ns, :]) +\
-                                         0.75/2 * (mesh_out[:,1:, 0:ns-1, :]+mesh_out[:,1:, 1:, :])
-            mesh_velocity = self.create_output(f'{mesh_name}_rotor{i}_out_velocity', shape=(nt, nc-1, ns-1, 3), val=0)
-            for ii in range(nt):
-                if ii == 0: mesh_velocity[ii, :, :, :] = (-3 * coll_pts_coords[ii, :, :, :] + 4 * coll_pts_coords[ii + 1, :, :, :] - coll_pts_coords[ii + 2, :, :, :]) / (2 * dt)
-                elif ii == (nt - 1): mesh_velocity[ii, :, :, :] = (3 * coll_pts_coords[ii, :, :, :] - 4 * coll_pts_coords[ii - 1, :, :, :] + coll_pts_coords[ii - 2, :, :, :]) / (2 * dt)
-                else: mesh_velocity[ii, :, :, :] = (coll_pts_coords[ii+1, :, :, :] - coll_pts_coords[ii-1, :, :, :]) / (2 * dt)
+            # coll_pts_coords = 0.25/2 * (mesh_out[:,0:nc-1, 0:ns-1, :] +mesh_out[:,0:nc-1, 1:ns, :]) +\
+            #                              0.75/2 * (mesh_out[:,1:, 0:ns-1, :]+mesh_out[:,1:, 1:, :])
+            # mesh_velocity = self.create_output(f'{mesh_name}_rotor{i}_out_velocity', shape=(nt, nc-1, ns-1, 3), val=0)
+            # for ii in range(nt):
+            #     if ii == 0: mesh_velocity[ii, :, :, :] = (-3 * coll_pts_coords[ii, :, :, :] + 4 * coll_pts_coords[ii + 1, :, :, :] - coll_pts_coords[ii + 2, :, :, :]) / (2 * dt)
+            #     elif ii == (nt - 1): mesh_velocity[ii, :, :, :] = (3 * coll_pts_coords[ii, :, :, :] - 4 * coll_pts_coords[ii - 1, :, :, :] + coll_pts_coords[ii - 2, :, :, :]) / (2 * dt)
+            #     else: mesh_velocity[ii, :, :, :] = (coll_pts_coords[ii+1, :, :, :] - coll_pts_coords[ii-1, :, :, :]) / (2 * dt)
 
             # TODO: also do blade velocities for mirrored meshes
 
@@ -647,13 +647,13 @@ class RotorCSDL3(ModuleCSDL):
 
 
             # mesh mirror velocity
-            coll_pts_coords_mirror = 0.25/2 * (mirror[:,0:nc-1, 0:ns-1, :] + mirror[:,0:nc-1, 1:ns, :]) +\
-                                         0.75/2 * (mirror[:,1:, 0:ns-1, :] + mirror[:,1:, 1:, :])
-            mesh_velocity_mirror = self.create_output(f'{mesh_name}_rotor{i}_mirror_velocity', shape=(nt, nc-1, ns-1, 3), val=0)
-            for ii in range(nt):
-                if ii == 0: mesh_velocity_mirror[ii, :, :, :] = (-3 * coll_pts_coords_mirror[ii, :, :, :] + 4 * coll_pts_coords_mirror[ii + 1, :, :, :] - coll_pts_coords_mirror[ii + 2, :, :, :]) / (2 * dt)
-                elif ii == (nt - 1): mesh_velocity_mirror[ii, :, :, :] = (3 * coll_pts_coords_mirror[ii, :, :, :] - 4 * coll_pts_coords_mirror[ii - 1, :, :, :] + coll_pts_coords_mirror[ii - 2, :, :, :]) / (2 * dt)
-                else: mesh_velocity_mirror[ii, :, :, :] = (coll_pts_coords_mirror[ii+1, :, :, :] - coll_pts_coords_mirror[ii-1, :, :, :]) / (2 * dt)
+            # coll_pts_coords_mirror = 0.25/2 * (mirror[:,0:nc-1, 0:ns-1, :] + mirror[:,0:nc-1, 1:ns, :]) +\
+            #                              0.75/2 * (mirror[:,1:, 0:ns-1, :] + mirror[:,1:, 1:, :])
+            # mesh_velocity_mirror = self.create_output(f'{mesh_name}_rotor{i}_mirror_velocity', shape=(nt, nc-1, ns-1, 3), val=0)
+            # for ii in range(nt):
+            #     if ii == 0: mesh_velocity_mirror[ii, :, :, :] = (-3 * coll_pts_coords_mirror[ii, :, :, :] + 4 * coll_pts_coords_mirror[ii + 1, :, :, :] - coll_pts_coords_mirror[ii + 2, :, :, :]) / (2 * dt)
+            #     elif ii == (nt - 1): mesh_velocity_mirror[ii, :, :, :] = (3 * coll_pts_coords_mirror[ii, :, :, :] - 4 * coll_pts_coords_mirror[ii - 1, :, :, :] + coll_pts_coords_mirror[ii - 2, :, :, :]) / (2 * dt)
+            #     else: mesh_velocity_mirror[ii, :, :, :] = (coll_pts_coords_mirror[ii+1, :, :, :] - coll_pts_coords_mirror[ii-1, :, :, :]) / (2 * dt)
 
 
         debug_rotor = debug_rot_mesh + csdl.expand(point, (num_blades,nt,nc,ns,3), 'm->ijklm')
