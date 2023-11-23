@@ -27,17 +27,17 @@ from torque_model import TorqueModel
 
 
 # region hyperparameters
-num_props = 4 # must be even
-num_blades = 3
+num_props = 2 # must be even
+num_blades = 2
 rpm = 1090. # fixed rpm
-nt = 40
+nt = 20
 dt = 0.003 # sec
 h = 2.375 # the height (m) from the image plane to the rotation_point
 pitch = 0.039425 # np.deg2rad(3) # rad
 rotor_blade_angle = -0.29411512# -0.30411512 # np.deg2rad(-4) # rad (negative is more thrust)
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
-do_flaps = True
+do_flaps = False
 do_fuselage = False
 mirror = True
 sub = True
@@ -111,7 +111,7 @@ for i in range(num_props):
 # region meshes
 
 # create the wing mesh:
-num_spanwise_vlm = 61
+num_spanwise_vlm = 21 # 61
 num_chordwise_vlm = 12
 
 if log_space:
@@ -312,10 +312,15 @@ if do_fuselage:
 
 prop_meshes = []
 prop_meshes_vel = []
+prop_loc_names = []
+prop_center_loc = []
+prop_blade_names = []
+prop_dir_list = []
 for i in range(num_props):
     direction = -1
     if i >= num_props/2: direction = 1
     
+    prop_dir_list.extend([direction] * num_blades)
     prop_model = Rotor3(mesh_name = propb1_mesh_names[i], 
                         num_blades = num_blades, 
                         ns = num_spanwise_prop, 
@@ -327,14 +332,20 @@ for i in range(num_props):
                         mesh = prop_meshes_np[i],
                         rpm = rpm,
                         point = prop_points[i])
-    prop_mesh_out, mirror_prop_meshes, prop_mesh_out_vel, prop_mesh_mirror_vel = prop_model.evaluate(h_m3l)
+    prop_loc_names.extend([propb1_mesh_names[i] + '_point_out'] * num_blades)
+    prop_blade_names.extend([propb1_mesh_names[i] + '_rotor' + str(j) + '_out' for j in range(num_blades)])
+    prop_mesh_out, mirror_prop_meshes, prop_center, prop_mirror_center = prop_model.evaluate(h_m3l)
 
     if mirror:
         prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
-        prop_meshes_vel.append(prop_mesh_out_vel + prop_mesh_mirror_vel)
+        prop_center_loc.append(prop_center)
+        prop_center_loc.append(prop_mirror_center)
+        prop_loc_names.extend([propb1_mesh_names[i] + '_point_mirror'] * num_blades)
+        prop_dir_list.extend([-1*direction] * num_blades)
+        prop_blade_names.extend([propb1_mesh_names[i] + '_rotor' + str(j) + '_mirror' for j in range(num_blades)])
     else:
         prop_meshes.append(prop_mesh_out)
-        prop_meshes_vel.append(prop_mesh_out_vel)
+        prop_center_loc.append(prop_center)
 
 
 
@@ -384,14 +395,17 @@ for prop_mesh in prop_meshes:
         initial_conditions.append((name+'_gamma_w_0', np.zeros((nt-1, ny-1))))
         initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
     i += 1
-
-for prop_mesh_vel in prop_meshes_vel:
-    for vel in prop_mesh_vel:
-        shape = vel.shape
-        nx = shape[1]
-        ny = shape[2]
-        name = vel.name
-        uvlm_parameters.append((f'{name}', True, vel))
+for prop_center in prop_center_loc:
+    print(prop_center.shape)
+    print(prop_center.name)
+    uvlm_parameters.append((prop_center.name, False, prop_center))
+# for prop_mesh_vel in prop_meshes_vel:
+#     for vel in prop_mesh_vel:
+#         shape = vel.shape
+#         nx = shape[1]
+#         ny = shape[2]
+#         name = vel.name
+#         uvlm_parameters.append((f'{name}', True, vel))
 
 # interactions for props
 sub_eval_list, sub_induced_list = generate_sub_lists(interaction_groups)
@@ -499,7 +513,11 @@ uvlm = VASTSolverUnsteady(num_nodes = nt,
                           symmetry = symmetry,
                           sym_struct_list = symmetry_list,
                           free_wake=free_wake,
-                          core_size=core_size,)
+                          core_size=core_size,
+                          rpm=[rpm]*len(prop_loc_names),
+                          rpm_dir=prop_dir_list, # +x is positive, -x is negative
+                          rot_surf_names=prop_blade_names, # list of surface names for blades corresponding to prop in prop_loc_names
+                          center_point_names=prop_loc_names,)
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
 model.set_dynamic_options(initial_conditions=initial_conditions,

@@ -25,11 +25,11 @@ from torque_model import TorqueModel
 # endregion
 
 # region hyperparameters
-num_props = 0
+num_props = 4
 num_blades = 2
 rpm = 1090.
 nt = 20
-dt_0 = 0.01 * 1
+dt_0 = 0.003 * 1
 # dt = dt_0 + 60./rpm
 dt = dt_0
 h = 20 # m
@@ -40,7 +40,7 @@ rotation_point = np.array([0,0,0])
 do_wing = True
 do_flaps = False
 do_fuselage = False
-mirror = False
+mirror = True
 sub = True
 free_wake = True
 symmetry = False # only works with mirror = True
@@ -84,8 +84,8 @@ for i in range(num_props):
 
 # region meshes
 # wing mesh:
-num_spanwise_vlm = 31
-num_chordwise_vlm = 61
+num_spanwise_vlm = 21
+num_chordwise_vlm = 15
 
 if log_space:
     start = 0.001
@@ -113,7 +113,7 @@ chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_vlm)
 wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 0., 5.]), direction=np.array([0., 0., -2.]), grid_search_n=50, plot=False)
 wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 5.]), direction=np.array([0., 0., 2.]), grid_search_n=50, plot=False)
 wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surface_wireframe, 1)
-spatial_rep.plot_meshes([wing_camber_surface])
+# spatial_rep.plot_meshes([wing_camber_surface])
 # exit()
 wing_camber_surface_np = wing_camber_surface.value.reshape((num_chordwise_vlm, num_spanwise_vlm, 3))
 wing_vlm_mesh_name = 'wing_vlm_mesh'
@@ -292,22 +292,12 @@ if do_fuselage:
 prop_meshes = []
 prop_meshes_vel = []
 prop_loc_names = []
+prop_center_loc = []
 prop_blade_names = []
 prop_dir_list = []
 for i in range(num_props):
-    # blade_angle_value = np.array([blade_angle])
-    # rotor_delta_value = np.reshape(np.array([rotor_delta]), (3,))
-    # if i >= num_props/2:
-    #     blade_angle_value = -1*blade_angle_value
-    #     rotor_delta_value[1] = -1*rotor_delta_value[1]
-    # blade_angle_m3l = m3l.Variable('blade_angle' + str(i), shape=(1,), value=blade_angle_value)
-    # delta_m3l = m3l.Variable('delta' + str(i), shape=(3,), value=rotor_delta_value)
-    # dir = -1
     direction = -1
-
-    if i >= num_props/2:
-        # dir = 1
-        direction = 1
+    if i >= num_props/2: direction = 1
     
     prop_dir_list.extend([direction] * num_blades)
     prop_model = Rotor3(mesh_name = propb1_mesh_names[i], 
@@ -321,16 +311,19 @@ for i in range(num_props):
                         mesh = prop_meshes_np[i],
                         rpm = rpm,
                         point = prop_points[i])
-    prop_loc_names.extend([propb1_mesh_names[i] + '_point'] * num_blades)
-    prop_blade_names.extend([propb1_mesh_names[i] + '_rotor' + str(j) for j in range(num_blades)])
-    # prop_mesh_out, mirror_prop_meshes, prop_mesh_out_vel, prop_mesh_mirror_vel = prop_model.evaluate(h_m3l)
-    prop_mesh_out, mirror_prop_meshes = prop_model.evaluate(h_m3l)
+    prop_loc_names.extend([propb1_mesh_names[i] + '_point_out'] * num_blades)
+    prop_blade_names.extend([propb1_mesh_names[i] + '_rotor' + str(j) + '_out' for j in range(num_blades)])
+    prop_mesh_out, mirror_prop_meshes, prop_center, prop_mirror_center = prop_model.evaluate(h_m3l)
     if mirror:
         prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
-        # prop_meshes_vel.append(prop_mesh_out_vel + prop_mesh_mirror_vel)
+        prop_center_loc.append(prop_center)
+        prop_center_loc.append(prop_mirror_center)
+        prop_loc_names.extend([propb1_mesh_names[i] + '_point_mirror'] * num_blades)
+        prop_dir_list.extend([-1*direction] * num_blades)
+        prop_blade_names.extend([propb1_mesh_names[i] + '_rotor' + str(j) + '_mirror' for j in range(num_blades)])
     else:
         prop_meshes.append(prop_mesh_out)
-        # prop_meshes_vel.append(prop_mesh_out_vel)
+        prop_center_loc.append(prop_center)
 
 if mirror:
     num_blades = num_blades*2
@@ -402,7 +395,7 @@ for n in range(4):
     prop_wake_coord_IC_mesh = np.zeros((nt-1, 5, 3))
     for m in range(nt-1):
         prop_wake_coord_IC_mesh[m,:,:] = prop_wake_coord_IC_list[n].copy()
-    prop_wake_coord_IC.append(prop_wake_coord_IC_mesh)
+    # prop_wake_coord_IC.append(prop_wake_coord_IC_mesh)
 
 j = 0
 for prop_mesh in prop_meshes:
@@ -418,11 +411,16 @@ for prop_mesh in prop_meshes:
         uvlm_parameters.append((name, True, var))
         # uvlm_parameters.append((name+'_coll_vel', True, np.zeros((nt, nx-1, ny-1, 3))))
         initial_conditions.append((name+'_gamma_w_0', np.zeros((nt-1, ny-1))))
-        # initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
-        initial_conditions.append((name+'_wake_coords_0', prop_wake_coord_IC[j]))
+        initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
+        # initial_conditions.append((name+'_wake_coords_0', prop_wake_coord_IC[j]))
         j += 1
     i += 1
-
+for prop_center in prop_center_loc:
+    print(prop_center.shape)
+    print(prop_center.name)
+    uvlm_parameters.append((prop_center.name, False, prop_center))
+    # uvlm_parameters.append((prop_center))
+# exit()
 # for prop_mesh_vel in prop_meshes_vel:
 #     for vel in prop_mesh_vel:
 #         shape = vel.shape
@@ -549,11 +547,12 @@ uvlm = VASTSolverUnsteady(num_nodes = nt,
                           free_wake=free_wake,
                           rpm=[rpm]*len(prop_loc_names),
                           rpm_dir=prop_dir_list, # +x is positive, -x is negative
-                          rpm_name_list=prop_blade_names, # list of surface names for blades corresponding to prop in prop_loc_names
+                          rot_surf_names=prop_blade_names, # list of surface names for blades corresponding to prop in prop_loc_names
+                          center_point_names=prop_loc_names,
                         #   use_polar=True,
-                          polar_bool_list=polar_bool_list,
-                          prop_center_names=prop_loc_names
+                        #   polar_bool_list=polar_bool_list,
                           )
+
 uvlm_residual = uvlm.evaluate()
 model.register_output(uvlm_residual)
 model.set_dynamic_options(initial_conditions=initial_conditions,
@@ -739,7 +738,7 @@ for chordwise:
     - chordwise panels: [1, 2, 5, 10, 15, 30, 45]
 '''
 
-plot_wing_distributions = True
+plot_wing_distributions = False
 if plot_wing_distributions:
     import pickle
     span_coords = sim['system_model.wig.wig.wig.operation.input_model.wing_vlm_meshmirror.wing_vlm_mesh_out'][0][0,:,1]

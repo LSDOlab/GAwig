@@ -444,6 +444,10 @@ class Rotor3(m3l.ExplicitOperation):
         mirror_mesh_vars = []
         for i in range(num_blades):
             mirror_mesh_vars.append(m3l.Variable(self.name+str(i)+'_mirror', shape=(nt,nc,ns,3), operation=self))
+        
+        point_name = self.parameters['mesh_name'] + '_point'
+        point_var = m3l.Variable(point_name+'_out', shape=(3,), operation=self)
+        point_mirror_var = m3l.Variable(point_name+'_mirror', shape=(3,), operation=self)
 
         # mesh_out_velocities = []
         # for i in range(num_blades):
@@ -453,7 +457,8 @@ class Rotor3(m3l.ExplicitOperation):
         # for i in range(num_blades):
         #     mesh_mirror_velocities.append(m3l.Variable(self.name+str(i)+'_mirror_velocity', shape=(nt,nc-1,ns-1,3), operation=self))
 
-        return tuple(mesh_out_vars), tuple(mirror_mesh_vars), # tuple(mesh_out_velocities), tuple(mesh_mirror_velocities)
+        # return tuple(mesh_out_vars), tuple(mirror_mesh_vars), # tuple(mesh_out_velocities), tuple(mesh_mirror_velocities)
+        return tuple(mesh_out_vars), tuple(mirror_mesh_vars), point_var, point_mirror_var
 
 
 
@@ -490,8 +495,16 @@ class RotorCSDL3(ModuleCSDL):
         # a single blade mesh:
         mesh = self.create_input(mesh_name, shape=(nc,ns,3), val=mesh)*0.3048
         # the center of the rotor disk:
+        h = self.declare_variable('h', shape=(1,))
         point = self.create_input(mesh_name + '_point', shape=(3,), val=np.reshape(point, (3,)))*0.3048
 
+        point_out = self.create_output(mesh_name + '_point_out', shape=(3,), val = 0.)
+        point_out[:2] = point[:2]
+        point_out[2] = point[2] + h
+
+        point_mirror = self.create_output(mesh_name + '_point_mirror', shape=(3,), val = 0.)
+        point_mirror[:2] = point_out[:2]
+        point_mirror[2] = point_out[2] * -1.
         
         delta = self.declare_variable('delta', shape=(3,), val=0)
         #self.print_var(delta)
@@ -528,7 +541,7 @@ class RotorCSDL3(ModuleCSDL):
                 blade_rot_mesh[i,j,:] = csdl.reshape(csdl.matvec(blade_rot_mat, blade_mesh_point), (1,1,3))
 
         alpha = self.declare_variable('theta', shape=(1,), val=0.)
-        h = self.declare_variable('h', shape=(1,))
+        # h = self.declare_variable('h', shape=(1,))
 
         
 
