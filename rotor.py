@@ -296,5 +296,3 @@ class RotorCSDL3(ModuleCSDL):
         luca_is_a_mirror_point[1] = actual_point[1]
         luca_is_a_mirror_point[2] = -1 * actual_point[2]
 
-        # self.register_output(mesh_name + '_rotated_luca', rotated_luca)
-
