@@ -191,6 +191,8 @@ class RotorCSDL3(ModuleCSDL):
         normalized_vector = vector/csdl.expand(csdl.pnorm(vector, 2), (3,))
         x, y, z = normalized_vector[0], normalized_vector[1], normalized_vector[2]
 
+        vec_x, vec_y, vec_z = csdl.reshape(x, (nt)), csdl.reshape(y, (nt)), csdl.reshape(z, (nt))
+
 
         
 
@@ -213,15 +215,15 @@ class RotorCSDL3(ModuleCSDL):
             vec_rot_mat = self.create_output('vec_rot_mat_' + str(i), shape=(nt,3,3), val=0)
             vec_cos_theta, vec_sin_theta = csdl.cos(angles), csdl.sin(angles)
             vec_one_minus_cos_theta = 1 - vec_cos_theta
-            vec_rot_mat[:,0,0] = csdl.reshape(vec_cos_theta + x**2 * vec_one_minus_cos_theta, (1,1))
-            vec_rot_mat[:,0,1] = csdl.reshape(x * y * vec_one_minus_cos_theta - z * vec_sin_theta, (1,1))
-            vec_rot_mat[:,0,2] = csdl.reshape(x * z * vec_one_minus_cos_theta + y * vec_sin_theta, (1,1))
-            vec_rot_mat[:,1,0] = csdl.reshape(y * x * vec_one_minus_cos_theta + z * vec_sin_theta, (1,1))
-            vec_rot_mat[:,1,1] = csdl.reshape(vec_cos_theta + y**2 * vec_one_minus_cos_theta, (1,1))
-            vec_rot_mat[:,1,2] = csdl.reshape(y * z * vec_one_minus_cos_theta - x * vec_sin_theta, (1,1))
-            vec_rot_mat[:,2,0] = csdl.reshape(z * x * vec_one_minus_cos_theta - y * vec_sin_theta, (1,1))
-            vec_rot_mat[:,2,1] = csdl.reshape(z * y * vec_one_minus_cos_theta + x * vec_sin_theta, (1,1))
-            vec_rot_mat[:,2,2] = csdl.reshape(vec_cos_theta + z**2 * vec_one_minus_cos_theta, (1,1))
+            vec_rot_mat[:,0,0] = csdl.reshape(vec_cos_theta + x**2 * vec_one_minus_cos_theta, (nt,1,1))
+            vec_rot_mat[:,0,1] = csdl.reshape(x * y * vec_one_minus_cos_theta - z * vec_sin_theta, (nt,1,1))
+            vec_rot_mat[:,0,2] = csdl.reshape(x * z * vec_one_minus_cos_theta + y * vec_sin_theta, (nt,1,1))
+            vec_rot_mat[:,1,0] = csdl.reshape(y * x * vec_one_minus_cos_theta + z * vec_sin_theta, (nt,1,1))
+            vec_rot_mat[:,1,1] = csdl.reshape(vec_cos_theta + y**2 * vec_one_minus_cos_theta, (nt,1,1))
+            vec_rot_mat[:,1,2] = csdl.reshape(y * z * vec_one_minus_cos_theta - x * vec_sin_theta, (nt,1,1))
+            vec_rot_mat[:,2,0] = csdl.reshape(z * x * vec_one_minus_cos_theta - y * vec_sin_theta, (nt,1,1))
+            vec_rot_mat[:,2,1] = csdl.reshape(z * y * vec_one_minus_cos_theta + x * vec_sin_theta, (nt,1,1))
+            vec_rot_mat[:,2,2] = csdl.reshape(vec_cos_theta + z**2 * vec_one_minus_cos_theta, (nt,1,1))
 
             for j in range(nt):
                 angle = (set_angle + rad_per_dt*j)*dir
