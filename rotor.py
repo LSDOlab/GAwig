@@ -291,5 +291,10 @@ class RotorCSDL3(ModuleCSDL):
         actual_point[1] = rotated_luca[1]
         actual_point[2] = rotated_luca[2] + h
 
+        luca_is_a_mirror_point = self.create_output(mesh_name + '_luca_is_a_mirror_point', shape=(3), val=0)
+        luca_is_a_mirror_point[0] = actual_point[0]
+        luca_is_a_mirror_point[1] = actual_point[1]
+        luca_is_a_mirror_point[2] = -1 * actual_point[2]
+
         # self.register_output(mesh_name + '_rotated_luca', rotated_luca)
 
