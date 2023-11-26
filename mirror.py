@@ -103,7 +103,6 @@ class MirrorCSDL(ModuleCSDL):
         dh = self.create_output('dh', shape=(nt,nc,ns,3), val=0)
         dh[:,:,:,2] = csdl.expand(h, (nt,nc,ns,1), 'i->abci')
 
-        #mesh = rotated_mesh + dh
         #mesh = rotated_mesh_points + dh
         mesh = self.register_output(mesh_name+'_out', rotated_mesh + dh)
 
