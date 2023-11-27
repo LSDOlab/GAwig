@@ -27,7 +27,7 @@ from torque_model import TorqueModel
 
 
 # region hyperparameters
-num_props = 2 # must be even
+num_props = 4 # must be even
 num_blades = 2
 rpm = 1090. # fixed rpm
 nt = 18
@@ -48,6 +48,7 @@ log_space = False # log spacing spanwise for wing mesh
 # airplane params:
 max_pwr = 4500. # hp
 m = 150000. # kg
+wing_area = 550 # m^2
 
 # VLM params:
 core_size = 0.5 # set the viscous core size
@@ -76,9 +77,6 @@ dy_const = [(-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0)]
 dz_const = [(-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0)]
 
 # set the baseline rotor deltas: rotors 0, 1, 2, 3
-# dxlist = [-0.02430892,-0.00279362, 0.01992822,-0.07037549]
-# dylist = [-0.01070022,-0.04420111,0.02285268,-0.01900518]
-# dzlist = [-0.32400794,-0.8670777,-0.16321619,-0.43031041]
 dxlist = [0,0,0,0]
 dylist = [0,0,0,0]
 dzlist = [0,0,0,0]
@@ -689,7 +687,6 @@ L_neg_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.w
 L_pos_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_pos_y_out_L_ave')
 L_tot_ave = model_csdl.register_output('L_tot_ave', L_neg_y_ave + L_pos_y_ave)
 model_csdl.print_var(L_tot_ave)
-# fz_res = model_csdl.register_output('fz_res', (L_tot_ave - m*9.81)*1E-2)
 fz_res = model_csdl.register_output('fz_res', (L_tot_ave - m*9.81))
 model_csdl.print_var(fz_res)
 
@@ -697,12 +694,12 @@ model_csdl.print_var(fz_res)
 # compute a viscous drag estimate:
 velocity = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u')
 other_drag_coef = 0.001 #2*0.02 #0.015
-other_drag = model_csdl.register_output('other_drag', 0.5*1.225*velocity**2*600*other_drag_coef) # 600m^2 not 6000ft^2
+other_drag = model_csdl.register_output('other_drag', 0.5*1.225*velocity**2*wing_area*other_drag_coef) # 600m^2 not 6000ft^2
 
 
 # panel_fx gives the total x-axis forces for the entire mirrored system:
 panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
-fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx) + other_drag) # 2*other_drag???
+fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx) + other_drag)
 model_csdl.print_var(fx_res)
 
 
@@ -778,7 +775,6 @@ print('fx res: ', sim['fx_res'])
 for i in range(num_props):
     print('rotor '+str(i)+' thrust (N): ', sim['system_model.wig.wig.wig.torque_operation_rotor_'+str(i)+'.total_thrust'])
 
-
 # print the blade angle for half the props (symmetric):
 for i in range(int(num_props/2)):
     print('blade angle '+str(i)+' (rad): ', sim['blade_angle_'+str(i)])
@@ -789,12 +785,6 @@ for i in range(int(num_props/2)):
 
 # print the velocity:
 print('velocity (m/s): ', sim['system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u'])
-
-
-
-
-
-
 
 
 # plot the lift distribution across the half span (left):
@@ -817,4 +807,4 @@ plot_lift_spanwise(nt=nt,
 
 
 # plot the uvlm result:
-if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test')
+plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test')
