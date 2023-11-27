@@ -27,7 +27,7 @@ from torque_model import TorqueModel
 
 
 # region hyperparameters
-num_props = 4 # must be even
+num_props = 6 # must be even
 num_blades = 2
 rpm = 1090. # fixed rpm
 nt = 18
