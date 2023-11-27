@@ -201,7 +201,6 @@ class RotorCSDL3(ModuleCSDL):
 
         # debug_rot_mesh = self.create_output('debug_rot_mesh', shape=(num_blades,nt,nc,ns,3), val=0)
         for i in range(num_blades):
-            # rot_mesh = self.create_output('rot_mesh'+str(i), shape=(nt,nc,ns,3), val=0)
             set_angle = rad_per_blade*i
 
 

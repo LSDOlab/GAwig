@@ -27,10 +27,10 @@ from torque_model import TorqueModel
 
 
 # region hyperparameters
-num_props = 2 # must be even
+num_props = 4 # must be even
 num_blades = 2
 rpm = 1090. # fixed rpm
-nt = 15
+nt = 30
 dt = 0.005 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
 pitch = 0.039425 # np.deg2rad(3) # rad
