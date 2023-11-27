@@ -17,7 +17,7 @@ from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, PostProcessor
 from deflect_flap import deflect_flap
 from VAST.core.profile_model import gen_profile_output_list, PPSubmodel
 from last_n_average import LastNAverage
-from plot_wing_symmetry import plot_wireframe, plot_wireframe_line
+from plot import plot_wireframe, plot_wireframe_line, plot_lift_spanwise
 from engine import Engine
 from torque_model import TorqueModel
 # from breguet_range_eqn import BreguetRange
@@ -27,10 +27,10 @@ from torque_model import TorqueModel
 
 
 # region hyperparameters
-num_props = 4 # must be even
+num_props = 2 # must be even
 num_blades = 2
 rpm = 1090. # fixed rpm
-nt = 30
+nt = 18
 dt = 0.005 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
 pitch = 0.039425 # np.deg2rad(3) # rad
@@ -797,61 +797,23 @@ print('velocity (m/s): ', sim['system_model.wig.wig.wig.operation.input_model.wi
 
 
 
-# plot the lift distribution across the half span:
-fig = plt.figure(figsize=(8,3))
-L_negy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_neg_y_out_L_panel']
-num_span = int((num_spanwise_vlm - 1)/2)
-xpos = np.linspace(0,num_span,num_span)
+# plot the lift distribution across the half span (left):
+plot_lift_spanwise(nt=nt, 
+                   n_avg=n_avg, 
+                   var=sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_neg_y_out_L_panel'],
+                   num_chordwise_vlm=num_chordwise_vlm,
+                   num_span=int((num_spanwise_vlm - 1)/2),
+                   num_props=num_props,
+                   rpos=np.array([87,67,47,9])/102,)
 
-rpos = np.array([87,67,47,9])/102
-
-data = np.zeros((num_span))
-for i in range(nt - n_avg - 1, nt - 1):
-    temp = np.zeros(num_span)
-    for j in range(num_chordwise_vlm - 1):
-        temp[:] += L_negy[i,j*num_span:(j+1)*num_span,0].flatten()
-    data[:] += temp
-
-plt.plot(xpos/max(xpos), data/n_avg, label='_nolegend_')
-plt.scatter(xpos/max(xpos), data/n_avg, label='_nolegend_')
-for i in range(int(num_props/2)): plt.axvline(x=rpos[i], color='black', linestyle='dashed', linewidth=2)
-plt.xlim([0,1])
-plt.xlabel('Spanwise location')
-plt.ylabel('Lift (N)')
-plt.legend(['Rotor locations'], frameon=False)
-plt.savefig('lift_distribution_neg_y.png', transparent=True, bbox_inches="tight", dpi=400)
-plt.show()
-
-
-
-
-
-# plot the lift distribution across the half span:
-fig = plt.figure(figsize=(8,3))
-L_posy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_pos_y_out_L_panel']
-num_span = int((num_spanwise_vlm - 1)/2)
-xpos = np.linspace(0,num_span,num_span)
-
-rpos = np.array([87,67,47,9])/102
-
-data = np.zeros((num_span))
-for i in range(nt - n_avg - 1, nt - 1):
-    temp = np.zeros(num_span)
-    for j in range(num_chordwise_vlm - 1):
-        temp[:] += L_posy[i,j*num_span:(j+1)*num_span,0].flatten()
-    data[:] += temp
-
-plt.plot(xpos/max(xpos), data/n_avg, label='_nolegend_')
-plt.scatter(xpos/max(xpos), data/n_avg, label='_nolegend_')
-for i in range(int(num_props/2)): plt.axvline(x=rpos[i], color='black', linestyle='dashed', linewidth=2)
-plt.xlim([0,1])
-plt.xlabel('Spanwise location')
-plt.ylabel('Lift (N)')
-plt.legend(['Rotor locations'], frameon=False)
-plt.savefig('lift_distribution_pos_y.png', transparent=True, bbox_inches="tight", dpi=400)
-plt.show()
-
-
+# plot the lift distribution across the half span (right):
+plot_lift_spanwise(nt=nt, 
+                   n_avg=n_avg, 
+                   var=sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_pos_y_out_L_panel'],
+                   num_chordwise_vlm=num_chordwise_vlm,
+                   num_span=int((num_spanwise_vlm - 1)/2),
+                   num_props=num_props,
+                   rpos=np.array([87,67,47,9])/102,)
 
 
 # plot the uvlm result:
