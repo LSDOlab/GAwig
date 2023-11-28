@@ -27,10 +27,10 @@ from torque_model import TorqueModel
 
 
 # region hyperparameters
-num_props = 6 # must be even
-num_blades = 2
+num_props = 2 # must be even
+num_blades = 3
 rpm = 1090. # fixed rpm
-nt = 18
+nt = 15
 dt = 0.005 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
 pitch = 0.039425 # np.deg2rad(3) # rad
@@ -807,4 +807,4 @@ plot_lift_spanwise(nt=nt,
 
 
 # plot the uvlm result:
-plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test')
+plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='test')
