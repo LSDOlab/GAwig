@@ -30,7 +30,7 @@ from torque_model import TorqueModel
 num_props = 2 # must be even
 num_blades = 3
 rpm = 1090. # fixed rpm
-nt = 18
+nt = 15
 dt = 0.005 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
 pitch = 0.039425 # np.deg2rad(3) # rad
@@ -53,7 +53,7 @@ wing_area = 550 # m^2
 # VLM params:
 core_size = 0.5 # set the viscous core size
 # wing:
-num_spanwise_vlm = 31
+num_spanwise_vlm = 21
 num_chordwise_vlm = 10
 # prop:
 num_spanwise_prop= 5
@@ -834,4 +834,4 @@ plot_lift_spanwise(nt=nt,
 
 
 # plot the uvlm result:
-plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='test')
+plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test')
