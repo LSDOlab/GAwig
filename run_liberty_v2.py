@@ -807,4 +807,4 @@ plot_lift_spanwise(nt=nt,
 
 
 # plot the uvlm result:
-plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='test')
+plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test')

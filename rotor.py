@@ -229,9 +229,13 @@ class RotorCSDL3(ModuleCSDL):
         #     # (nc,ns,3), (nt,3,3), (nt,nc,ns,3)
         #     rotor = self.register_output(mesh_name + '_rotor'+str(i), rot_mesh + csdl.expand(point, (nt,nc,ns,3), 'm->ijkm'))
 
+
+
         for i in range(num_blades):
-            rot_mesh = self.create_output('rot_mesh'+str(i), shape=(nt,nc,ns,3), val=0)
+            # rot_mesh = self.create_output('rot_mesh'+str(i), shape=(nt,nc,ns,3), val=0)
             set_angle = rad_per_blade*i
+
+            vec_rot_mat = self.create_output('vec_rot_mat_' + str(i), shape=(nt,3,3), val=0)
 
             for j in range(nt):
                 angle = (set_angle + rad_per_dt*j)*dir
@@ -249,14 +253,21 @@ class RotorCSDL3(ModuleCSDL):
                 rot_mat[2,1] = csdl.reshape(z * y * one_minus_cos_theta + x * sin_theta, (1,1))
                 rot_mat[2,2] = csdl.reshape(cos_theta + z**2 * one_minus_cos_theta, (1,1))
 
-                for k in range(nc):
-                    for l in range(ns):
-                        mesh_point = csdl.reshape(shifted_mesh[k,l,:], (3))
+                vec_rot_mat[j,:,:] = csdl.reshape(rot_mat, (1,3,3))
 
-                        rot_mesh[j,k,l,:] = csdl.reshape(csdl.matvec(rot_mat, mesh_point), (1,1,1,3))
+            #     for k in range(nc):
+            #         for l in range(ns):
+            #             mesh_point = csdl.reshape(shifted_mesh[k,l,:], (3))
 
-            rotor = rot_mesh + csdl.expand(point, (nt,nc,ns,3), 'm->ijkm')
-            self.register_output(mesh_name + '_rotor'+str(i), rotor)
+            #             rot_mesh[j,k,l,:] = csdl.reshape(csdl.matvec(rot_mat, mesh_point), (1,1,1,3))
+
+            # rotor = rot_mesh + csdl.expand(point, (nt,nc,ns,3), 'm->ijkm')
+            # self.register_output(mesh_name + '_rotor'+str(i), rotor)
+
+            # compute the rotated mesh (NOW VECTORIZED!!!):
+            rot_mesh = csdl.einsum(shifted_mesh, csdl.einsum(vec_rot_mat, subscripts='ijk->ikj'), subscripts='jkl,ilm->ijkm')
+            # (nc,ns,3), (nt,3,3), (nt,nc,ns,3)
+            rotor = self.register_output(mesh_name + '_rotor'+str(i), rot_mesh + csdl.expand(point, (nt,nc,ns,3), 'm->ijkm'))
 
 
             
