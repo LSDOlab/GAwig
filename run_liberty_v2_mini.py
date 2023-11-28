@@ -18,7 +18,7 @@ from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, PostProcessor
 from deflect_flap import deflect_flap
 from VAST.core.profile_model import gen_profile_output_list, PPSubmodel
 from last_n_average import LastNAverage
-from plot_wing_symmetry import plot_wireframe, plot_wireframe_line
+from plot import plot_wireframe, plot_wireframe_line
 from engine import Engine
 from torque_model import TorqueModel
 # from breguet_range_eqn import BreguetRange
@@ -28,7 +28,7 @@ from torque_model import TorqueModel
 
 
 # region hyperparameters
-num_props = 0 # must be even
+num_props = 2 # must be even
 num_blades = 3
 rpm = 1090. # fixed rpm
 nt = 20 # was 30 before
@@ -40,7 +40,7 @@ rotor_blade_angle = -0.29411512# -0.30411512 # np.deg2rad(-4) # rad (negative is
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
 do_flaps = False
-do_fuselage = False
+do_fuselage = True
 mirror = False
 sub = True
 free_wake = True
@@ -113,8 +113,8 @@ for i in range(num_props):
 # region meshes
 
 # create the wing mesh:
-num_spanwise_vlm = 41 # 61
-num_chordwise_vlm = 16
+num_spanwise_vlm = 21 # 61
+num_chordwise_vlm = 15
 
 if log_space:
     start, end = 0.001, 1.0
@@ -141,7 +141,7 @@ chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_vlm)
 wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 0., 5.]), direction=np.array([0., 0., -5.]), grid_search_n=50, plot=False)
 wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 5.]), direction=np.array([0., 0., 5.]), grid_search_n=50, plot=False)
 wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surface_wireframe, 1)
-spatial_rep.plot_meshes([wing_camber_surface])
+# spatial_rep.plot_meshes([wing_camber_surface])
 wing_camber_surface_np = wing_camber_surface.value.reshape((num_chordwise_vlm, num_spanwise_vlm, 3))
 wing_vlm_mesh_name = 'wing_vlm_mesh'
 
@@ -441,19 +441,16 @@ for surface in non_rotor_surfaces:
 if symmetry:
     # symmetry for props
     for i in range(int(num_props/2)):
-        for j in range(int(num_blades)):
-            if mirror:
+        if mirror:
+            for j in range(int(num_blades/2)):
                 symmetry_list.append([int(i*num_blades+j),                                     # left blade
                                     int((num_props-1-i)*num_blades + j),                       # right blade
                                     int(i*num_blades+j + num_blades/2),                        # left mirror blade
                                     int((num_props-1-i)*num_blades + j + num_blades/2)])       # right mirror blade
-            else:
+        else:
+            for j in range(int(num_blades)):
                 symmetry_list.append([int(i*num_blades+j),                                     # left blade
                                     int((num_props-1-i)*num_blades + j)])                      # right blade
-            # symmetry_list.append([int(i*num_blades+j),                                     # left blade
-            #                         int((num_props-1-i)*num_blades + j),                       # right blade
-            #                         int(i*num_blades+j + num_blades/2),                        # left mirror blade
-            #                         int((num_props-1-i)*num_blades + j + num_blades/2)])       # right mirror blade
 
 
     # symmetry for wing
@@ -472,9 +469,13 @@ if symmetry:
     if right_fuse_mesh_out.name in surface_names:
         fuselage0_index = surface_names.index(right_fuse_mesh_out.name)
         fuselage1_index = surface_names.index(left_fuse_mesh_out.name)
-        fuselage0_mirror_index = surface_names.index(right_fuse_mirror_mesh.name)
-        fuselage1_mirror_index = surface_names.index(left_fuse_mirror_mesh.name)
-        symmetry_list.append([fuselage0_index, fuselage1_index, fuselage0_mirror_index, fuselage1_mirror_index])
+        if mirror:
+            fuselage0_mirror_index = surface_names.index(right_fuse_mirror_mesh.name)
+            fuselage1_mirror_index = surface_names.index(left_fuse_mirror_mesh.name)
+            symmetry_list.append([fuselage0_index, fuselage1_index, fuselage0_mirror_index, fuselage1_mirror_index])
+        else:
+            symmetry_list.append([fuselage0_index, fuselage1_index])
+
 # endregion
 
 
@@ -655,11 +656,11 @@ model_csdl.add_design_variable('set_pitch', lower=np.deg2rad(0), upper=np.deg2ra
 # print the pitch angle during optimization:
 model_csdl.print_var(set_pitch)
 # connect set_pitch to the wing mirror:
-model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_mesh_pos_ymirror.theta')
-model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_mesh_neg_ymirror.theta')
-# if do_wing:
-#     model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_mesh_pos_ymirror.theta')
-#     model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_mesh_neg_ymirror.theta')
+# model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_mesh_pos_ymirror.theta')
+# model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_mesh_neg_ymirror.theta')
+if do_wing:
+    model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_mesh_pos_ymirror.theta')
+    model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.wing_vlm_mesh_neg_ymirror.theta')
 # connect set_pitch to the fuselage mirrors:
 if do_fuselage:
     model_csdl.connect('set_pitch', 'system_model.wig.wig.wig.operation.input_model.right_fuselage_meshmirror.theta')
@@ -874,33 +875,33 @@ if False:
 
 
 
-# plot the lift distribution across the half span:
-fig = plt.figure(figsize=(8,3))
-L_negy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_neg_y_out_L_panel']
-L_posy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_pos_y_out_L_panel']
-num_span = int((num_spanwise_vlm - 1)/2)
-xpos = np.linspace(0,num_span,num_span)
+# # plot the lift distribution across the half span:
+# fig = plt.figure(figsize=(8,3))
+# L_negy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_neg_y_out_L_panel']
+# L_posy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_pos_y_out_L_panel']
+# num_span = int((num_spanwise_vlm - 1)/2)
+# xpos = np.linspace(0,num_span,num_span)
 
-rpos = np.array([87,67,47,9])/102
+# rpos = np.array([87,67,47,9])/102
 
-data = np.zeros((num_span))
-for i in range(nt - n_avg - 1, nt - 1):
-    temp = np.zeros(num_span)
-    for j in range(num_chordwise_vlm - 1):
-        temp[:] += L_negy[i,j*num_span:(j+1)*num_span,0].flatten()
-    data[:] += temp
+# data = np.zeros((num_span))
+# for i in range(nt - n_avg - 1, nt - 1):
+#     temp = np.zeros(num_span)
+#     for j in range(num_chordwise_vlm - 1):
+#         temp[:] += L_negy[i,j*num_span:(j+1)*num_span,0].flatten()
+#     data[:] += temp
 
-plt.plot(xpos/max(xpos), data/n_avg, label='_nolegend_')
-plt.scatter(xpos/max(xpos), data/n_avg, label='_nolegend_')
-for i in range(int(num_props/2)): plt.axvline(x=rpos[i], color='black', linestyle='dashed', linewidth=2)
-plt.xlim([0,1])
-plt.xlabel('Spanwise location')
-plt.ylabel('Lift (N)')
-plt.legend(['Rotor locations'], frameon=False)
-plt.savefig('lift_distribution.png', transparent=True, bbox_inches="tight", dpi=400)
-# plt.show()
+# plt.plot(xpos/max(xpos), data/n_avg, label='_nolegend_')
+# plt.scatter(xpos/max(xpos), data/n_avg, label='_nolegend_')
+# for i in range(int(num_props/2)): plt.axvline(x=rpos[i], color='black', linestyle='dashed', linewidth=2)
+# plt.xlim([0,1])
+# plt.xlabel('Spanwise location')
+# plt.ylabel('Lift (N)')
+# plt.legend(['Rotor locations'], frameon=False)
+# plt.savefig('lift_distribution.png', transparent=True, bbox_inches="tight", dpi=400)
+# # plt.show()
 
-plot_wing_distributions = True
+plot_wing_distributions = False
 if plot_wing_distributions:
     import pickle
     span_coords = sim['system_model.wig.wig.wig.operation.input_model.wing_vlm_mesh_neg_ymirror.wing_vlm_mesh_neg_y_out'][0][0,:,1]
@@ -948,4 +949,4 @@ if plot_wing_distributions:
     plt.show()
 
 # plot the uvlm result:
-if False: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='liberty_noGE', backend='ffmpeg')
+if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='liberty_noGE', backend='ffmpeg')

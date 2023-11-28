@@ -76,9 +76,8 @@ class MirrorCSDL(ModuleCSDL):
         point = self.parameters['point']
         mesh_value = self.parameters['mesh_value']
 
-        alpha = self.declare_variable('theta', shape=(1,), val=0.)
+        alpha = -1 * self.declare_variable('theta', shape=(1,)) # why the -1 though?
         h = self.declare_variable('h', shape=(1,))
-        #h = self.register_module_input('h', shape=(1), promotes=True)
 
         # the rotation matrix:
         rotation_matrix_y = self.create_output('rotation_matrix_y',shape=(3,3),val=0)
@@ -90,18 +89,13 @@ class MirrorCSDL(ModuleCSDL):
 
         mesh_in_one_by = self.declare_variable(mesh_name, shape=(nc,ns,3), val=mesh_value)
         mesh_in = csdl.expand(mesh_in_one_by, (nt,nc,ns,3), 'ijk->lijk')
-        #mesh_in = self.register_module_input(mesh_name, shape=(nt,nc,ns,3), promotes=True)
         self.register_output('debug_mesh', 1*mesh_in)
 
         # rotate the mesh:
         translated_mesh_points = mesh_in - np.tile(point, (nt, nc, ns, 1))
-        rotated_mesh_points = self.create_output('rotated_mesh_points', shape=(nt,nc,ns,3), val=0)
-        for i in range(nt):
-            for j in range(nc):
-                for k in range(ns):
-                    eval_point = csdl.reshape(translated_mesh_points[i,j,k,:], (3))
-                    #eval_point = csdl.reshape(mesh_in[i,j,:], (3))
-                    rotated_mesh_points[i,j,k,:] = csdl.reshape(csdl.matvec(rotation_matrix_y, eval_point), (1,1,1,3))
+
+        # Apply rotation to all eval_points using matrix multiplication
+        rotated_mesh_points = csdl.einsum(translated_mesh_points, rotation_matrix_y, subscripts='ijkl,lm->ijkm')
 
         rotated_mesh = rotated_mesh_points + np.tile(point, (nt, nc, ns, 1))
 
@@ -109,9 +103,8 @@ class MirrorCSDL(ModuleCSDL):
         dh = self.create_output('dh', shape=(nt,nc,ns,3), val=0)
         dh[:,:,:,2] = csdl.expand(h, (nt,nc,ns,1), 'i->abci')
 
-        mesh = rotated_mesh + dh
         #mesh = rotated_mesh_points + dh
-        self.register_output(mesh_name+'_out', mesh)
+        mesh = self.register_output(mesh_name+'_out', rotated_mesh + dh)
 
         # create the mirrored mesh:
         mirror = self.create_output(mesh_name+'_mirror', shape=(nt,nc,ns,3), val=0)
