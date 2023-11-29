@@ -21,20 +21,20 @@ from plot import plot_wireframe, plot_wireframe_line, plot_lift_spanwise
 from engine import Engine
 from torque_model import TorqueModel
 # from breguet_range_eqn import BreguetRange
-from modopt.snopt_library import SNOPT
+# from modopt.snopt_library import SNOPT
 # from mpi4py import MPI
 
 
 
 # region hyperparameters
 num_props = 8 # must be even
-num_blades = 4
+num_blades = 3 # 3
 rpm = 1090. # fixed rpm
 nt = 25
 dt = 0.004 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
-pitch = 0.1 # np.deg2rad(3) # rad
-rotor_blade_angle = -0.07 # rad (negative is more thrust)
+pitch = 0.09 # np.deg2rad(3) # rad
+rotor_blade_angle = -0.08 # rad (negative is more thrust)
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
 do_flaps = True
@@ -52,10 +52,10 @@ wing_area = 550 # m^2
 other_drag_coef = 2 * 0.02
 
 # VLM params:
-core_size = 0.2 # 0.5 # set the viscous core size
+core_size = 0.4 # 0.5 # set the viscous core size
 # wing:
 num_spanwise_vlm = 31
-num_chordwise_vlm = 10
+num_chordwise_vlm = 8
 # prop:
 num_spanwise_prop= 5
 num_chordwise_prop = 2
@@ -602,7 +602,6 @@ wig_condition.add_m3l_model('wig_model', overmodel)
 design_scenario.add_design_condition(wig_condition)
 system_model.add_design_scenario(design_scenario=design_scenario)
 caddee_csdl_model = caddee.assemble_csdl()
-# caddee_csdl_model = overmodel.assemble_csdl()
 model_csdl = caddee_csdl_model
 # endregion
 
@@ -724,10 +723,26 @@ velocity = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input
 other_drag = model_csdl.register_output('other_drag', 0.5*1.225*velocity**2*wing_area*other_drag_coef)
 
 
-# panel_fx gives the total x-axis forces for the entire mirrored system:
-panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
-fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx) + other_drag)
+# compute the total thrust:
+thrust_index = model_csdl.create_output('thrust_index', shape=(num_props), val=0)
+for i in range(num_props): thrust_index[i] = 1*model_csdl.declare_variable('system_model.wig.wig.wig.torque_operation_rotor_'+str(i)+'.total_thrust')
+total_thrust = model_csdl.register_output('thrust_sum', csdl.sum(thrust_index)) # negative is thrust
+model_csdl.print_var(total_thrust)
+
+# get the drag from the wing:
+D_neg_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_neg_y_out_D_ave')
+D_pos_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_pos_y_out_D_ave')
+total_drag = D_neg_y_ave + D_pos_y_ave
+
+# compute the thrust minus drag residual:
+fx_res = model_csdl.register_output('fx_res', total_thrust + total_drag + other_drag)
 model_csdl.print_var(fx_res)
+
+
+# panel_fx gives the total x-axis forces for the entire mirrored system:
+# panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
+# fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx) + other_drag)
+# model_csdl.print_var(fx_res)
 
 
 trim_res_vec = model_csdl.create_output('trim_res_vec', shape=(2), val=0)
@@ -767,7 +782,7 @@ start = time.time()
 
 # for single core:
 sim = Simulator(model_csdl, analytics=True, lazy=1)
-# sim.run()
+sim.run()
 # sim.check_partials(compact_print=True)
 # sim.check_totals()
 
@@ -778,17 +793,17 @@ sim = Simulator(model_csdl, analytics=True, lazy=1)
 # optimizer.print_results()
 
 # if SNOPT:
-prob = CSDLProblem(problem_name='gawig', simulator=sim)
-optimizer = SNOPT(prob, 
-    Major_iterations=300,
-    Major_optimality=1e-3,
-    Major_feasibility=1e-3,
-    append2file=True,
-    # Major_step_limit=0.25,
-    Print_frequency=1,
-    )
-optimizer.solve()
-optimizer.print_results()
+# prob = CSDLProblem(problem_name='gawig', simulator=sim)
+# optimizer = SNOPT(prob, 
+#     Major_iterations=300,
+#     Major_optimality=1e-3,
+#     Major_feasibility=1e-3,
+#     append2file=True,
+#     # Major_step_limit=0.25,
+#     Print_frequency=1,
+#     )
+# optimizer.solve()
+# optimizer.print_results()
 
 
 
