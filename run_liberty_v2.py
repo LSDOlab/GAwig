@@ -30,10 +30,11 @@ from torque_model import TorqueModel
 num_props = 2 # must be even
 num_blades = 3
 rpm = 1090. # fixed rpm
-nt = 15
-dt = 0.005 # sec
+nt = 30
+dt = 0.003 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
-pitch = 0.039425 # np.deg2rad(3) # rad
+# pitch = 0.039425 # np.deg2rad(3) # rad
+pitch = 0. # np.deg2rad(3) # rad
 rotor_blade_angle = -0.211512# -0.30411512 # np.deg2rad(-4) # rad (negative is more thrust)
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
@@ -53,7 +54,7 @@ wing_area = 550 # m^2
 # VLM params:
 core_size = 0.5 # set the viscous core size
 # wing:
-num_spanwise_vlm = 21
+num_spanwise_vlm = 31
 num_chordwise_vlm = 10
 # prop:
 num_spanwise_prop= 5

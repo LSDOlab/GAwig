@@ -31,7 +31,7 @@ from torque_model import TorqueModel
 num_props = 2 # must be even
 num_blades = 3
 rpm = 1090. # fixed rpm
-nt = 20 # was 30 before
+nt = 30 # was 30 before
 dt = 0.003 # sec
 h = 2.375 # the height (m) from the image plane to the rotation_point
 # pitch = 0.05236 # np.deg2rad(3) # rad
@@ -40,7 +40,7 @@ rotor_blade_angle = -0.29411512# -0.30411512 # np.deg2rad(-4) # rad (negative is
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
 do_flaps = False
-do_fuselage = True
+do_fuselage = False
 mirror = False
 sub = True
 free_wake = True
@@ -875,31 +875,31 @@ if False:
 
 
 
-# # plot the lift distribution across the half span:
-# fig = plt.figure(figsize=(8,3))
-# L_negy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_neg_y_out_L_panel']
-# L_posy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_pos_y_out_L_panel']
-# num_span = int((num_spanwise_vlm - 1)/2)
-# xpos = np.linspace(0,num_span,num_span)
+# plot the lift distribution across the half span:
+fig = plt.figure(figsize=(8,3))
+L_negy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_neg_y_out_L_panel']
+L_posy = sim['system_model.wig.wig.wig.operation.wing_vlm_mesh_pos_y_out_L_panel']
+num_span = int((num_spanwise_vlm - 1)/2)
+xpos = np.linspace(0,num_span,num_span)
 
-# rpos = np.array([87,67,47,9])/102
+rpos = np.array([87,67,47,9])/102
 
-# data = np.zeros((num_span))
-# for i in range(nt - n_avg - 1, nt - 1):
-#     temp = np.zeros(num_span)
-#     for j in range(num_chordwise_vlm - 1):
-#         temp[:] += L_negy[i,j*num_span:(j+1)*num_span,0].flatten()
-#     data[:] += temp
+data = np.zeros((num_span))
+for i in range(nt - n_avg - 1, nt - 1):
+    temp = np.zeros(num_span)
+    for j in range(num_chordwise_vlm - 1):
+        temp[:] += L_posy[i,j*num_span:(j+1)*num_span,0].flatten()
+    data[:] += temp
 
-# plt.plot(xpos/max(xpos), data/n_avg, label='_nolegend_')
-# plt.scatter(xpos/max(xpos), data/n_avg, label='_nolegend_')
-# for i in range(int(num_props/2)): plt.axvline(x=rpos[i], color='black', linestyle='dashed', linewidth=2)
-# plt.xlim([0,1])
-# plt.xlabel('Spanwise location')
-# plt.ylabel('Lift (N)')
-# plt.legend(['Rotor locations'], frameon=False)
-# plt.savefig('lift_distribution.png', transparent=True, bbox_inches="tight", dpi=400)
-# # plt.show()
+plt.plot(xpos/max(xpos), data/n_avg, label='_nolegend_')
+plt.scatter(xpos/max(xpos), data/n_avg, label='_nolegend_')
+for i in range(int(num_props/2)): plt.axvline(x=rpos[i], color='black', linestyle='dashed', linewidth=2)
+plt.xlim([0,1])
+plt.xlabel('Spanwise location')
+plt.ylabel('Lift (N)')
+plt.legend(['Rotor locations'], frameon=False)
+plt.savefig('lift_distribution.png', transparent=True, bbox_inches="tight", dpi=400)
+plt.show()
 
 plot_wing_distributions = False
 if plot_wing_distributions:
