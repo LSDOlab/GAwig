@@ -354,5 +354,5 @@ class RotorCSDL3(ModuleCSDL):
         initial_thrust_vector = self.create_input('initial_vector', shape=(3), val=np.array([1,0,0]))
         thrust_vector = csdl.matvec(csdl.transpose(rotation_matrix_y), initial_thrust_vector) # rotates the point
         self.register_output('thrust_vector', thrust_vector)
-        self.print_var(thrust_vector)
+        # self.print_var(thrust_vector)
 

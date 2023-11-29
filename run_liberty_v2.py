@@ -21,20 +21,20 @@ from plot import plot_wireframe, plot_wireframe_line, plot_lift_spanwise
 from engine import Engine
 from torque_model import TorqueModel
 # from breguet_range_eqn import BreguetRange
-# from modopt.snopt_library import SNOPT
+from modopt.snopt_library import SNOPT
 # from mpi4py import MPI
 
 
 
 # region hyperparameters
-num_props = 2 # must be even
-num_blades = 3
+num_props = 8 # must be even
+num_blades = 4
 rpm = 1090. # fixed rpm
-nt = 25 # 30
-dt = 0.003 # sec
+nt = 25
+dt = 0.004 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
 pitch = 0.1 # np.deg2rad(3) # rad
-rotor_blade_angle = -0.053 # np.deg2rad(-4) # rad (negative is more thrust)
+rotor_blade_angle = -0.07 # rad (negative is more thrust)
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
 do_flaps = True
@@ -631,7 +631,7 @@ for i in range(len(prop_meshes)):
 # the pitch angle design variable:
 set_pitch = model_csdl.create_input('set_pitch', val=pitch)
 # add the pitch angle design variable:
-model_csdl.add_design_variable('set_pitch', lower=np.deg2rad(0), scaler=1E1)
+model_csdl.add_design_variable('set_pitch', lower=0.0, upper=0.2, scaler=1E1)
 # print the pitch angle during optimization:
 model_csdl.print_var(set_pitch)
 # connect set_pitch to the wing mirror:
@@ -767,7 +767,7 @@ start = time.time()
 
 # for single core:
 sim = Simulator(model_csdl, analytics=True, lazy=1)
-sim.run()
+# sim.run()
 # sim.check_partials(compact_print=True)
 # sim.check_totals()
 
@@ -778,17 +778,17 @@ sim.run()
 # optimizer.print_results()
 
 # if SNOPT:
-# prob = CSDLProblem(problem_name='gawig', simulator=sim)
-# optimizer = SNOPT(prob, 
-#     Major_iterations=300,
-#     Major_optimality=1e-3,
-#     Major_feasibility=1e-3,
-#     append2file=True,
-#     # Major_step_limit=0.25,
-#     Print_frequency=1,
-#     )
-# optimizer.solve()
-# optimizer.print_results()
+prob = CSDLProblem(problem_name='gawig', simulator=sim)
+optimizer = SNOPT(prob, 
+    Major_iterations=300,
+    Major_optimality=1e-3,
+    Major_feasibility=1e-3,
+    append2file=True,
+    # Major_step_limit=0.25,
+    Print_frequency=1,
+    )
+optimizer.solve()
+optimizer.print_results()
 
 
 
