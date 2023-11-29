@@ -30,7 +30,7 @@ from torque_model import TorqueModel
 num_props = 2 # must be even
 num_blades = 3
 rpm = 1090. # fixed rpm
-nt = 30
+nt = 25 # 30
 dt = 0.003 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
 pitch = 0.1 # np.deg2rad(3) # rad

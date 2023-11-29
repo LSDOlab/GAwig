@@ -336,7 +336,7 @@ class RotorCSDL3(ModuleCSDL):
         # rotate the rotation point for LUCA SCOTZNIOVSKY:
         translated_point_luca = point - r_point # np.tile(r_point, (nt, nc, ns, 1))
         actual_translated_point_luca = translated_point_luca + delta # accounts for the design variable delta
-        rotated_point_luca = csdl.matvec(rotation_matrix_y, actual_translated_point_luca) # rotates the point
+        rotated_point_luca = csdl.matvec(csdl.transpose(rotation_matrix_y), actual_translated_point_luca) # rotates the point
         rotated_luca = rotated_point_luca + r_point # shifts back from r_point
         # shift the point by dh:
         actual_point = self.create_output(mesh_name + '_point_out', shape=(3), val=0)
@@ -352,6 +352,7 @@ class RotorCSDL3(ModuleCSDL):
 
         
         initial_thrust_vector = self.create_input('initial_vector', shape=(3), val=np.array([1,0,0]))
-        thrust_vector = csdl.matvec(rotation_matrix_y, initial_thrust_vector) # rotates the point
+        thrust_vector = csdl.matvec(csdl.transpose(rotation_matrix_y), initial_thrust_vector) # rotates the point
         self.register_output('thrust_vector', thrust_vector)
+        self.print_var(thrust_vector)
 
