@@ -33,26 +33,26 @@ rpm = 1090. # fixed rpm
 nt = 30
 dt = 0.003 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
-# pitch = 0.039425 # np.deg2rad(3) # rad
-pitch = 0. # np.deg2rad(3) # rad
-rotor_blade_angle = -0.211512# -0.30411512 # np.deg2rad(-4) # rad (negative is more thrust)
+pitch = 0.1 # np.deg2rad(3) # rad
+rotor_blade_angle = -0.053 # np.deg2rad(-4) # rad (negative is more thrust)
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
-do_flaps = False
+do_flaps = True
 do_fuselage = False
-mirror = False
+mirror = True
 sub = True
 free_wake = True
-symmetry = True # only works with mirror = True
+symmetry = True
 log_space = False # log spacing spanwise for wing mesh
 
 # airplane params:
 max_pwr = 4500. # hp
 m = 150000. # kg
 wing_area = 550 # m^2
+other_drag_coef = 2 * 0.02
 
 # VLM params:
-core_size = 0.5 # set the viscous core size
+core_size = 0.2 # 0.5 # set the viscous core size
 # wing:
 num_spanwise_vlm = 31
 num_chordwise_vlm = 10
@@ -64,7 +64,7 @@ num_long_vlm = 6
 num_vert_vlm = 3
 
 # flap params:
-flap_deflection = 20 # deg
+flap_deflection = 27 # deg
 flap_frac = 0.25 # percent of the chord deflected by the flap
 
 # average the uvlm forces:
@@ -73,9 +73,9 @@ n_avg = int(num_periods/(rpm*dt/60))
 print('n average: ', n_avg)
 
 # set constraints on rotor delta: (lower, upper) for rotors 0, 1, 2, and 3
-dx_const = [(-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5)]
+dx_const = [(-1.0, 0.5), (-1.0, 0.5), (-1.0, 0.5), (-1.0, 0.5)]
 dy_const = [(-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0)]
-dz_const = [(-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0), (-1.0, 1.0)]
+dz_const = [(-0.5, 0.5), (-1.0, 1.0), (-1.5, 1.5), (-2.0, 2.0)]
 
 # set the baseline rotor deltas: rotors 0, 1, 2, 3
 dxlist = [0,0,0,0]
@@ -399,8 +399,8 @@ for prop_mesh in prop_meshes:
         initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
     i += 1
 for prop_center in prop_center_loc:
-    print(prop_center.shape)
-    print(prop_center.name)
+    # print(prop_center.shape)
+    # print(prop_center.name)
     uvlm_parameters.append((prop_center.name, False, prop_center))
 # for prop_mesh_vel in prop_meshes_vel:
 #     for vel in prop_mesh_vel:
@@ -679,9 +679,9 @@ for i in range(int(num_props/2)):
 # NOTE: negative delta_x is moving rotors forwards
 for i in range(int(num_props/2)):
     delta_x, delta_y, delta_z, = model_csdl.create_input('delta_x_'+str(i), val=dxlist[i]), model_csdl.create_input('delta_y_'+str(i), val=dylist[i]), model_csdl.create_input('delta_z_'+str(i), val=dzlist[i])
-    model_csdl.add_design_variable('delta_x_'+str(i), upper=dx_const[i][1], lower=dx_const[i][0], scaler=1E2)
-    model_csdl.add_design_variable('delta_y_'+str(i), upper=dy_const[i][1], lower=dy_const[i][0], scaler=1E2)
-    model_csdl.add_design_variable('delta_z_'+str(i), upper=dz_const[i][1], lower=dz_const[i][0], scaler=1E2)
+    model_csdl.add_design_variable('delta_x_'+str(i), upper=dx_const[i][1], lower=dx_const[i][0], scaler=1E1)
+    model_csdl.add_design_variable('delta_y_'+str(i), upper=dy_const[i][1], lower=dy_const[i][0], scaler=1E1)
+    model_csdl.add_design_variable('delta_z_'+str(i), upper=dz_const[i][1], lower=dz_const[i][0], scaler=1E1)
 
     # concatenate delta_x, y, and z:
     delta = model_csdl.create_output('delta_'+str(i), shape=(3), val=0)
@@ -699,16 +699,16 @@ for i in range(int(num_props/2)):
 
 
 
-# the max engine power constraint:
-power_vector = model_csdl.create_output('power_vector', shape=(len(prop_fx_list)), val=0)
-for i in range(len(prop_fx_list)):
-    eng_pwr = model_csdl.declare_variable('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr')
-    power_vector[i] = eng_pwr
-# aggregate the max power with a ks max:
-max_eng_pwr = model_csdl.register_output('max_eng_pwr', csdl.max(1E-2*power_vector)/1E-2)
-# add a single aggregated max power constraint:
-# model_csdl.add_constraint('max_eng_pwr', upper=max_pwr, scaler=1E-3)
-model_csdl.print_var(max_eng_pwr)
+# # the max engine power constraint:
+# power_vector = model_csdl.create_output('power_vector', shape=(len(prop_fx_list)), val=0)
+# for i in range(len(prop_fx_list)):
+#     eng_pwr = model_csdl.declare_variable('system_model.wig.wig.wig.'+f'engine_{i}'+'_engine.'+f'engine_{i}'+'_pwr')
+#     power_vector[i] = eng_pwr
+# # aggregate the max power with a ks max:
+# max_eng_pwr = model_csdl.register_output('max_eng_pwr', csdl.max(1E-2*power_vector)/1E-2)
+# # add a single aggregated max power constraint:
+# # model_csdl.add_constraint('max_eng_pwr', upper=max_pwr, scaler=1E-3)
+# model_csdl.print_var(max_eng_pwr)
 
 # lift equals weight constraint:
 L_neg_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_neg_y_out_L_ave')
@@ -721,8 +721,7 @@ model_csdl.print_var(fz_res)
 
 # compute a viscous drag estimate:
 velocity = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input_model.wig_ac_states_operation.u')
-other_drag_coef = 0.001 #2*0.02 #0.015
-other_drag = model_csdl.register_output('other_drag', 0.5*1.225*velocity**2*wing_area*other_drag_coef) # 600m^2 not 6000ft^2
+other_drag = model_csdl.register_output('other_drag', 0.5*1.225*velocity**2*wing_area*other_drag_coef)
 
 
 # panel_fx gives the total x-axis forces for the entire mirrored system:
@@ -733,11 +732,11 @@ model_csdl.print_var(fx_res)
 
 trim_res_vec = model_csdl.create_output('trim_res_vec', shape=(2), val=0)
 trim_res_vec[0], trim_res_vec[1] = fz_res, fx_res
-trim_res = model_csdl.register_output('trim_res', csdl.pnorm(trim_res_vec)/10)
+trim_res = model_csdl.register_output('trim_res', csdl.pnorm(trim_res_vec))
 
 # print the trim residual during optimization:
 model_csdl.print_var(trim_res)
-model_csdl.add_constraint('trim_res', equals=0, scaler=1E-2)
+model_csdl.add_constraint('trim_res', equals=0, scaler=1E-3)
 
 
 # print the velocity during optimization:
@@ -798,6 +797,8 @@ print('total run time (s): ', end - start)
 
 print('fz res: ', sim['fz_res'])
 print('fx res: ', sim['fx_res'])
+print('trim res: ', sim['trim_res'])
+print('set pitch angle (rad): ', sim['set_pitch'])
 
 # print rotor thrust for all the props:
 for i in range(num_props):

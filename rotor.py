@@ -349,3 +349,9 @@ class RotorCSDL3(ModuleCSDL):
         luca_is_a_mirror_point[1] = actual_point[1]
         luca_is_a_mirror_point[2] = -1 * actual_point[2]
 
+
+        
+        initial_thrust_vector = self.create_input('initial_vector', shape=(3), val=np.array([1,0,0]))
+        thrust_vector = csdl.matvec(rotation_matrix_y, initial_thrust_vector) # rotates the point
+        self.register_output('thrust_vector', thrust_vector)
+
