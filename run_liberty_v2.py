@@ -21,19 +21,19 @@ from plot import plot_wireframe, plot_wireframe_line, plot_lift_spanwise
 from engine import Engine
 from torque_model import TorqueModel
 # from breguet_range_eqn import BreguetRange
-# from modopt.snopt_library import SNOPT
+from modopt.snopt_library import SNOPT
 # from mpi4py import MPI
 
 
 
 # region hyperparameters
 num_props = 8 # must be even
-num_blades = 3 # 3
+num_blades = 4
 rpm = 1090. # fixed rpm
 nt = 25
 dt = 0.004 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
-pitch = 0.09 # np.deg2rad(3) # rad
+pitch = 0.07 # 0.09 rad
 rotor_blade_angle = -0.08 # rad (negative is more thrust)
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
@@ -47,7 +47,7 @@ log_space = False # log spacing spanwise for wing mesh
 
 # airplane params:
 max_pwr = 4500. # hp
-m = 150000. # kg
+m = 158500. # kg
 wing_area = 550 # m^2
 other_drag_coef = 2 * 0.02
 
@@ -732,7 +732,8 @@ model_csdl.print_var(total_thrust)
 # get the drag from the wing:
 D_neg_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_neg_y_out_D_ave')
 D_pos_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_pos_y_out_D_ave')
-total_drag = D_neg_y_ave + D_pos_y_ave
+total_drag = model_csdl.register_output('total_wing_drag', D_neg_y_ave + D_pos_y_ave)
+model_csdl.print_var(total_drag)
 
 # compute the thrust minus drag residual:
 fx_res = model_csdl.register_output('fx_res', total_thrust + total_drag + other_drag)
@@ -782,9 +783,9 @@ start = time.time()
 
 # for single core:
 sim = Simulator(model_csdl, analytics=True, lazy=1)
-sim.run()
+#sim.run()
 # sim.check_partials(compact_print=True)
-# sim.check_totals()
+#sim.check_totals()
 
 # run an optimization with SLSQP:
 # prob = CSDLProblem(problem_name='gawig', simulator=sim)
@@ -793,17 +794,17 @@ sim.run()
 # optimizer.print_results()
 
 # if SNOPT:
-# prob = CSDLProblem(problem_name='gawig', simulator=sim)
-# optimizer = SNOPT(prob, 
-#     Major_iterations=300,
-#     Major_optimality=1e-3,
-#     Major_feasibility=1e-3,
-#     append2file=True,
-#     # Major_step_limit=0.25,
-#     Print_frequency=1,
-#     )
-# optimizer.solve()
-# optimizer.print_results()
+prob = CSDLProblem(problem_name='gawig', simulator=sim)
+optimizer = SNOPT(prob, 
+    Major_iterations=300,
+    Major_optimality=1e-4,
+    Major_feasibility=1e-4,
+    append2file=True,
+    # Major_step_limit=0.25,
+    Print_frequency=1,
+    )
+optimizer.solve()
+optimizer.print_results()
 
 
 
