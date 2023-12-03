@@ -169,7 +169,7 @@ class RotorCSDL3(ModuleCSDL):
 
 
 
-        alpha = -1 * self.declare_variable('theta', shape=(1,)) # why the -1 ????
+        alpha = self.declare_variable('theta', shape=(1,))
         h = self.declare_variable('h', shape=(1,))
 
         # the rotation matrix for ground effect stuff:
@@ -285,7 +285,7 @@ class RotorCSDL3(ModuleCSDL):
 
             # NATIVE ROTOR MIRRORING!!!!!
             translated_mesh_points = rotor - np.tile(r_point, (nt, nc, ns, 1))
-            rotated_mesh_points = csdl.einsum(translated_mesh_points, rotation_matrix_y, subscripts='ijkl,lm->ijkm')
+            rotated_mesh_points = csdl.einsum(translated_mesh_points, csdl.transpose(rotation_matrix_y), subscripts='ijkl,lm->ijkm')
             rotated_mesh = rotated_mesh_points + np.tile(r_point, (nt, nc, ns, 1))
 
             # translate the mesh based on altitude:
@@ -338,7 +338,7 @@ class RotorCSDL3(ModuleCSDL):
         # rotate the rotation point for LUCA SCOTZNIOVSKY:
         translated_point_luca = point - r_point # np.tile(r_point, (nt, nc, ns, 1))
         actual_translated_point_luca = translated_point_luca + delta # accounts for the design variable delta
-        rotated_point_luca = csdl.matvec(csdl.transpose(rotation_matrix_y), actual_translated_point_luca) # rotates the point
+        rotated_point_luca = csdl.matvec(rotation_matrix_y, actual_translated_point_luca) # rotates the point
         rotated_luca = rotated_point_luca + r_point # shifts back from r_point
         # shift the point by dh:
         actual_point = self.create_output(mesh_name + '_point_out', shape=(3), val=0)
@@ -354,7 +354,7 @@ class RotorCSDL3(ModuleCSDL):
 
         
         initial_thrust_vector = self.create_input('initial_vector', shape=(3), val=np.array([-1,0,0]))
-        thrust_vector = csdl.matvec(csdl.transpose(rotation_matrix_y), initial_thrust_vector) # rotates the point
+        thrust_vector = csdl.matvec(rotation_matrix_y, initial_thrust_vector) # rotates the point
         out_thrust_vector = self.register_output(mesh_name + '_point_out_thrust_vector', thrust_vector)
         mirror_thrust_vector = self.create_output(mesh_name + '_point_mirror_thrust_vector', shape=thrust_vector.shape, val=0.)
         mirror_thrust_vector[0] = out_thrust_vector[0]

@@ -8,7 +8,6 @@ from caddee.core.caddee_core.system_representation.component.component import Li
 import array_mapper as am
 import numpy as np
 import matplotlib.pyplot as plt
-plt.rcParams.update(plt.rcParamsDefault)
 import csdl
 from mirror import Mirror
 from rotor import Rotor3
@@ -17,12 +16,11 @@ from VAST.core.vast_solver_unsteady import VASTSolverUnsteady, PostProcessor
 from deflect_flap import deflect_flap
 from VAST.core.profile_model import gen_profile_output_list, PPSubmodel
 from last_n_average import LastNAverage
-from plot import plot_wireframe, plot_wireframe_line, plot_lift_spanwise
+from plot import plot_wireframe, plot_lift_spanwise
 from engine import Engine
 from torque_model import TorqueModel
 # from breguet_range_eqn import BreguetRange
-# from modopt.snopt_library import SNOPT
-# from mpi4py import MPI
+from modopt.snopt_library import SNOPT
 
 
 
@@ -30,17 +28,16 @@ from torque_model import TorqueModel
 num_props = 2 # must be even
 num_blades = 3
 rpm = 1090. # fixed rpm
-nt = 30
-dt = 0.003 # sec
+nt = 17
+dt = 0.007 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
-pitch = 0.05236 # np.deg2rad(3) # rad
-# pitch = 0.0 # np.deg2rad(3) # rad
-rotor_blade_angle = -0.053 # np.deg2rad(-4) # rad (negative is more thrust)
+pitch = 0.16251691 #0.07 # 0.07 rad
+rotor_blade_angle = 0.08157842 #-0.04 # rad (negative is more thrust)
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
 do_flaps = False
 do_fuselage = False
-mirror = True
+mirror = False
 sub = True
 free_wake = True
 symmetry = True
@@ -48,15 +45,16 @@ log_space = False # log spacing spanwise for wing mesh
 
 # airplane params:
 max_pwr = 4500. # hp
-m = 150000. # kg
+m = 158500. # kg
 wing_area = 550 # m^2
 other_drag_coef = 2 * 0.02
+dir_list = [-1]*(num_props//2) + [1]*(num_props//2) # set the prop rotation direction
 
 # VLM params:
-core_size = 0.2 # 0.5 # set the viscous core size
+core_size = 1.0 # 0.5 # set the viscous core size
 # wing:
-num_spanwise_vlm = 41
-num_chordwise_vlm = 10
+num_spanwise_vlm = 31
+num_chordwise_vlm = 8
 # prop:
 num_spanwise_prop= 5
 num_chordwise_prop = 2
@@ -71,6 +69,7 @@ flap_frac = 0.25 # percent of the chord deflected by the flap
 # average the uvlm forces:
 num_periods = 1.0
 n_avg = int(num_periods/(rpm*dt/60))
+end_offset = 1
 print('n average: ', n_avg)
 
 # set constraints on rotor delta: (lower, upper) for rotors 0, 1, 2, and 3
@@ -121,6 +120,7 @@ for i in range(num_props):
 
 
 
+
 # region meshes
 
 # create the wing mesh:
@@ -161,7 +161,6 @@ if do_flaps:
     flap_mesh = deflect_flap(wing_camber_surface_np, flap_deflection, int(num_chordwise_vlm*flap_frac))
     wing_camber_surface_np = flap_mesh
     # spatial_rep.plot_meshes([flap_mesh])
-
 
 
 # split the wing mesh to exploit symmetry:
@@ -258,10 +257,10 @@ design_scenario = cd.DesignScenario(name='wig')
 wig_condition = cd.CruiseCondition(name='wig')
 wig_condition.atmosphere_model = cd.SimpleAtmosphereModel()
 wig_condition.set_module_input(name='altitude', val=0)
-wig_condition.set_module_input(name='mach_number', val=0.14169198, dv_flag=True)
+wig_condition.set_module_input(name='mach_number', val=0.151626822, lower=0.1, upper=0.3, dv_flag=True)
 wig_condition.set_module_input(name='range', val=1000)
 # ptich angle is always zero, mirroring functions apply pitch by offsetting meshes:
-wig_condition.set_module_input(name='pitch_angle', val=np.deg2rad(0))
+wig_condition.set_module_input(name='pitch_angle', val=0)
 wig_condition.set_module_input(name='flight_path_angle', val=0)
 wig_condition.set_module_input(name='roll_angle', val=0)
 wig_condition.set_module_input(name='yaw_angle', val=0)
@@ -322,9 +321,7 @@ prop_blade_names = []
 prop_dir_list = []
 prop_thrust_vec = []
 for i in range(num_props):
-    direction = -1
-    if i >= num_props/2: direction = 1
-    
+    direction = dir_list[i]
     prop_dir_list.extend([direction] * num_blades)
     prop_model = Rotor3(mesh_name = propb1_mesh_names[i], 
                         num_blades = num_blades, 
@@ -360,8 +357,6 @@ if mirror: num_blades = num_blades*2
 # endregion
 
 
-
-
 # region uvlm_parameters, interactions
 uvlm_parameters = [('u',True,ac_states_expanded['u']),
                     ('v',True,ac_states_expanded['v']),
@@ -392,8 +387,7 @@ for prop_mesh in prop_meshes:
     interaction_groups.append(list(range(num_blades*i,num_blades*(i+1))))
     for var in prop_mesh:
         shape = var.shape
-        nx = shape[1]
-        ny = shape[2]
+        nx, ny = shape[1], shape[2]
         name = var.name
         surface_names.append(name)
         surface_shapes.append(shape[1:4])
@@ -554,8 +548,7 @@ outputs = uvlm_op.evaluate()[0:len(pp_vars)]
 
 
 # region post-processing
-average_op = LastNAverage(n=n_avg,end_offset=1)
-# time averaged quantities:
+average_op = LastNAverage(n=n_avg,end_offset=end_offset)
 ave_outputs = average_op.evaluate(outputs)
 fx, fy, fz = ave_outputs[0], ave_outputs[1], ave_outputs[2]
 
@@ -605,7 +598,6 @@ wig_condition.add_m3l_model('wig_model', overmodel)
 design_scenario.add_design_condition(wig_condition)
 system_model.add_design_scenario(design_scenario=design_scenario)
 caddee_csdl_model = caddee.assemble_csdl()
-# caddee_csdl_model = overmodel.assemble_csdl()
 model_csdl = caddee_csdl_model
 # endregion
 
@@ -614,7 +606,6 @@ model_csdl = caddee_csdl_model
 # region manual connections
 for i in range(len(prop_meshes)):
     i = str(i)
-
     rpm_csdl = model_csdl.create_input(f'rpm_rotor_{i}', val=rpm)
     model_csdl.connect('p' + i + '_vector', 'system_model.wig.wig.wig.operation.input_model.p' + i + 'b1_mesh_rotor.vector')
     model_csdl.connect(f'rpm_rotor_{i}', f'system_model.wig.wig.wig.torque_operation_rotor_{i}.rpm')
@@ -634,7 +625,7 @@ for i in range(len(prop_meshes)):
 # the pitch angle design variable:
 set_pitch = model_csdl.create_input('set_pitch', val=pitch)
 # add the pitch angle design variable:
-model_csdl.add_design_variable('set_pitch', lower=np.deg2rad(0), scaler=1E1)
+model_csdl.add_design_variable('set_pitch', upper=0.2, scaler=1E1)
 # print the pitch angle during optimization:
 model_csdl.print_var(set_pitch)
 # connect set_pitch to the wing mirror:
@@ -651,27 +642,32 @@ for i in range(num_props): model_csdl.connect('set_pitch', 'system_model.wig.wig
 
 
 
-# blade angle design variables (for each prop):
-for i in range(int(num_props/2)):
-    blade_angle = model_csdl.create_input('blade_angle_'+str(i), val=rotor_blade_angle)
-    # add the design variable for each prop:
-    model_csdl.add_design_variable('blade_angle_'+str(i), upper=np.deg2rad(20), lower=np.deg2rad(-20), scaler=1E1)
-    model_csdl.connect('blade_angle_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.blade_angle')
-    # symmetric blade-angle connections:
-    model_csdl.register_output('other_blade_angle_'+str(i), -1*blade_angle)
-    model_csdl.connect('other_blade_angle_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.blade_angle')
-    # print the blade angle during optimization:
-    model_csdl.print_var(blade_angle)
-
-# # blade angle design variables (for all props):
-# blade_angle = model_csdl.create_input('blade_angle_', val=rotor_blade_angle)
-# model_csdl.add_design_variable('blade_angle_', scaler=1E1)
-# # print the blade angle during optimization:
-# model_csdl.print_var(blade_angle)
-# model_csdl.register_output('other_blade_angle_', -1*blade_angle)
+# # blade angle design variables (for each prop):
 # for i in range(int(num_props/2)):
-#     model_csdl.connect('blade_angle_', 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.blade_angle')
-#     model_csdl.connect('other_blade_angle_', 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.blade_angle')
+#     blade_angle = model_csdl.create_input('blade_angle_'+str(i), val=rotor_blade_angle)
+#     # add the design variable for each prop:
+#     model_csdl.add_design_variable('blade_angle_'+str(i), upper=np.deg2rad(20), lower=np.deg2rad(-20), scaler=1E1)
+#     model_csdl.connect('blade_angle_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.blade_angle')
+#     # symmetric blade-angle connections:
+#     model_csdl.register_output('other_blade_angle_'+str(i), -1*blade_angle)
+#     model_csdl.connect('other_blade_angle_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.blade_angle')
+#     # print the blade angle during optimization:
+#     model_csdl.print_var(blade_angle)
+
+
+
+
+
+
+# blade angle design variables (for all props):
+blade_angle = model_csdl.create_input('blade_angle_', val=rotor_blade_angle)
+model_csdl.add_design_variable('blade_angle_', scaler=1E1)
+# print the blade angle during optimization:
+model_csdl.print_var(blade_angle)
+model_csdl.register_output('other_blade_angle_', -1*blade_angle)
+for i in range(int(num_props/2)):
+    model_csdl.connect('blade_angle_', 'system_model.wig.wig.wig.operation.input_model.p'+str(i)+'b1_mesh_rotor.blade_angle')
+    model_csdl.connect('other_blade_angle_', 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.blade_angle')
 
 
 
@@ -682,9 +678,9 @@ for i in range(int(num_props/2)):
 # NOTE: negative delta_x is moving rotors forwards
 for i in range(int(num_props/2)):
     delta_x, delta_y, delta_z, = model_csdl.create_input('delta_x_'+str(i), val=dxlist[i]), model_csdl.create_input('delta_y_'+str(i), val=dylist[i]), model_csdl.create_input('delta_z_'+str(i), val=dzlist[i])
-    model_csdl.add_design_variable('delta_x_'+str(i), upper=dx_const[i][1], lower=dx_const[i][0], scaler=1E1)
-    model_csdl.add_design_variable('delta_y_'+str(i), upper=dy_const[i][1], lower=dy_const[i][0], scaler=1E1)
-    model_csdl.add_design_variable('delta_z_'+str(i), upper=dz_const[i][1], lower=dz_const[i][0], scaler=1E1)
+    #model_csdl.add_design_variable('delta_x_'+str(i), upper=dx_const[i][1], lower=dx_const[i][0], scaler=1E1)
+    #model_csdl.add_design_variable('delta_y_'+str(i), upper=dy_const[i][1], lower=dy_const[i][0], scaler=1E1)
+    #model_csdl.add_design_variable('delta_z_'+str(i), upper=dz_const[i][1], lower=dz_const[i][0], scaler=1E1)
 
     # concatenate delta_x, y, and z:
     delta = model_csdl.create_output('delta_'+str(i), shape=(3), val=0)
@@ -698,7 +694,7 @@ for i in range(int(num_props/2)):
     model_csdl.connect('other_delta_'+str(i), 'system_model.wig.wig.wig.operation.input_model.p'+str(num_props - i - 1)+'b1_mesh_rotor.delta')
 
     # print the rotor delta during optimization:
-    model_csdl.print_var(delta)
+    #model_csdl.print_var(delta)
 
 
 
@@ -727,10 +723,27 @@ velocity = model_csdl.declare_variable('system_model.wig.wig.wig.operation.input
 other_drag = model_csdl.register_output('other_drag', 0.5*1.225*velocity**2*wing_area*other_drag_coef)
 
 
-# panel_fx gives the total x-axis forces for the entire mirrored system:
-panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
-fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx) + other_drag)
+# compute the total thrust:
+thrust_index = model_csdl.create_output('thrust_index', shape=(num_props), val=0)
+for i in range(num_props): thrust_index[i] = 1*model_csdl.declare_variable('system_model.wig.wig.wig.torque_operation_rotor_'+str(i)+'.total_thrust')
+total_thrust = model_csdl.register_output('thrust_sum', csdl.sum(thrust_index)) # negative is thrust
+model_csdl.print_var(total_thrust)
+
+# get the drag from the wing:
+D_neg_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_neg_y_out_D_ave')
+D_pos_y_ave = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.wing_vlm_mesh_pos_y_out_D_ave')
+total_drag = model_csdl.register_output('total_wing_drag', D_neg_y_ave + D_pos_y_ave)
+model_csdl.print_var(total_drag)
+
+# compute the thrust minus drag residual:
+fx_res = model_csdl.register_output('fx_res', total_thrust + total_drag + other_drag)
 model_csdl.print_var(fx_res)
+
+
+# panel_fx gives the total x-axis forces for the entire mirrored system:
+# panel_fx = model_csdl.declare_variable('system_model.wig.wig.wig.average_op.panel_forces_x_ave', shape=(num_panels, 1))
+# fx_res = model_csdl.register_output('fx_res', csdl.sum(1*panel_fx) + other_drag)
+# model_csdl.print_var(fx_res)
 
 
 trim_res_vec = model_csdl.create_output('trim_res_vec', shape=(2), val=0)
@@ -739,7 +752,7 @@ trim_res = model_csdl.register_output('trim_res', csdl.pnorm(trim_res_vec))
 
 # print the trim residual during optimization:
 model_csdl.print_var(trim_res)
-model_csdl.add_constraint('trim_res', equals=0, scaler=1E-3)
+# model_csdl.add_constraint('trim_res', equals=0.0, scaler=1E-2)
 
 
 # print the velocity during optimization:
@@ -747,7 +760,10 @@ vel = model_csdl.register_output('vel', 1*velocity)
 model_csdl.print_var(vel)
 
 # create the objective:
-obj = model_csdl.register_output('obj', 1*velocity)
+# obj = model_csdl.register_output('obj', 1*velocity)
+# model_csdl.add_objective('obj', scaler=1E-2)
+
+obj = model_csdl.register_output('obj', 1*trim_res)
 model_csdl.add_objective('obj', scaler=1E-1)
 
 
@@ -758,21 +774,11 @@ model_csdl.add_objective('obj', scaler=1E-1)
 
 
 
-
-
-
 start = time.time()
-
-# for paralellization:
-# mpi run command: mpirun -np 2 python run_liberty_v2.py
-# comm = MPI.COMM_WORLD
-# sim = Simulator(model_csdl, analytics=True, display_scripts=True, comm=comm,)
-
-# for single core:
 sim = Simulator(model_csdl, analytics=True, lazy=1)
 sim.run()
 # sim.check_partials(compact_print=True)
-# sim.check_totals()
+#sim.check_totals()
 
 # run an optimization with SLSQP:
 # prob = CSDLProblem(problem_name='gawig', simulator=sim)
@@ -784,10 +790,10 @@ sim.run()
 # prob = CSDLProblem(problem_name='gawig', simulator=sim)
 # optimizer = SNOPT(prob, 
 #     Major_iterations=300,
-#     Major_optimality=1e-3,
-#     Major_feasibility=1e-3,
+#     Major_optimality=1e-4,
+#     Major_feasibility=1e-4,
 #     append2file=True,
-#     # Major_step_limit=0.25,
+#     Major_step_limit=0.2,
 #     Print_frequency=1,
 #     )
 # optimizer.solve()
@@ -808,8 +814,8 @@ for i in range(num_props):
     print('rotor '+str(i)+' thrust (N): ', sim['system_model.wig.wig.wig.torque_operation_rotor_'+str(i)+'.total_thrust'])
 
 # print the blade angle for half the props (symmetric):
-for i in range(int(num_props/2)):
-    print('blade angle '+str(i)+' (rad): ', sim['blade_angle_'+str(i)])
+# for i in range(int(num_props/2)):
+#     print('blade angle '+str(i)+' (rad): ', sim['blade_angle_'+str(i)])
 
 # print the rotor deltas for half the props (symmetric):
 for i in range(int(num_props/2)):
@@ -839,4 +845,4 @@ plot_lift_spanwise(nt=nt,
 
 
 # plot the uvlm result:
-plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='test')
+plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='test')
