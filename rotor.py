@@ -86,6 +86,8 @@ class Rotor3(m3l.ExplicitOperation):
         point_name = self.parameters['mesh_name'] + '_point'
         point_var = m3l.Variable(point_name+'_out', shape=(3,), operation=self)
         point_mirror_var = m3l.Variable(point_name+'_mirror', shape=(3,), operation=self)
+        out_thrust_vector_var = m3l.Variable(point_name+'_out_thrust_vector', shape=(3,), operation=self)
+        mirror_thrust_vector_var = m3l.Variable(point_name+'_mirror_thrust_vector', shape=(3,), operation=self)
 
         # mesh_out_velocities = []
         # for i in range(num_blades):
@@ -96,7 +98,7 @@ class Rotor3(m3l.ExplicitOperation):
         #     mesh_mirror_velocities.append(m3l.Variable(self.name+str(i)+'_mirror_velocity', shape=(nt,nc-1,ns-1,3), operation=self))
 
         # return tuple(mesh_out_vars), tuple(mirror_mesh_vars), # tuple(mesh_out_velocities), tuple(mesh_mirror_velocities)
-        return tuple(mesh_out_vars), tuple(mirror_mesh_vars), point_var, point_mirror_var
+        return tuple(mesh_out_vars), tuple(mirror_mesh_vars), point_var, point_mirror_var, out_thrust_vector_var, mirror_thrust_vector_var
 
 
 
@@ -336,7 +338,7 @@ class RotorCSDL3(ModuleCSDL):
         # rotate the rotation point for LUCA SCOTZNIOVSKY:
         translated_point_luca = point - r_point # np.tile(r_point, (nt, nc, ns, 1))
         actual_translated_point_luca = translated_point_luca + delta # accounts for the design variable delta
-        rotated_point_luca = csdl.matvec(rotation_matrix_y, actual_translated_point_luca) # rotates the point
+        rotated_point_luca = csdl.matvec(csdl.transpose(rotation_matrix_y), actual_translated_point_luca) # rotates the point
         rotated_luca = rotated_point_luca + r_point # shifts back from r_point
         # shift the point by dh:
         actual_point = self.create_output(mesh_name + '_point_out', shape=(3), val=0)
@@ -351,7 +353,12 @@ class RotorCSDL3(ModuleCSDL):
 
 
         
-        initial_thrust_vector = self.create_input('initial_vector', shape=(3), val=np.array([1,0,0]))
-        thrust_vector = csdl.matvec(rotation_matrix_y, initial_thrust_vector) # rotates the point
-        self.register_output('thrust_vector', thrust_vector)
+        initial_thrust_vector = self.create_input('initial_vector', shape=(3), val=np.array([-1,0,0]))
+        thrust_vector = csdl.matvec(csdl.transpose(rotation_matrix_y), initial_thrust_vector) # rotates the point
+        out_thrust_vector = self.register_output(mesh_name + '_point_out_thrust_vector', thrust_vector)
+        mirror_thrust_vector = self.create_output(mesh_name + '_point_mirror_thrust_vector', shape=thrust_vector.shape, val=0.)
+        mirror_thrust_vector[0] = out_thrust_vector[0]
+        mirror_thrust_vector[1] = out_thrust_vector[1]
+        mirror_thrust_vector[2] = out_thrust_vector[2] * -1.
+
 

@@ -33,11 +33,12 @@ rpm = 1090. # fixed rpm
 nt = 30
 dt = 0.003 # sec
 h = 2.5 # the height (m) from the image plane to the rotation_point
-pitch = 0.1 # np.deg2rad(3) # rad
+pitch = 0.05236 # np.deg2rad(3) # rad
+# pitch = 0.0 # np.deg2rad(3) # rad
 rotor_blade_angle = -0.053 # np.deg2rad(-4) # rad (negative is more thrust)
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
-do_flaps = True
+do_flaps = False
 do_fuselage = False
 mirror = True
 sub = True
@@ -54,7 +55,7 @@ other_drag_coef = 2 * 0.02
 # VLM params:
 core_size = 0.2 # 0.5 # set the viscous core size
 # wing:
-num_spanwise_vlm = 31
+num_spanwise_vlm = 41
 num_chordwise_vlm = 10
 # prop:
 num_spanwise_prop= 5
@@ -145,8 +146,8 @@ else:
 
 chord_surface = am.linspace(leading_edge, trailing_edge, num_chordwise_vlm)
 # spatial_rep.plot_meshes([chord_surface])
-wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 0., 5.]), direction=np.array([0., 0., -5.]), grid_search_n=30, plot=False)
-wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 5.]), direction=np.array([0., 0., 5.]), grid_search_n=30, plot=False)
+wing_upper_surface_wireframe = wing.project(chord_surface.value + np.array([0., 0., 5.]), direction=np.array([0., 0., -5.]), grid_search_n=50, plot=False)
+wing_lower_surface_wireframe = wing.project(chord_surface.value - np.array([0., 0., 5.]), direction=np.array([0., 0., 5.]), grid_search_n=50, plot=False)
 wing_camber_surface = am.linspace(wing_upper_surface_wireframe, wing_lower_surface_wireframe, 1)
 # spatial_rep.plot_meshes([wing_camber_surface])
 wing_camber_surface_np = wing_camber_surface.value.reshape((num_chordwise_vlm, num_spanwise_vlm, 3))
@@ -319,6 +320,7 @@ prop_loc_names = []
 prop_center_loc = []
 prop_blade_names = []
 prop_dir_list = []
+prop_thrust_vec = []
 for i in range(num_props):
     direction = -1
     if i >= num_props/2: direction = 1
@@ -337,7 +339,7 @@ for i in range(num_props):
                         point = prop_points[i])
     prop_loc_names.extend([propb1_mesh_names[i] + '_point_out'] * num_blades)
     prop_blade_names.extend([propb1_mesh_names[i] + '_rotor' + str(j) + '_out' for j in range(num_blades)])
-    prop_mesh_out, mirror_prop_meshes, prop_center, prop_mirror_center = prop_model.evaluate(h_m3l)
+    prop_mesh_out, mirror_prop_meshes, prop_center, prop_mirror_center, prop_thrust_vector, mirror_prop_thrust_vector = prop_model.evaluate(h_m3l)
 
     if mirror:
         prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
@@ -346,9 +348,11 @@ for i in range(num_props):
         prop_loc_names.extend([propb1_mesh_names[i] + '_point_mirror'] * num_blades)
         prop_dir_list.extend([-1*direction] * num_blades)
         prop_blade_names.extend([propb1_mesh_names[i] + '_rotor' + str(j) + '_mirror' for j in range(num_blades)])
+        prop_thrust_vec.extend([prop_thrust_vector, mirror_prop_thrust_vector])
     else:
         prop_meshes.append(prop_mesh_out)
         prop_center_loc.append(prop_center)
+        prop_thrust_vec.append(prop_thrust_vector)
 
 
 
@@ -398,10 +402,9 @@ for prop_mesh in prop_meshes:
         initial_conditions.append((name+'_gamma_w_0', np.zeros((nt-1, ny-1))))
         initial_conditions.append((name+'_wake_coords_0', np.zeros((nt-1, ny, 3))))
     i += 1
-for prop_center in prop_center_loc:
-    # print(prop_center.shape)
-    # print(prop_center.name)
+for i, prop_center in enumerate(prop_center_loc):
     uvlm_parameters.append((prop_center.name, False, prop_center))
+    uvlm_parameters.append((prop_thrust_vec[i].name, False, prop_thrust_vec[i]))
 # for prop_mesh_vel in prop_meshes_vel:
 #     for vel in prop_mesh_vel:
 #         shape = vel.shape

@@ -33,15 +33,15 @@ num_blades = 3
 rpm = 1090. # fixed rpm
 nt = 30 # was 30 before
 dt = 0.003 # sec
-h = 2.375 # the height (m) from the image plane to the rotation_point
-# pitch = 0.05236 # np.deg2rad(3) # rad
-pitch = 0. # np.deg2rad(3) # rad
-rotor_blade_angle = -0.29411512# -0.30411512 # np.deg2rad(-4) # rad (negative is more thrust)
+h = 2.5 # the height (m) from the image plane to the rotation_point
+pitch = 0.05236 # np.deg2rad(3) # rad
+# pitch = 0. # np.deg2rad(3) # rad
+rotor_blade_angle = -0.053# -0.30411512 # np.deg2rad(-4) # rad (negative is more thrust)
 rotation_point = np.array([24,0,0]) # np.array([37,0,0]) with fuselages
 do_wing = True
 do_flaps = False
 do_fuselage = False
-mirror = False
+mirror = True
 sub = True
 free_wake = True
 symmetry = True 
@@ -113,8 +113,8 @@ for i in range(num_props):
 # region meshes
 
 # create the wing mesh:
-num_spanwise_vlm = 21 # 61
-num_chordwise_vlm = 15
+num_spanwise_vlm = 41 # 61
+num_chordwise_vlm = 10
 
 if log_space:
     start, end = 0.001, 1.0
@@ -318,6 +318,7 @@ prop_loc_names = []
 prop_center_loc = []
 prop_blade_names = []
 prop_dir_list = []
+prop_thrust_vec = []
 for i in range(num_props):
     direction = -1
     if i >= num_props/2: direction = 1
@@ -336,7 +337,7 @@ for i in range(num_props):
                         point = prop_points[i])
     prop_loc_names.extend([propb1_mesh_names[i] + '_point_out'] * num_blades)
     prop_blade_names.extend([propb1_mesh_names[i] + '_rotor' + str(j) + '_out' for j in range(num_blades)])
-    prop_mesh_out, mirror_prop_meshes, prop_center, prop_mirror_center = prop_model.evaluate(h_m3l)
+    prop_mesh_out, mirror_prop_meshes, prop_center, prop_mirror_center, prop_thrust_vector, mirror_prop_thrust_vector = prop_model.evaluate(h_m3l)
 
     if mirror:
         prop_meshes.append(prop_mesh_out + mirror_prop_meshes)
@@ -345,9 +346,11 @@ for i in range(num_props):
         prop_loc_names.extend([propb1_mesh_names[i] + '_point_mirror'] * num_blades)
         prop_dir_list.extend([-1*direction] * num_blades)
         prop_blade_names.extend([propb1_mesh_names[i] + '_rotor' + str(j) + '_mirror' for j in range(num_blades)])
+        prop_thrust_vec.extend([prop_thrust_vector, mirror_prop_thrust_vector])
     else:
         prop_meshes.append(prop_mesh_out)
         prop_center_loc.append(prop_center)
+        prop_thrust_vec.append(prop_thrust_vector)
 
 
 
@@ -399,10 +402,9 @@ for prop_mesh in prop_meshes:
     i += 1
 
 # 
-for prop_center in prop_center_loc:
-    print(prop_center.shape)
-    print(prop_center.name)
+for i, prop_center in enumerate(prop_center_loc):
     uvlm_parameters.append((prop_center.name, False, prop_center))
+    uvlm_parameters.append((prop_thrust_vec[i].name, False, prop_thrust_vec[i]))
 # for prop_mesh_vel in prop_meshes_vel:
 #     for vel in prop_mesh_vel:
 #         shape = vel.shape
@@ -946,7 +948,7 @@ if plot_wing_distributions:
     ax2.set_xlabel('Normalized Spanwise Location')
     ax2.set_ylabel('Sectional Induced Drag (N/m)')
 
-    plt.show()
+    # plt.show()
 
 # plot the uvlm result:
-if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=True, name='liberty_noGE', backend='ffmpeg')
+if True: plot_wireframe(sim, surface_names, nt, plot_mirror=True, interactive=False, name='liberty_noGE', backend='ffmpeg')
