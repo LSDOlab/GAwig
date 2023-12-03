@@ -25,8 +25,8 @@ from modopt.snopt_library import SNOPT
 
 
 # region hyperparameters
-num_props = 2 # must be even
-num_blades = 3
+num_props = 8 # must be even
+num_blades = 4
 rpm = 1090. # fixed rpm
 nt = 17
 dt = 0.007 # sec
