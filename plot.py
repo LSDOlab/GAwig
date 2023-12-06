@@ -37,7 +37,7 @@ def plot_wireframe_line(sim, surface_names, nt, interactive = False, plot_mirror
             #bg2='lb',
             bg='white',
             #bg2='white',
-            # axes=0,
+            axes=0,
             #  pos=(0, 0),
             offscreen=False,
             interactive=1,
@@ -241,6 +241,9 @@ def plot_lift_spanwise(nt, n_avg, var, num_span, num_chordwise_vlm, num_props, r
         for j in range(num_chordwise_vlm - 1):
             temp[:] += var[i,j*num_span:(j+1)*num_span,0].flatten()
         data[:] += temp
+
+
+    print(data/n_avg)
 
     plt.plot(xpos/max(xpos), data/n_avg, label='_nolegend_')
     plt.scatter(xpos/max(xpos), data/n_avg, label='_nolegend_')
